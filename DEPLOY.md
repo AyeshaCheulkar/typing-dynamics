@@ -13,19 +13,27 @@ Go to <https://www.pythonanywhere.com> → **Pricing & signup** → **Create a B
 account** (free). Pick a username — it becomes your web address, so choose something
 sensible (e.g. `ayeshastudy`).
 
-## 2. Upload the project
-The file **`deploy.zip`** (in your project folder) contains everything needed and
-nothing extra (no venv, no local database).
+## 2. Get the project onto the server (via GitHub — recommended)
+The code lives at <https://github.com/AyeshaCheulkar/typing-dynamics> (public).
 
-1. On PythonAnywhere, open the **Files** tab.
-2. Under "Files", use **Upload a file** to upload `deploy.zip` to your home folder.
-3. Open a **Bash console** (Consoles tab → Bash) and run:
+Open a **Bash console** (Consoles tab → Bash) and run:
+```bash
+cd ~
+git clone https://github.com/AyeshaCheulkar/typing-dynamics.git
+cd typing-dynamics
+ls        # you should see app.py, db.py, templates/, static/ ...
+```
+
+*Updating later* is then just: `cd ~/typing-dynamics && git pull` → **Reload** (step 7).
+
+<details><summary>Alternative: upload deploy.zip instead of git</summary>
+
+1. **Files** tab → **Upload a file** → upload `deploy.zip` to your home folder.
+2. In a Bash console:
    ```bash
-   mkdir -p ~/typing-dynamics
-   cd ~/typing-dynamics
-   unzip ~/deploy.zip
-   ls        # you should see app.py, db.py, templates/, static/ ...
+   mkdir -p ~/typing-dynamics && cd ~/typing-dynamics && unzip ~/deploy.zip
    ```
+</details>
 
 ## 3. Install Flask
 In the same Bash console:
