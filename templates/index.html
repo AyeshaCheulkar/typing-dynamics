@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Writing Study</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+
+    <!-- SCREEN 1: Start / consent-lite -------------------------------------->
+    <section id="start-screen" class="screen">
+        <span class="eyebrow">Writing &amp; Effort Study</span>
+        <h1>Welcome 👋</h1>
+        <p class="lead">
+            You will complete a short writing task. As you type, this tool records
+            <strong>how</strong> you type (timing and edits) — not to judge your
+            writing, but to study writing effort. Afterwards you will rate how
+            effortful the task felt. Please write in your own words, without
+            copying and pasting.
+        </p>
+
+        <label class="field">
+            <span>Participant ID</span>
+            <input type="text" id="participant-id" placeholder="e.g. P01" autocomplete="off">
+            <small class="field-hint">Use the <strong>same ID every time</strong> (e.g. P01).
+                Spaces are removed and letters capitalised automatically.</small>
+        </label>
+
+        <div class="field">
+            <span>Choose a task level</span>
+            <div class="level-cards" id="level-cards">
+                {% for lvl in levels %}
+                <button type="button" class="level-card{% if loop.first %} selected{% endif %}"
+                        data-level="{{ lvl.id }}">
+                    <span class="level-badge level-{{ lvl.id }}">{{ lvl.difficulty }}</span>
+                    <span class="level-title">{{ lvl.title }}</span>
+                    <span class="level-blurb">{{ lvl.blurb }}</span>
+                    <span class="level-count">{{ lvl.variations|length }} prompt variations</span>
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Preview of the prompt the participant will actually get -->
+        <div class="preview-box" id="preview-box">
+            <div class="preview-head">
+                <span class="task-label">Your prompt</span>
+                <button type="button" id="shuffle-btn" class="ghost">🔀 Shuffle</button>
+            </div>
+            <img id="preview-image" class="preview-image" alt="" hidden>
+            <p id="preview-prompt" class="preview-prompt"></p>
+        </div>
+
+        <button id="start-btn" class="primary block">Start writing →</button>
+        <p id="start-error" class="error" hidden></p>
+    </section>
+
+    <!-- SCREEN 2: Writing editor -------------------------------------------->
+    <section id="write-screen" class="screen" hidden>
+        <div class="task-box">
+            <span class="task-label">Your task</span>
+            <img id="task-image" class="task-image" alt="" hidden>
+            <p id="task-prompt"></p>
+        </div>
+
+        <textarea id="editor" placeholder="Start typing here…" spellcheck="true"></textarea>
+        <p id="paste-warning" class="paste-warning" hidden>
+            🚫 Pasting is disabled for this study — please type your answer in your own words.
+        </p>
+
+        <div class="editor-footer">
+            <span id="live-stats" class="stats">0 words · 0 characters</span>
+            <button id="finish-btn" class="primary">Finish &amp; rate effort</button>
+        </div>
+    </section>
+
+    <!-- SCREEN 3: Effort rating --------------------------------------------->
+    <section id="rate-screen" class="screen" hidden>
+        <h2>How effortful did that task feel?</h2>
+        <p class="lead">Think about mental effort, difficulty and how hard you
+            had to work — not how good the result was.</p>
+
+        <div class="rating" id="rating">
+            <button class="rate" data-value="1">1<small>Very easy</small></button>
+            <button class="rate" data-value="2">2<small>Easy</small></button>
+            <button class="rate" data-value="3">3<small>Moderate</small></button>
+            <button class="rate" data-value="4">4<small>Hard</small></button>
+            <button class="rate" data-value="5">5<small>Very hard</small></button>
+        </div>
+        <div class="scale-hint">
+            <span>← took no effort</span>
+            <span>took a lot of effort →</span>
+        </div>
+
+        <p></p>
+        <button id="submit-btn" class="primary block" disabled>Submit</button>
+        <p id="submit-status" class="status"></p>
+    </section>
+
+    <!-- SCREEN 4: Done ------------------------------------------------------>
+    <section id="done-screen" class="screen" hidden>
+        <div class="big-check">✅</div>
+        <h2>Thank you!</h2>
+        <p class="lead">Your session was saved successfully.</p>
+        <p></p>
+        <button id="another-btn" class="primary block">Do another task</button>
+    </section>
+
+</div>
+
+<!-- The full level/variation pool, handed to the client so it can preview and
+     randomly assign a prompt. -->
+<script id="levels-data" type="application/json">{{ levels|tojson }}</script>
+<script src="{{ url_for('static', filename='logger.js') }}"></script>
+</body>
+</html>

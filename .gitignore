@@ -1,0 +1,14 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Local data & runtime artifacts — never commit collected data or logs
+data.db
+*.log
+
+# Build/deploy artifacts
+deploy.zip
+
+# Local secrets
+.env

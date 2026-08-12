@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin — Captured Sessions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container admin-container">
+    <div class="screen">
+        <div class="admin-head">
+            <div>
+                <span class="eyebrow">Researcher dashboard</span>
+                <h1>Captured sessions</h1>
+            </div>
+            <div class="head-actions">
+                <a class="ghost" href="/admin/export.csv">⬇ Download CSV</a>
+                <a class="ghost" href="/">↗ Open writing page</a>
+            </div>
+        </div>
+
+        <!-- Summary cards -->
+        <div class="stat-grid">
+            <div class="stat-card">
+                <span class="stat-value">{{ stats.total }}</span>
+                <span class="stat-label">Sessions</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">{{ stats.participants }}</span>
+                <span class="stat-label">Participants</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">{{ stats.avg_effort }}</span>
+                <span class="stat-label">Avg effort (1–5)</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">{{ stats.avg_duration_s }}<small>s</small></span>
+                <span class="stat-label">Avg duration</span>
+            </div>
+            <div class="stat-card{% if stats.flagged %} stat-card--warn{% endif %}">
+                <span class="stat-value">{{ stats.flagged }}</span>
+                <span class="stat-label">Quality flags</span>
+            </div>
+            <div class="stat-card stat-card--ok">
+                <span class="stat-value" id="included-count">{{ stats.included }}<small>/{{ stats.total }}</small></span>
+                <span class="stat-label">In ML dataset</span>
+            </div>
+        </div>
+
+        {% if stats.total %}
+        <!-- Effort distribution mini-bars -->
+        <div class="dist">
+            <span class="dist-title">Effort rating distribution</span>
+            <div class="dist-bars">
+                {% for r in range(1, 6) %}
+                {% set c = stats.effort_dist.get(r, 0) %}
+                <div class="dist-col">
+                    <div class="dist-bar-wrap">
+                        <div class="dist-bar"
+                             style="height: {{ (c / stats.total * 100)|round(0) }}%"
+                             title="{{ c }} session(s)"></div>
+                    </div>
+                    <span class="dist-count">{{ c }}</span>
+                    <span class="dist-label">{{ r }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if per_participant %}
+        <h2 class="table-title">Progress by participant</h2>
+        <p class="lead small">Track collection against your target (~10 participants × 3–4 tasks).</p>
+        <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Participant</th><th>Sessions</th><th>Distinct tasks</th>
+                    <th>Included</th><th>Flagged</th><th>Avg effort</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in per_participant %}
+                <tr>
+                    <td><span class="pill">{{ p.participant_id }}</span></td>
+                    <td>{{ p.sessions }}</td>
+                    <td>{{ p.distinct_tasks }}</td>
+                    <td>{{ p.included }}</td>
+                    <td>{% if p.flagged %}<span class="qflag">{{ p.flagged }}</span>{% else %}0{% endif %}</td>
+                    <td>{{ p.avg_effort }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% endif %}
+
+        <h2 class="table-title">All sessions</h2>
+        <p class="lead small">Click a row to read the full response. Quality flags are review
+            aids only — nothing is auto-rejected. Use <strong>In ML?</strong> to include or
+            exclude each session from the dataset.</p>
+
+        {% set FLAG_LABELS = {
+            'too_short': 'Short',
+            'keyboard_mashing': 'Mashing',
+            'repetitive': 'Repetitive',
+            'gibberish': 'Gibberish',
+            'copied_prompt': 'Copied prompt'
+        } %}
+
+        {% if sessions %}
+        <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th></th><th>ID</th><th>Participant</th><th>Level</th>
+                    <th>Dur</th><th>Words</th><th>Effort</th><th>Events</th>
+                    <th>Integrity</th><th>Quality</th><th>In ML?</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in sessions %}
+                {% set meta = task_meta.get(s.task_id, {'label': s.task_id, 'difficulty': '?'}) %}
+                <tr class="sess-row{% if not s.included %} excluded{% endif %}" data-id="{{ s.id }}">
+                    <td class="expand-cell"><span class="caret">▸</span></td>
+                    <td>#{{ s.id }}</td>
+                    <td><span class="pill">{{ s.participant_id }}</span></td>
+                    <td><span class="level-tag level-{{ meta.difficulty|lower }}">{{ meta.difficulty }}</span></td>
+                    <td>{{ (s.duration_ms / 1000)|round(1) }} s</td>
+                    <td>{{ s.word_count }}</td>
+                    <td><span class="effort effort-{{ s.effort_rating }}">{{ s.effort_rating }}</span></td>
+                    <td>{{ s.event_count }}</td>
+                    <td>
+                        {% if s.paste_used %}<span class="flag">⚠ paste</span>
+                        {% else %}<span class="ok-tag">✓ clean</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if s.quality_flags %}
+                            {% for f in s.quality_flags %}
+                            <span class="qflag">{{ FLAG_LABELS.get(f, f) }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="ok-tag">✓ ok</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button class="incl-btn {% if s.included %}on{% else %}off{% endif %}"
+                                data-id="{{ s.id }}"
+                                aria-pressed="{{ 'true' if s.included else 'false' }}">
+                            {% if s.included %}✓ Included{% else %}Excluded{% endif %}
+                        </button>
+                    </td>
+                </tr>
+                <tr class="detail-row" id="detail-{{ s.id }}" hidden>
+                    <td colspan="11">
+                        <div class="detail-panel">
+                            <div class="detail-meta">
+                                <span><strong>Prompt variation:</strong> <code>{{ s.task_id }}</code></span>
+                                <span><strong>Characters:</strong> {{ s.char_count }}</span>
+                                <span><strong>Saved:</strong> {{ s.created_at }}</span>
+                                <a href="/api/session/{{ s.id }}" target="_blank">Raw JSON ↗</a>
+                            </div>
+                            {% if s.quality_flags %}
+                            <div class="detail-flags">
+                                {% for f in s.quality_flags %}
+                                <span class="qflag">{{ FLAG_LABELS.get(f, f) }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="response-text">{{ s.final_text }}</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% else %}
+        <p class="empty">No sessions yet. Complete a writing task at
+            <a href="/">the writing page</a> first.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='admin.js') }}"></script>
+</body>
+</html>
