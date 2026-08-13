@@ -373,6 +373,33 @@ def export_csv():
     )
 
 
+@app.route("/admin/keystrokes.csv")
+@require_admin
+def export_keystrokes_csv():
+    """Download the RAW keystroke layer — one row per event across all sessions.
+
+    This is the ground-truth behavioural data. Stage 2 turns it into features;
+    this export is a downloadable backup / for external processing.
+    """
+    rows = db.list_all_keystrokes()
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow([
+        "session_id", "participant_id", "task_id", "event_type",
+        "key_value", "t_ms", "caret_pos", "selection_end",
+    ])
+    for r in rows:
+        writer.writerow([
+            r["session_id"], r["participant_id"], r["task_id"], r["event_type"],
+            r["key_value"], r["t_ms"], r["caret_pos"], r["selection_end"],
+        ])
+    return Response(
+        buf.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=keystrokes.csv"},
+    )
+
+
 def _summarise(sessions):
     """Compute headline numbers for the admin dashboard cards."""
     n = len(sessions)

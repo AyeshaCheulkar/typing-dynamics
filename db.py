@@ -190,6 +190,27 @@ def set_included(session_id, included):
     return changed > 0
 
 
+def list_all_keystrokes():
+    """Every keystroke event across all sessions, with its session context.
+
+    One row per event — this is the full raw behavioural layer, exported so the
+    researcher can download/back it up. Stage 2 reads the same data to build the
+    feature table.
+    """
+    conn = get_connection()
+    rows = conn.execute(
+        """
+        SELECT k.session_id, s.participant_id, s.task_id,
+               k.event_type, k.key_value, k.t_ms, k.caret_pos, k.selection_end
+        FROM keystrokes k
+        JOIN sessions s ON s.id = k.session_id
+        ORDER BY k.session_id, k.t_ms, k.id
+        """
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
 def get_session_detail(session_id):
     """Return one session's full record plus its events (for verification)."""
     conn = get_connection()
