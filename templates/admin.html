@@ -169,6 +169,12 @@
                             </div>
                             {% endif %}
                             <div class="response-text">{{ s.final_text }}</div>
+
+                            <h3 class="ks-title">Keystroke capture
+                                <span class="muted">({{ s.event_count }} events)</span></h3>
+                            <div class="ks-view" data-id="{{ s.id }}" data-loaded="0">
+                                <span class="muted">Expand to load the keystroke timeline…</span>
+                            </div>
                         </div>
                     </td>
                 </tr>

@@ -10,6 +10,8 @@
     const includedCount = document.getElementById("included-count");
 
     // ---- Expand / collapse a row to reveal the full response ---------------
+    const PAUSE_MS = 1000;   // gap between keystrokes counted as a "pause"
+
     document.querySelectorAll(".sess-row").forEach(function (row) {
         row.addEventListener("click", function (e) {
             // Don't toggle when the click was on the include/exclude button.
@@ -19,8 +21,78 @@
             const open = detail.hidden === false;
             detail.hidden = open;
             row.classList.toggle("open", !open);
+            if (!open) {
+                const view = detail.querySelector(".ks-view");
+                if (view && view.dataset.loaded === "0") loadKeystrokes(view);
+            }
         });
     });
+
+    // ---- Load + render the raw keystroke timeline for a session ------------
+    async function loadKeystrokes(view) {
+        view.dataset.loaded = "1";
+        view.innerHTML = '<span class="muted">Loading keystrokes…</span>';
+        try {
+            const res = await fetch("/api/session/" + view.dataset.id);
+            const data = await res.json();
+            const events = data.events || [];
+
+            let keydowns = 0, deletions = 0, pastes = 0, pauses = 0, maxGap = 0;
+            let lastT = null;
+            const rows = [];
+            for (const ev of events) {
+                if (ev.event_type === "keydown") {
+                    keydowns++;
+                    const gap = lastT === null ? 0 : ev.t_ms - lastT;
+                    if (lastT !== null && gap >= PAUSE_MS) { pauses++; if (gap > maxGap) maxGap = gap; }
+                    const isDel = ev.key_value === "Backspace" || ev.key_value === "Delete";
+                    if (isDel) deletions++;
+                    const isRange = ev.selection_end != null && ev.selection_end !== ev.caret_pos;
+                    rows.push(
+                        '<tr class="' + (isDel ? "ks-del " : "") + (gap >= PAUSE_MS ? "ks-pause" : "") + '">' +
+                        "<td>" + (ev.t_ms / 1000).toFixed(2) + "s</td>" +
+                        "<td>" + (gap >= PAUSE_MS ? "⏸ " : "") + gap + " ms</td>" +
+                        "<td>" + esc(ev.key_value) + (isRange ? ' <span class="ks-tag">selection</span>' : "") + "</td>" +
+                        "<td>" + ev.caret_pos + "</td></tr>"
+                    );
+                    lastT = ev.t_ms;
+                } else if (ev.event_type === "paste") {
+                    pastes++;
+                    rows.push('<tr class="ks-paste"><td>' + (ev.t_ms / 1000).toFixed(2) +
+                        's</td><td>—</td><td>⚠ paste attempt (' + esc(ev.key_value) +
+                        ')</td><td>—</td></tr>');
+                }
+            }
+
+            const summary =
+                '<div class="ks-stats">' +
+                stat(keydowns, "keys pressed") +
+                stat(deletions, "deletions (⌫/Del)") +
+                stat(pauses, "pauses ≥1s") +
+                stat((maxGap / 1000).toFixed(1) + "s", "longest pause") +
+                stat(pastes, "paste attempts") +
+                "</div>";
+
+            const table = rows.length
+                ? '<div class="ks-table-wrap"><table class="ks-table"><thead><tr>' +
+                  "<th>Time</th><th>Gap</th><th>Key</th><th>Caret</th></tr></thead><tbody>" +
+                  rows.join("") + "</tbody></table></div>"
+                : '<span class="muted">No keystroke events recorded for this session.</span>';
+
+            view.innerHTML = summary + table;
+        } catch (err) {
+            view.innerHTML = '<span class="muted">Could not load keystrokes.</span>';
+            view.dataset.loaded = "0";
+        }
+    }
+
+    function stat(value, label) {
+        return '<span class="ks-stat"><b>' + value + '</b>' + label + "</span>";
+    }
+    function esc(s) {
+        return String(s == null ? "" : s)
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
 
     // ---- Include / exclude toggle ------------------------------------------
     document.querySelectorAll(".incl-btn").forEach(function (btn) {
