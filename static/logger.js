@@ -201,6 +201,19 @@
     });
     editor.addEventListener("dragover", function (e) { e.preventDefault(); });
 
+    // Belt-and-suspenders: modern browsers report HOW text was inserted via
+    // beforeinput.inputType. Blocking here catches paste/drop even on mobile
+    // browsers where the classic "paste"/"drop" events don't always fire or
+    // can't be cancelled. Normal typing (insertText) is untouched.
+    editor.addEventListener("beforeinput", function (e) {
+        if (e.inputType === "insertFromPaste" ||
+            e.inputType === "insertFromPasteAsQuotation" ||
+            e.inputType === "insertFromDrop") {
+            e.preventDefault();
+            flagBlockedPaste(e.inputType, null);
+        }
+    });
+
     editor.addEventListener("input", function () {
         liveStats.textContent =
             wordCount(editor.value) + " words · " + editor.value.length + " characters";
