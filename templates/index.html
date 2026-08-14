@@ -53,6 +53,13 @@
             <p id="preview-prompt" class="preview-prompt"></p>
         </div>
 
+        <p id="device-warning" class="error" hidden>
+            📵 This study must be done on a <strong>laptop or desktop with a
+            physical keyboard</strong>. Phone and tablet keyboards can't record
+            the typing detail this study measures, so mobile devices are not
+            supported. Please switch to a computer to take part.
+        </p>
+
         <button id="start-btn" class="primary block">Start writing →</button>
         <p id="start-error" class="error" hidden></p>
     </section>
@@ -65,9 +72,18 @@
             <p id="task-prompt"></p>
         </div>
 
-        <textarea id="editor" placeholder="Start typing here…" spellcheck="true"></textarea>
+        <textarea id="editor" placeholder="Start typing here…"
+                  spellcheck="false" autocorrect="off" autocapitalize="off"
+                  autocomplete="off" autocomplete-list="off" data-gramm="false"
+                  data-gramm_editor="false" data-enable-grammarly="false"></textarea>
         <p id="paste-warning" class="paste-warning" hidden>
             🚫 Pasting is disabled for this study — please type your answer in your own words.
+        </p>
+        <p id="keyboard-warning" class="paste-warning" hidden>
+            ⌨️ Your keyboard isn't sending readable keystrokes (this happens on
+            phone/tablet on-screen keyboards). This session can't be recorded —
+            please switch to a <strong>laptop or desktop with a physical
+            keyboard</strong>.
         </p>
 
         <div class="editor-footer">
@@ -113,6 +129,6 @@
 <!-- The full level/variation pool, handed to the client so it can preview and
      randomly assign a prompt. -->
 <script id="levels-data" type="application/json">{{ levels|tojson }}</script>
-<script src="{{ url_for('static', filename='logger.js') }}?v=3"></script>
+<script src="{{ url_for('static', filename='logger.js') }}?v=4"></script>
 </body>
 </html>

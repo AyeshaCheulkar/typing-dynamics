@@ -29,11 +29,13 @@
     const previewImage  = document.getElementById("preview-image");
     const startBtn    = document.getElementById("start-btn");
     const startError  = document.getElementById("start-error");
+    const deviceWarning = document.getElementById("device-warning");
 
     const taskPrompt  = document.getElementById("task-prompt");
     const taskImage   = document.getElementById("task-image");
     const editor      = document.getElementById("editor");
     const pasteWarning = document.getElementById("paste-warning");
+    const keyboardWarning = document.getElementById("keyboard-warning");
     const liveStats   = document.getElementById("live-stats");
     const finishBtn   = document.getElementById("finish-btn");
 
@@ -54,6 +56,34 @@
     function show(screen) {
         [startScreen, writeScreen, rateScreen, doneScreen]
             .forEach(s => (s.hidden = s !== screen));
+    }
+
+    // ---- Device gate --------------------------------------------------------
+    // Keystroke dynamics REQUIRES a physical keyboard. Phone/tablet on-screen
+    // keyboards route text through an IME composition layer, so every keydown
+    // arrives as keyCode 229 / key "Unidentified" with no real key identity and
+    // no usable dwell/flight timing. We block those devices up front so we never
+    // collect an unusable session, and keep a runtime backstop (below) in case a
+    // device slips through the user-agent check.
+    function isLikelyMobile() {
+        const ua = navigator.userAgent || "";
+        if (/Android|iPhone|iPod|iPad|Mobile|Opera Mini|IEMobile|BlackBerry|webOS/i.test(ua)) {
+            return true;
+        }
+        // iPadOS 13+ reports a desktop Mac UA; catch it via touch points.
+        if (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return true;
+        return false;
+    }
+
+    // Disable the study on a touch/mobile device and explain why.
+    function blockDevice() {
+        deviceWarning.hidden = false;
+        startBtn.disabled = true;
+        startBtn.textContent = "Not available on this device";
+    }
+
+    if (isLikelyMobile()) {
+        blockDevice();
     }
 
     function wordCount(text) {
@@ -149,6 +179,9 @@
         }
 
         editor.value = "";
+        imeDetected = false;
+        keyboardWarning.hidden = true;
+        finishBtn.disabled = false;
         liveStats.textContent = "0 words · 0 characters";
         submitBtn.disabled = true;
         submitStatus.textContent = "";
@@ -170,7 +203,21 @@
         });
     }
 
-    editor.addEventListener("keydown", e => record("keydown", e.key));
+    // Runtime backstop: if any keydown arrives without a real key identity
+    // (keyCode 229 or key "Unidentified" — an on-screen/IME keyboard), this
+    // session can't yield valid keystroke dynamics. Warn the participant and
+    // block finishing so an unusable session is never submitted. Set once.
+    let imeDetected = false;
+    function checkIme(e) {
+        if (imeDetected) return;
+        if (e.keyCode === 229 || e.key === "Unidentified") {
+            imeDetected = true;
+            keyboardWarning.hidden = false;
+            finishBtn.disabled = true;
+        }
+    }
+
+    editor.addEventListener("keydown", e => { checkIme(e); record("keydown", e.key); });
     editor.addEventListener("keyup",   e => record("keyup",   e.key));
 
     // Pasting is DISABLED to protect data integrity: pasted text carries no
