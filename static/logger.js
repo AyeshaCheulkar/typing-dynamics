@@ -65,24 +65,32 @@
     // no usable dwell/flight timing. We block those devices up front so we never
     // collect an unusable session, and keep a runtime backstop (below) in case a
     // device slips through the user-agent check.
-    function isLikelyMobile() {
+    // We block ONLY phones up front. A phone almost never has a physical
+    // keyboard, so blocking early saves the participant from typing a whole
+    // answer that can't be recorded. We deliberately do NOT block tablets/iPads
+    // here: many are used with a Bluetooth/attached physical keyboard, which
+    // sends perfectly valid keystrokes (real e.key, not keyCode 229). There is
+    // no browser API to detect a connected hardware keyboard, so instead of
+    // guessing from the device we let tablets start and let the runtime backstop
+    // below decide per session — it blocks only if it actually sees on-screen /
+    // IME input (keyCode 229 / "Unidentified"). Note: an Android *tablet* UA
+    // omits "Mobile"; only phones carry it.
+    function isPhone() {
         const ua = navigator.userAgent || "";
-        if (/Android|iPhone|iPod|iPad|Mobile|Opera Mini|IEMobile|BlackBerry|webOS/i.test(ua)) {
-            return true;
-        }
-        // iPadOS 13+ reports a desktop Mac UA; catch it via touch points.
-        if (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return true;
+        if (/iPhone|iPod/i.test(ua)) return true;
+        if (/Android/i.test(ua) && /Mobile/i.test(ua)) return true;
+        if (/Windows Phone|BlackBerry|IEMobile|Opera Mini/i.test(ua)) return true;
         return false;
     }
 
-    // Disable the study on a touch/mobile device and explain why.
+    // Disable the study on a phone and explain why.
     function blockDevice() {
         deviceWarning.hidden = false;
         startBtn.disabled = true;
         startBtn.textContent = "Not available on this device";
     }
 
-    if (isLikelyMobile()) {
+    if (isPhone()) {
         blockDevice();
     }
 

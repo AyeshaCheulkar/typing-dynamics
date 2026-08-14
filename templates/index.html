@@ -54,10 +54,10 @@
         </div>
 
         <p id="device-warning" class="error" hidden>
-            📵 This study must be done on a <strong>laptop or desktop with a
-            physical keyboard</strong>. Phone and tablet keyboards can't record
-            the typing detail this study measures, so mobile devices are not
-            supported. Please switch to a computer to take part.
+            📵 This study needs a <strong>physical keyboard</strong>, so phones
+            aren't supported. Please use a laptop or desktop — or a tablet/iPad
+            <strong>with a Bluetooth or attached keyboard</strong> (an on-screen
+            keyboard can't record the typing detail this study measures).
         </p>
 
         <button id="start-btn" class="primary block">Start writing →</button>
@@ -129,6 +129,6 @@
 <!-- The full level/variation pool, handed to the client so it can preview and
      randomly assign a prompt. -->
 <script id="levels-data" type="application/json">{{ levels|tojson }}</script>
-<script src="{{ url_for('static', filename='logger.js') }}?v=4"></script>
+<script src="{{ url_for('static', filename='logger.js') }}?v=5"></script>
 </body>
 </html>
