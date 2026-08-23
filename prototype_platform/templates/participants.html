@@ -1,0 +1,46 @@
+{% extends "admin_base.html" %}
+{% block title %}Participants · Writing Analytics{% endblock %}
+{% block main %}
+<div class="page-head sticky">
+  <div><div class="eyebrow">Study cohort</div><h1>Participants</h1>
+    <p class="muted small">{{ participants|length }} participants · click a card to open the profile.</p></div>
+  <div class="seg" id="view-seg">
+    <button data-v="cards" class="on">Cards</button>
+    <button data-v="table">Table</button>
+  </div>
+</div>
+
+<div id="view-cards" class="participant-grid">
+  {% for p in participants %}
+  <a class="p-card" href="{{ url_for('participant_profile', code=p.code) }}">
+    <div class="p-top"><span class="p-code">{{ p.code }}</span>
+      <span class="p-sessions">{{ p.sessions }} session{{ 's' if p.sessions != 1 }}</span></div>
+    <div class="p-metrics">
+      <div><span class="pm-v">{{ p.avg_effort }}</span><span class="pm-l">avg effort</span></div>
+      <div><span class="pm-v">{{ p.avg_speed }}</span><span class="pm-l">chars/s</span></div>
+      <div><span class="pm-v">{{ p.avg_pauses }}</span><span class="pm-l">pauses/100</span></div>
+    </div>
+    <div class="p-foot"><span class="muted small">Last: {{ p.last }}</span>
+      <span class="go">View profile →</span></div>
+  </a>
+  {% endfor %}
+</div>
+
+<div id="view-table" class="chart-card hidden" style="margin-top:0">
+  <div style="overflow-x:auto"><table class="clean">
+    <thead><tr><th>Participant</th><th>Sessions</th><th>Valid</th><th>Levels</th>
+      <th>Avg effort</th><th>Avg speed</th><th>Avg pauses</th><th>Avg time</th>
+      <th>Avg revisions</th><th>Last</th><th></th></tr></thead>
+    <tbody>{% for p in participants %}
+      <tr><td><strong>{{ p.code }}</strong></td><td>{{ p.sessions }}</td><td>{{ p.valid }}</td>
+        <td>{{ p.levels }}</td><td>{{ p.avg_effort }}</td><td>{{ p.avg_speed }}</td>
+        <td>{{ p.avg_pauses }}</td><td>{{ p.avg_time }}s</td><td>{{ p.avg_revisions }}</td>
+        <td class="muted small">{{ p.last }}</td>
+        <td><a href="{{ url_for('participant_profile', code=p.code) }}">Open →</a></td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+{% endblock %}

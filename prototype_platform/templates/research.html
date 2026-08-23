@@ -1,0 +1,68 @@
+{% extends "admin_base.html" %}
+{% block title %}Research results · Writing Analytics{% endblock %}
+{% block main %}
+<div class="page-head sticky">
+  <div><div class="eyebrow">Pilot study · n={{ kpis.valid_sessions }} sessions · {{ kpis.participants }} participants</div>
+    <h1>Research results</h1></div>
+</div>
+
+<div class="paper">
+  <div class="paper-sec">
+    <div class="paper-n">01</div>
+    <div><h2>Research question</h2>
+      <p class="lead-q">Are typing dynamics associated with self-perceived writing effort,
+         and can they estimate it?</p>
+      <p class="muted small">Target: participant-reported writing effort (1–5). No claim
+         is made about mental effort, stress, or any psychological state.</p></div>
+  </div>
+
+  <div class="paper-sec">
+    <div class="paper-n">02</div>
+    <div><h2>Observed associations</h2>
+      <p class="muted small">Spearman ρ between each behaviour and self-rated effort
+         (valid sessions). Directional but not significant.</p>
+      <div class="assoc-list">
+        {% for s in signals %}
+        <div class="assoc"><span class="a-name">{{ s.name }}</span>
+          <div class="a-bar"><span class="{{ s.direction }}" style="width:{{ (s.rho|abs*100)|round|int }}%"></span></div>
+          <span class="a-rho">{{ '%+.2f' % s.rho }}</span></div>
+        {% endfor %}
+      </div>
+      <figure class="paper-fig"><img src="{{ url_for('static', filename='analysis_primary.png') }}"
+        alt="Correlations and model error with 95% CIs">
+        <figcaption class="muted small">Correlations and model error, each with 95% confidence intervals.</figcaption></figure>
+    </div>
+  </div>
+
+  <div class="paper-sec">
+    <div class="paper-n">03</div>
+    <div><h2>Prediction performance</h2>
+      <p class="muted small">Participant-aware cross-validation (leave-one-participant-out).</p>
+      <table class="clean"><thead><tr><th>Model</th><th>MAE [95% CI]</th><th>RMSE</th><th>R²</th></tr></thead>
+        <tbody>{% for name, mae, rmse, r2 in model.rows %}
+          <tr><td>{{ name }}</td><td>{{ mae }}</td><td>{{ rmse }}</td><td>{{ r2 }}</td></tr>{% endfor %}</tbody></table>
+    </div>
+  </div>
+
+  <div class="paper-sec">
+    <div class="paper-n">04</div>
+    <div><h2>Explainability</h2>
+      <p class="muted small">SHAP global importance (Random Forest). Describes model
+         behaviour, not causal effects.</p>
+      <figure class="paper-fig"><img src="{{ url_for('static', filename='shap_summary.png') }}"
+        alt="SHAP global importance"><figcaption class="muted small">Writing time and pausing dominate the model's estimates.</figcaption></figure>
+    </div>
+  </div>
+
+  <div class="paper-sec">
+    <div class="paper-n">05</div>
+    <div><h2>Statistical caution</h2>
+      <ul class="caution">{% for n in model.notes %}<li>{{ n }}</li>{% endfor %}
+        <li>Small sample (n={{ kpis.valid_sessions }}); results are exploratory, not confirmatory.</li></ul>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+{% endblock %}

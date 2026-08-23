@@ -1,0 +1,77 @@
+{% extends "admin_base.html" %}
+{% block title %}{{ p.code }} · Participant profile{% endblock %}
+{% block main %}
+<div class="page-head sticky">
+  <div><div class="eyebrow"><a href="{{ url_for('participants_page') }}">Participants</a> / profile</div>
+    <h1>Participant {{ p.code }}</h1>
+    <p class="muted small">{{ p.snapshot.sessions }} writing session{{ 's' if p.snapshot.sessions != 1 }}
+       · {{ p.snapshot.levels }} task level{{ 's' if p.snapshot.levels != 1 }}
+       · {{ p.snapshot.valid }} valid</p></div>
+</div>
+
+<section class="section-head"><h2>Participant snapshot</h2></section>
+<div class="snapshot">
+  <div class="snap"><span class="s-v">{{ p.snapshot.sessions }}</span><span class="s-l">Sessions</span></div>
+  <div class="snap accent-self"><span class="s-v">{{ p.snapshot.avg_effort }}<i>/5</i></span><span class="s-l">Avg self-rated effort</span></div>
+  <div class="snap"><span class="s-v">{{ p.snapshot.avg_speed }}</span><span class="s-l">Avg speed (chars/s)</span></div>
+  <div class="snap"><span class="s-v">{{ p.snapshot.avg_time }}<i>s</i></span><span class="s-l">Avg writing time</span></div>
+  <div class="snap"><span class="s-v">{{ p.snapshot.avg_pause_ratio }}<i>%</i></span><span class="s-l">Avg pause ratio</span></div>
+  <div class="snap"><span class="s-v">{{ p.snapshot.avg_revisions }}</span><span class="s-l">Avg revisions/100</span></div>
+</div>
+
+<section class="section-head"><h2>Session trend</h2></section>
+{% if p.enough_trend %}
+<div class="split-1-1">
+  <div class="chart-card"><h3>Self-rated effort across sessions</h3><canvas id="c-effort"></canvas></div>
+  <div class="chart-card"><h3>Writing behaviour across sessions</h3><canvas id="c-behaviour"></canvas>
+    <p class="muted small">Speed, pauses and revisions, each relative to this writer's own maximum.</p></div>
+</div>
+{% else %}
+<div class="empty">
+  <div class="empty-mark">—</div>
+  <p><strong>Not enough sessions to establish a meaningful trend.</strong></p>
+  <p class="muted small">This participant has {{ p.snapshot.sessions }} session(s).
+     Trends are shown once there are at least 3.</p>
+</div>
+{% endif %}
+
+<section class="section-head"><h2>Writing sessions</h2>
+  <div class="seg" id="view-seg"><button data-v="cards" class="on">Cards</button><button data-v="table">Table</button></div>
+</section>
+<div id="view-cards" class="session-grid">
+  {% for s in p.sessions %}
+  <div class="s-card">
+    <div class="s-head"><span class="s-num">Session {{ '%02d' % loop.index }}</span>
+      {% if s.valid %}<span class="badge valid-badge">valid</span>{% else %}<span class="badge invalid-badge">invalid capture</span>{% endif %}</div>
+    <div class="s-task muted small">{{ s.level_title }} · {{ s.difficulty }}</div>
+    <div class="s-metrics">
+      <div><span class="sm-v self">{{ s.effort }}/5</span><span class="sm-l">effort</span></div>
+      <div><span class="sm-v">{{ s.speed }}</span><span class="sm-l">chars/s</span></div>
+      <div><span class="sm-v">{{ s.pauses }}</span><span class="sm-l">pauses</span></div>
+      <div><span class="sm-v">{{ s.revisions }}</span><span class="sm-l">revisions</span></div>
+      <div><span class="sm-v">{{ (s.time_s // 60) }}m {{ (s.time_s % 60) }}s</span><span class="sm-l">time</span></div>
+      <div><span class="sm-v">{{ s.words }}</span><span class="sm-l">words</span></div>
+    </div>
+    <a class="s-go" href="{{ url_for('session_report', session_id=s.id) }}">View full report →</a>
+  </div>
+  {% endfor %}
+</div>
+<div id="view-table" class="chart-card hidden">
+  <div style="overflow-x:auto"><table class="clean">
+    <thead><tr><th>#</th><th>Task</th><th class="self-badge">Effort</th><th>Speed</th>
+      <th>Pauses</th><th>Revisions</th><th>Time</th><th>Words</th><th>Valid</th><th></th></tr></thead>
+    <tbody>{% for s in p.sessions %}
+      <tr><td>{{ '%02d' % loop.index }}</td><td>{{ s.level_title }}</td>
+        <td class="self">{{ s.effort }}/5</td><td>{{ s.speed }}</td><td>{{ s.pauses }}</td>
+        <td>{{ s.revisions }}</td><td>{{ s.time_s }}s</td><td>{{ s.words }}</td>
+        <td>{{ '✓' if s.valid else '✗' }}</td>
+        <td><a href="{{ url_for('session_report', session_id=s.id) }}">Report →</a></td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/chart.min.js') }}"></script>
+<script>window.PROFILE = {{ p.trend | tojson }};</script>
+<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+{% endblock %}

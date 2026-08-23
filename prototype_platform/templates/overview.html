@@ -1,0 +1,88 @@
+{% extends "admin_base.html" %}
+{% block title %}Overview · Writing Analytics{% endblock %}
+{% block main %}
+<div class="page-head sticky">
+  <div>
+    <div class="eyebrow">Pilot study · Typing dynamics &amp; self-perceived writing effort</div>
+    <h1>Writing Analytics</h1>
+  </div>
+  <div class="status-chip">
+    <span class="dot valid"></span> Data collection: Active
+    <span class="divider"></span> Model: <span class="exp-badge badge">Experimental</span>
+  </div>
+</div>
+
+<div class="source-banner">
+  <span><span class="pill">Pilot study</span> Fixed dissertation dataset —
+     {{ kpis.valid_sessions }} valid sessions · {{ kpis.participants }} participants.</span>
+  <a class="btn" href="{{ url_for('live_page') }}">Live submissions: {{ live_count }} →</a>
+</div>
+
+<section class="kpis six">
+  <div class="kpi"><div class="k-num" data-count="{{ kpis.participants }}">0</div><div class="k-label">Participants</div></div>
+  <div class="kpi accent-valid"><div class="k-num" data-count="{{ kpis.valid_sessions }}">0</div><div class="k-label">Valid sessions</div></div>
+  <div class="kpi accent-self"><div class="k-num" data-count="{{ kpis.mean_effort }}" data-dec="2">0</div><div class="k-label">Mean self-rated effort <span class="unit">/ 5</span></div></div>
+  <div class="kpi"><div class="k-num" data-count="{{ kpis.mean_writing_time }}">0</div><div class="k-label">Mean writing time <span class="unit">s</span></div></div>
+  <div class="kpi"><div class="k-num" data-count="{{ kpis.mean_speed }}" data-dec="2">0</div><div class="k-label">Mean typing speed <span class="unit">chars/s</span></div></div>
+  <div class="kpi"><div class="k-num" data-count="{{ kpis.mean_pause_ratio }}">0</div><div class="k-label">Mean pause ratio <span class="unit">%</span></div></div>
+</section>
+
+<section class="section-head"><h2>Effort &amp; writing behaviour</h2>
+  <p class="muted small">Self-rated effort against a chosen typing behaviour, across all valid sessions.</p></section>
+<div class="split-2-1">
+  <div class="chart-card">
+    <div class="chart-head">
+      <h3>Self-rated effort ↔ behaviour</h3>
+      <div class="seg" id="feat-seg">
+        <button data-k="speed" class="on">Typing speed</button>
+        <button data-k="pauses">Pauses</button>
+        <button data-k="revisions">Revisions</button>
+        <button data-k="time">Writing time</button>
+      </div>
+    </div>
+    <canvas id="c-primary"></canvas>
+    <p class="muted small">Each point is one session. Relationships are weak and not
+       statistically significant at this sample size — exploratory only.</p>
+  </div>
+  <div class="chart-card">
+    <h3>Effort distribution</h3>
+    <canvas id="c-effort"></canvas>
+    <p class="muted small">Self-rated effort (1–5), valid sessions.</p>
+  </div>
+</div>
+
+<section class="section-head"><h2>Research signals</h2>
+  <p class="muted small">Pilot associations between typing behaviour and self-rated
+     effort (Spearman ρ). <strong>Associations, not causal findings.</strong></p></section>
+<div class="signal-grid">
+  {% for s in signals %}
+  <div class="signal-card">
+    <div class="sig-top"><span class="sig-name">{{ s.name }}</span>
+      <span class="trend {{ s.direction }}">{{ '↑' if s.direction=='up' else '↓' }}</span></div>
+    <div class="sig-rho">ρ = {{ '%+.2f' % s.rho }}</div>
+    <div class="sig-meta muted small">{{ s.strength }} {{ s.tendency }}</div>
+    <div class="sig-bar"><span class="{{ s.direction }}" style="width: {{ (s.rho|abs*100)|round|int }}%"></span></div>
+  </div>
+  {% endfor %}
+</div>
+<p class="muted small" style="margin-top:8px">All 95% confidence intervals span zero
+   (n={{ kpis.valid_sessions }}). See <a href="{{ url_for('research_page') }}">Research results</a>
+   for the full statistical picture.</p>
+
+<section class="section-head"><h2>Prediction performance</h2></section>
+<div class="chart-card">
+  <table class="clean">
+    <thead><tr><th>Model</th><th>MAE [95% CI]</th><th>RMSE</th><th>R²</th></tr></thead>
+    <tbody>{% for name, mae, rmse, r2 in model.rows %}
+      <tr><td>{{ name }}</td><td>{{ mae }}</td><td>{{ rmse }}</td><td>{{ r2 }}</td></tr>{% endfor %}</tbody>
+  </table>
+  <p class="muted small">The experimental estimate does not currently outperform a
+     mean baseline — reported honestly. Full detail on the
+     <a href="{{ url_for('research_page') }}">Research results</a> page.</p>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/chart.min.js') }}"></script>
+<script>window.OVERVIEW = {{ charts | tojson }};</script>
+<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+{% endblock %}

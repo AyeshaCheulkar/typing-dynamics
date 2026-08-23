@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Researcher Login{% endblock %}
+{% block body %}
+<div class="login-wrap">
+  <div class="ghost-word">DATA</div>
+  <div class="login-split">
+    <aside class="login-aside">
+      <div class="a-brand">Writing<br>Analytics</div>
+      <p class="a-tag">Typing dynamics &amp; self-perceived writing effort — the research analytics workspace.</p>
+      <div class="legend">
+        <div class="legend-title">What the platform separates</div>
+        <div class="legend-item"><span class="legend-dot dot-measured"></span> Measured behaviour</div>
+        <div class="legend-item"><span class="legend-dot dot-self"></span> Self-rated effort</div>
+        <div class="legend-item"><span class="legend-dot dot-exp"></span> Experimental estimate</div>
+      </div>
+      <div class="a-foot">Research prototype · pilot study</div>
+    </aside>
+    <div class="login-main">
+      <div class="mark">Researcher login</div>
+      <h1>Welcome back</h1>
+      <p class="muted small">Sign in to access the analytics dashboard.</p>
+      {% if error %}<div class="err">{{ error }}</div>{% endif %}
+      <form method="post" action="{{ url_for('admin_login') }}">
+        <label class="field">Username
+          <input type="text" name="username" autocomplete="username" value="admin"></label>
+        <label class="field">Password
+          <input type="password" name="password" autocomplete="current-password" autofocus></label>
+        <button class="btn primary big" style="width:100%;justify-content:center" type="submit">Sign in</button>
+      </form>
+      <p class="center small" style="margin-top:18px"><a href="{{ url_for('home') }}">← Back to home</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

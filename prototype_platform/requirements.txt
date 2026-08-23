@@ -1,0 +1,8 @@
+# Prototype platform dependencies (separate from the Stage-1 app's requirements).
+flask>=3.0
+scikit-learn>=1.5
+pandas>=2.0
+numpy>=1.26
+matplotlib>=3.7
+shap>=0.44
+joblib>=1.3

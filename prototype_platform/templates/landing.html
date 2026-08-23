@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Writing Analytics{% endblock %}
+{% block body %}
+<div class="topnav">
+  <div class="wordmark">Writing Analytics</div>
+  <a class="navlink" href="{{ url_for('admin_login') }}">Researcher login →</a>
+</div>
+
+<section class="hero">
+  <div class="ghost-word">WRITE</div>
+  <div class="hero-inner">
+    <div class="eyebrow">Research prototype · Typing dynamics</div>
+    <h1>See how<br>you write</h1>
+    <p class="lead">Write a short passage and get an objective read of your writing
+      process — speed, pauses, revisions and time — with an experimental, fully
+      explained estimate of your self-rated writing effort.</p>
+    <div class="cta">
+      <a class="btn primary big" href="{{ url_for('test') }}">Start the writing test</a>
+      <a class="btn ghost big" href="{{ url_for('admin_login') }}">Researcher login</a>
+    </div>
+    <p class="disc">A research prototype. It describes writing-process behaviour and
+      shows an experimental estimate for research purposes only — it does
+      <strong>not</strong> measure mental effort, stress, intelligence, or any
+      psychological state.</p>
+  </div>
+</section>
+
+<div class="feature-strip">
+  <div><span class="eyebrow">Capture</span><p>Keystroke timing recorded as you type</p></div>
+  <div><span class="eyebrow">Analyse</span><p>Speed · pauses · revisions · writing time</p></div>
+  <div><span class="eyebrow">Explain</span><p>Every estimate broken down with SHAP</p></div>
+</div>
+{% endblock %}

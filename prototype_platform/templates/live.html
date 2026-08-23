@@ -1,0 +1,78 @@
+{% extends "admin_base.html" %}
+{% block title %}Live submissions · Writing Analytics{% endblock %}
+{% block main %}
+<div class="page-head sticky">
+  <div><div class="eyebrow">Live platform · collected via the writing test</div>
+    <h1>Live submissions</h1>
+    <p class="muted small">Fresh sessions submitted at <code>/test</code> — separate
+       from the fixed pilot study dataset.</p></div>
+  {% if sessions %}
+  <form method="post" action="{{ url_for('live_clear') }}"
+        onsubmit="return confirm('Clear ALL live submissions? This cannot be undone. The pilot study data is not affected.');">
+    <button class="btn" type="submit">Clear all live submissions</button>
+  </form>
+  {% endif %}
+</div>
+
+<div class="source-banner amber">
+  <span>This section shows only <strong>live test submissions</strong>. Clearing it
+     starts fresh and does <strong>not</strong> touch the pilot study data.</span>
+</div>
+
+<section class="kpis">
+  <div class="kpi"><div class="k-num" data-count="{{ summary.sessions }}">0</div><div class="k-label">Submissions</div></div>
+  <div class="kpi"><div class="k-num" data-count="{{ summary.participants }}">0</div><div class="k-label">Participants</div></div>
+  <div class="kpi accent-self"><div class="k-num" data-count="{{ summary.mean_self_rated }}" data-dec="2">0</div><div class="k-label">Mean self-rated <span class="unit">/ 5</span></div></div>
+  <div class="kpi accent-exp"><div class="k-num" data-count="{{ summary.mean_predicted }}" data-dec="2">0</div><div class="k-label">Mean experimental <span class="unit">/ 5</span></div></div>
+</section>
+
+{% if participants %}
+<section class="section-head"><h2>Live participants</h2>
+  <p class="muted small">Click a card to open that participant's live profile.</p></section>
+<div class="participant-grid">
+  {% for p in participants %}
+  <a class="p-card" href="{{ url_for('live_profile', code=p.code) }}">
+    <div class="p-top"><span class="p-code">{{ p.code }}</span>
+      <span class="p-sessions">{{ p.sessions }} session{{ 's' if p.sessions != 1 }}</span></div>
+    <div class="p-metrics">
+      <div><span class="pm-v">{{ p.avg_effort }}</span><span class="pm-l">avg effort</span></div>
+      <div><span class="pm-v">{{ p.avg_speed }}</span><span class="pm-l">chars/s</span></div>
+      <div><span class="pm-v">{{ p.avg_pauses }}</span><span class="pm-l">pauses/100</span></div>
+    </div>
+    <div class="p-foot"><span class="muted small">Last: {{ p.last }}</span>
+      <span class="go">View profile →</span></div>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if sessions %}
+<section class="section-head"><h2>All live sessions</h2></section>
+<div class="chart-card">
+  <div style="overflow-x:auto"><table class="clean">
+    <thead><tr><th>ID</th><th>Participant</th><th>Task</th>
+      <th class="self-badge">Self-rated</th><th class="exp-badge">Experimental</th>
+      <th>Valid</th><th>Submitted</th><th></th></tr></thead>
+    <tbody>{% for s in sessions %}
+      <tr><td>{{ s.id }}</td><td><strong>{{ s.participant_code }}</strong></td>
+        <td>{{ s.task_id }}</td>
+        <td class="self">{{ s.self_rated_effort or '—' }}</td>
+        <td class="exp">{{ s.predicted_effort if s.predicted_effort is not none else '—' }}</td>
+        <td>{% if s.behavioural_valid %}<span class="badge valid-badge">valid</span>{% else %}<span class="badge invalid-badge">invalid</span>{% endif %}</td>
+        <td class="muted small">{{ s.created_at }}</td>
+        <td><a href="{{ url_for('report', session_id=s.id) }}">View report →</a></td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+</div>
+{% else %}
+<div class="empty">
+  <div class="empty-mark">—</div>
+  <p><strong>No live submissions yet.</strong></p>
+  <p class="muted small">Sessions submitted through the <a href="{{ url_for('test') }}">writing test</a>
+     will appear here. This is a clean, fresh collection space.</p>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+{% endblock %}

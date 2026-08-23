@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% block title %}Your Writing Report{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='report.css') }}">{% endblock %}
+{% block body %}
+<div class="topnav">
+  <a class="wordmark" href="{{ url_for('home') }}">Writing Analytics</a>
+  <span class="navlink">Writing-process research prototype</span>
+</div>
+<div class="wrap report">
+
+  <header class="report-head">
+    <div class="report-head-row">
+      <div>
+        <div class="eyebrow">Your writing report</div>
+        <h1>How you wrote</h1>
+        <p class="muted">Participant <strong>{{ s.participant_code }}</strong> ·
+           {{ task.get('level_title','Task') }} <span class="pill">{{ s.difficulty }}</span></p>
+      </div>
+      <button class="btn no-print" onclick="window.print()">⬇ Download PDF</button>
+    </div>
+  </header>
+
+  <!-- metric strip -->
+  <div class="report-metrics">
+    {% for m in metrics %}
+    <div class="rmetric"><span class="rm-v">{{ m.value }}</span><span class="rm-l">{{ m.label }}</span></div>
+    {% endfor %}
+  </div>
+
+  <!-- stepper -->
+  <nav class="stepper">
+    <a href="#s-behaviour"><b>01</b> Behaviour</a>
+    <a href="#s-self"><b>02</b> Self-rating</a>
+    <a href="#s-exp"><b>03</b> Experimental</a>
+    <a href="#s-why"><b>04</b> Explanation</a>
+    <a href="#s-sugg"><b>05</b> Suggestions</a>
+  </nav>
+
+  <!-- 01 How you wrote -->
+  <section id="s-behaviour" class="card measured">
+    <div class="sec-tag"><span class="num">01</span><h2>How you wrote</h2>
+      <span class="badge measured-badge">measured behaviour</span></div>
+    <p class="muted small">Objective facts from your typing, compared with the typical
+       range across the study's sessions. Descriptions, not judgements.</p>
+    <div class="behaviour-grid">
+      {% for c in context %}
+      <div class="behaviour">
+        <div class="b-label">{{ c.label }}</div>
+        <div class="b-value">{{ c.display }}</div>
+        <div class="b-bar"><span style="width: {{ c.percentile }}%"></span></div>
+        <div class="b-band muted small">{{ c.band|capitalize }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- behaviour profile radar -->
+  <section class="card">
+    <div class="sec-tag"><h2>Your writing behaviour profile</h2></div>
+    <p class="muted small">Relative to the current study sample — a behavioural
+       comparison, not a psychological assessment.</p>
+    <div class="profile-wrap"><canvas id="c-profile"></canvas></div>
+    <div class="profile-interp">
+      <div class="eyebrow">Your writing pattern</div>
+      <p>{{ profile_interpretation }}</p>
+    </div>
+  </section>
+
+  <!-- writing timeline -->
+  <section class="card">
+    <div class="sec-tag"><h2>Your writing timeline</h2></div>
+    <p class="muted small">Reconstructed from your actual keystroke timing. Hover a
+       segment for detail.</p>
+    {% if timeline.insufficient %}
+    <div class="empty"><div class="empty-mark">—</div>
+      <p class="muted">Not enough keystroke data to reconstruct a timeline.</p></div>
+    {% else %}
+    <div class="timeline" id="timeline">
+      {% for seg in timeline.segments %}
+      <span class="tl-seg tl-{{ seg.cls }}" style="width:{{ seg.pct }}%"
+        data-tip="{% if seg.cls=='pause' %}Pause · {{ seg.dur_s }} s{% elif seg.cls=='revision' %}Revision · Backspace ({{ seg.n }}){% else %}Typing · {{ seg.dur_s }} s{% endif %}"></span>
+      {% endfor %}
+    </div>
+    <div class="tl-legend">
+      <span><i class="sw tl-type"></i> Typing</span>
+      <span><i class="sw tl-pause"></i> Long pause</span>
+      <span><i class="sw tl-revision"></i> Revision</span>
+      <span class="muted small">· {{ timeline.n_pause }} long pauses · longest {{ timeline.longest_pause_s }} s</span>
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- 02 Self-rated -->
+  <section id="s-self" class="card selfrated">
+    <div class="sec-tag"><span class="num">02</span><h2>Your self-rated writing effort</h2>
+      <span class="badge self-badge">what you reported</span></div>
+    {% if s.self_rated_effort %}
+    <div class="rating-line">
+      <div class="rating-big self">{{ s.self_rated_effort }}<i>/5</i></div>
+      <div class="dots">
+        {% for i in range(1,6) %}<span class="{{ 'on self' if i <= s.self_rated_effort }}"></span>{% endfor %}
+      </div>
+    </div>
+    <p class="muted small">Your own rating of how much effort this task required — the
+       primary ground-truth label in the research.</p>
+    {% else %}<p class="muted">No self-rating was recorded.</p>{% endif %}
+  </section>
+
+  <!-- 03 Experimental -->
+  <section id="s-exp" class="card experimental">
+    <div class="sec-tag"><span class="num">03</span><h2>Experimental estimated writing effort</h2>
+      <span class="badge exp-badge">experimental model</span></div>
+    {% if estimate.available %}
+    <div class="rating-line">
+      <div class="rating-big exp">{{ estimate.predicted_effort }}<i>/5</i></div>
+      <span class="pill">{{ estimate.band }}</span>
+    </div>
+    <div class="exp-scale">
+      <div class="exp-track"><span class="exp-marker"
+           style="left: {{ ((estimate.predicted_effort-1)/4*100)|round(1) }}%"></span></div>
+      <div class="exp-ticks"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+    </div>
+    <p class="caveat">⚠ An <strong>experimental estimate</strong> from a research model.
+       On the current sample it does <strong>not</strong> outperform a simple average,
+       so treat it as indicative only. It is <strong>not</strong> a measure of mental
+       effort, stress, intelligence, or any psychological state.</p>
+    {% else %}
+    <p class="caveat">No experimental estimate is shown: {{ estimate.reason }}</p>
+    {% endif %}
+  </section>
+
+  <!-- 04 Why -->
+  <section id="s-why" class="card">
+    <div class="sec-tag"><span class="num">04</span><h2>Why did the model estimate this?</h2></div>
+    {% if contrib_view %}
+    <div class="dg-axis"><span>← Lower estimate</span><span>Higher estimate →</span></div>
+    <div class="diverging">
+      {% for c in contrib_view %}
+      <div class="dg-row">
+        <div class="dg-name">{{ c.name }}</div>
+        <div class="dg-track"><span class="dg-mid"></span>
+          <span class="dg-bar {{ c.dir }}" style="width: {{ (c.pct*0.5)|round(1) }}%"></span></div>
+        <div class="dg-val {{ c.dir }}">{{ '%+.2f' % c.val }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="interpretation">
+      <div class="eyebrow">What this means</div>
+      <p>The model's estimate was influenced most by
+         <strong>{{ contrib_view[0].name|lower }}</strong>{% if contrib_view|length > 1 %},
+         followed by {{ contrib_view[1].name|lower }}{% endif %}.</p>
+      <p class="muted small">SHAP explains the behaviour of the model; it does not
+         establish that these behaviours cause writing effort.</p>
+    </div>
+    {% else %}
+    <p class="muted">No estimate was produced, so there is nothing to explain.</p>
+    {% endif %}
+  </section>
+
+  <!-- 05 Suggestions -->
+  <section id="s-sugg" class="card">
+    <div class="sec-tag"><span class="num">05</span><h2>Writing-process suggestions</h2></div>
+    <p class="muted small">Based only on your observed writing behaviour — never on any effort score.</p>
+    {% if has_rec %}
+    <div class="insight-grid">
+      {% for r in recommendations %}
+      <div class="insight">
+        <div class="ins-title">{{ r.title }}</div>
+        <div class="eyebrow" style="margin-top:6px">Observed behaviour</div>
+        <div class="ins-observed">{{ r.observed }}</div>
+        <div class="ins-strategy"><span class="eyebrow">Possible strategy</span>{{ r.strategy }}</div>
+        {% if r.resources %}
+        <div class="eyebrow" style="margin-top:12px">Ways to build this skill</div>
+        <ul class="res">{% for x in r.resources %}<li>{{ x }}</li>{% endfor %}</ul>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty soft">
+      <div class="ins-title">No strong behaviour-based suggestion</div>
+      <p class="muted small">Your observed writing behaviour did not cross any of the
+         current recommendation thresholds — so nothing here is prompted by this session.</p>
+    </div>
+    <div class="gen-tips">
+      <div class="eyebrow">General writing tips <span class="muted">· not based on this session</span></div>
+      <ul class="res">{% for t in general_tips %}<li>{{ t }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- session at a glance -->
+  <section class="card">
+    <div class="sec-tag"><h2>Session at a glance</h2></div>
+    <table class="clean glance"><thead><tr><th>Area</th><th>Observation</th></tr></thead>
+      <tbody>{% for g in glance %}<tr><td>{{ g.area }}</td><td>{{ g.obs }}</td></tr>{% endfor %}</tbody></table>
+  </section>
+
+  <footer class="disclaimer report-foot">
+    <div><strong>{{ s.participant_code }}</strong> · Session {{ '%02d' % s.id }}
+       · Research prototype · Experimental estimate</div>
+    <div>Describes writing-process behaviour and shows an experimental estimate for
+       research purposes only. It does <strong>not</strong> measure mental effort,
+       stress, intelligence, emotion, or any psychological state.</div>
+    <a href="{{ url_for('test') }}">← Write another passage</a>
+  </footer>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/chart.min.js') }}"></script>
+<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+<script>
+(function(){
+  var p = {{ profile | tojson }};
+  var el = document.getElementById('c-profile');
+  if (el && window.Chart && p.labels.length){
+    new Chart(el,{type:'radar',
+      data:{labels:p.labels,datasets:[{label:'Percentile in study',data:p.values,
+        backgroundColor:'rgba(37,99,235,.14)',borderColor:'#2563eb',
+        pointBackgroundColor:'#2563eb',borderWidth:1.5}]},
+      options:{plugins:{legend:{display:false}},
+        scales:{r:{suggestedMin:0,suggestedMax:100,ticks:{display:false},
+          grid:{color:'#e6edfb'},angleLines:{color:'#e6edfb'},
+          pointLabels:{font:{family:'Space Grotesk',size:11}}}}}});
+  }
+})();
+</script>
+{% endblock %}

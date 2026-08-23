@@ -1,0 +1,141 @@
+{% extends "admin_base.html" %}
+{% block title %}Session {{ '%02d' % sid }} · Report{% endblock %}
+{% block main %}
+<div class="page-head sticky">
+  <div><div class="eyebrow"><a href="{{ url_for('participant_profile', code=row.participant_id) }}">{{ row.participant_id }}</a> / session report</div>
+    <h1>Writing session report</h1>
+    <p class="muted small">Participant {{ row.participant_id }} · Session {{ '%02d' % sid }}
+       · {{ level_title }} <span class="pill">{{ row.difficulty }}</span>
+       {% if not feats.behavioural_valid %}<span class="badge invalid-badge">invalid capture</span>{% endif %}</p></div>
+</div>
+
+<!-- Visual summary: self-rated vs experimental -->
+<div class="summary-2">
+  <div class="sum-card self">
+    <div class="sum-label">Self-rated effort <span class="self-badge badge">participant</span></div>
+    <div class="sum-big">{{ row.effort_rating }}<i>/5</i></div>
+    <div class="muted small">The participant's own rating.</div>
+  </div>
+  <div class="sum-card exp">
+    <div class="sum-label">Experimental estimate <span class="exp-badge badge">Experimental model</span></div>
+    {% if estimate.available %}
+    <div class="sum-big">{{ estimate.predicted_effort }}<i>/5</i>
+      <span class="pill">{{ estimate.band }}</span></div>
+    <div class="muted small">Research model output — not a measurement.</div>
+    {% else %}
+    <div class="sum-big muted">—</div>
+    <div class="muted small">{{ estimate.reason }}</div>
+    {% endif %}
+  </div>
+</div>
+<p class="caveat">The experimental estimate is produced by a research model that does
+   not outperform a simple average on this pilot. It is <strong>not</strong> a measure
+   of mental effort, stress, intelligence, or any psychological state.</p>
+
+<!-- Writing Behaviour Profile (rings) -->
+<section class="section-head"><h2>Writing behaviour profile</h2>
+  <p class="muted small">Ring fill = this session's percentile within the study's valid sessions.</p></section>
+<div class="ring-grid">
+  {% for m in profile %}
+  <div class="ring-tile">
+    <div class="ring-wrap">
+      <svg viewBox="0 0 64 64" class="ring">
+        <circle cx="32" cy="32" r="26" class="ring-bg"></circle>
+        <circle cx="32" cy="32" r="26" class="ring-fg"
+                style="stroke-dasharray:163.36; stroke-dashoffset:{{ (163.36*(1-(m.pct/100)))|round(1) }}"></circle>
+      </svg>
+      <div class="ring-center">{{ m.value }}<span>{{ m.unit }}</span></div>
+    </div>
+    <div class="ring-label">{{ m.label }}</div>
+    <div class="muted small">{{ m.pct }}th pct</div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Typing timeline -->
+<section class="section-head"><h2>Typing timeline</h2>
+  <p class="muted small">Reconstructed from captured keystroke timing. Hover a segment for detail.</p></section>
+<div class="chart-card">
+  {% if timeline.insufficient %}
+  <div class="empty"><div class="empty-mark">—</div>
+    <p class="muted">Not enough keystroke data to reconstruct a timeline for this session.</p></div>
+  {% else %}
+  <div class="timeline" id="timeline">
+    {% for seg in timeline.segments %}
+    <span class="tl-seg tl-{{ seg.cls }}" style="width:{{ seg.pct }}%"
+          data-tip="{% if seg.cls=='pause' %}Pause: {{ seg.dur_s }} s{% elif seg.cls=='revision' %}Backspace activity · {{ seg.n }} keys{% else %}Typing · {{ seg.dur_s }} s{% endif %}"></span>
+    {% endfor %}
+  </div>
+  <div class="tl-legend">
+    <span><i class="sw tl-type"></i> Typing</span>
+    <span><i class="sw tl-pause"></i> Pause</span>
+    <span><i class="sw tl-revision"></i> Revision</span>
+    <span class="muted small">· {{ timeline.n_pause }} long pauses · longest {{ timeline.longest_pause_s }} s</span>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Explainability -->
+<section class="section-head"><h2>Why did the model estimate this?</h2></section>
+<div class="chart-card">
+  {% if estimate.available %}
+  <div class="contrib">
+    {% for name, val in estimate.contributions[:5] %}
+    <div class="shap-row">
+      <div class="shap-name">{{ name }}</div>
+      <div class="shap-track"><span class="shap-bar {{ 'up' if val>0 else 'down' }}"
+            style="width:{{ (val|abs*120)|round|int }}px"></span></div>
+      <div class="shap-val {{ 'up' if val>0 else 'down' }}">{{ '%+.2f' % val }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="interpretation">
+    <div class="eyebrow">Model interpretation</div>
+    <p>The estimate was influenced most strongly by
+       <strong>{{ estimate.contributions[0][0]|lower }}</strong>
+       {% if estimate.contributions[1] %}and <strong>{{ estimate.contributions[1][0]|lower }}</strong>{% endif %}.</p>
+    <p class="muted small">This describes model behaviour; it does not establish that
+       these behaviours cause writing effort.</p>
+  </div>
+  {% else %}
+  <p class="muted">No estimate was produced for this session, so there is nothing to explain.</p>
+  {% endif %}
+</div>
+
+<!-- Writing process insights -->
+<section class="section-head"><h2>Your writing process</h2>
+  <p class="muted small">Personalised to the observed writing behaviour — never to the effort score.</p></section>
+{% if has_rec %}
+<div class="insight-grid">
+  {% for r in recommendations %}
+  <div class="insight">
+    <div class="ins-title">{{ r.title }}</div>
+    <div class="eyebrow" style="margin-top:6px">Observed behaviour</div>
+    <div class="ins-observed">{{ r.observed }}</div>
+    <div class="ins-strategy"><span class="eyebrow">Possible strategy</span>{{ r.strategy }}</div>
+    {% if r.resources %}
+    <div class="eyebrow" style="margin-top:12px">Ways to build this skill</div>
+    <ul class="res">{% for x in r.resources %}<li>{{ x }}</li>{% endfor %}</ul>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty soft">
+  <div class="ins-title">No strong behaviour-based suggestion</div>
+  <p class="muted small">This participant's observed writing behaviour did not cross
+     any of the current recommendation thresholds — nothing here is prompted by this session.</p>
+</div>
+<div class="gen-tips">
+  <div class="eyebrow">General writing tips <span class="muted">· not based on this session</span></div>
+  <ul class="res">{% for t in general_tips %}<li>{{ t }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+<footer class="disclaimer">Research prototype. Describes writing-process behaviour and
+  shows an experimental estimate for research purposes only. It does <strong>not</strong>
+  measure mental effort, stress, intelligence, emotion, or any psychological state.</footer>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="admin">
+  <aside class="sidebar">
+    <div class="brand">Writing<br>Analytics</div>
+    <nav>
+      <div class="nav-group">Pilot study</div>
+      <a href="{{ url_for('admin') }}" class="{{ 'active' if active=='overview' }}">Overview</a>
+      <a href="{{ url_for('participants_page') }}" class="{{ 'active' if active=='participants' }}">Participants</a>
+      <a href="{{ url_for('research_page') }}" class="{{ 'active' if active=='research' }}">Research results</a>
+      <div class="nav-group">Live platform</div>
+      <a href="{{ url_for('live_page') }}" class="{{ 'active' if active=='live' }}">Live submissions</a>
+      <div class="sep"></div>
+      <a href="{{ url_for('export_csv') }}">Export study CSV</a>
+      <a href="{{ url_for('home') }}">View site</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </nav>
+    <div class="legend side-legend">
+      <div class="legend-title">Colour key</div>
+      <div class="legend-item"><span class="legend-dot dot-measured"></span> Measured behaviour</div>
+      <div class="legend-item"><span class="legend-dot dot-self"></span> Self-rated effort</div>
+      <div class="legend-item"><span class="legend-dot dot-exp"></span> Experimental estimate</div>
+    </div>
+    <div class="foot">Research prototype · study data<br>read-only · separate from Stage-1</div>
+  </aside>
+  <main class="main">{% block main %}{% endblock %}</main>
+</div>
+{% endblock %}

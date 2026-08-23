@@ -12,3 +12,21 @@ deploy.zip
 
 # Local secrets
 .env
+
+# --- Research participant data (identifiers + raw text/keystrokes) — never on a public repo ---
+features.csv
+server_export.csv
+server_keystrokes.csv
+
+# --- Third-party datasets (redistribute under their own licences, not here) + derived features ---
+Free Text Typing Dataset.csv
+keyrecs_freetext.csv
+keyrecs_demographics.csv
+external_features_emosurv.csv
+external_features_keyrecs.csv
+
+# --- Trained model artifact (derived from participant data; regenerate via train_model.py) ---
+effort_model.pkl
+
+# --- Local design tooling ---
+.impeccable/

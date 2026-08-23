@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Writing Test{% endblock %}
+{% block body %}
+<div class="topnav">
+  <a class="wordmark" href="{{ url_for('home') }}">Writing Analytics</a>
+  <a class="navlink" href="{{ url_for('home') }}">← Home</a>
+</div>
+<div class="wrap">
+
+  <div id="device-block" class="overlay hidden">
+    <div class="card center">
+      <h2>Please use a laptop or desktop</h2>
+      <p class="muted">This study measures typing behaviour and needs a physical
+         keyboard. Please reopen this page on a laptop or desktop.</p>
+    </div>
+  </div>
+
+  <header class="site-head">
+    <div class="eyebrow">Writing test</div>
+    <h1>Write a short passage</h1>
+    <p class="muted">We record <em>how</em> you type (not the meaning of your words).
+       It does <strong>not</strong> measure intelligence, stress, or any mental state.</p>
+  </header>
+
+  <section id="panel-start" class="card">
+    <h2>Before you start</h2>
+    <p>You'll write a short passage. As you write, the page records your keystroke
+       timing so we can describe your writing process. Then you'll rate how much
+       effort it took you.</p>
+    <label class="field">Participant code
+      <input id="code" type="text" placeholder="e.g. P01" autocomplete="off"></label>
+    <p class="muted small">Choose a difficulty level — a prompt is picked at random,
+       and you can shuffle to a different one:</p>
+    <div id="task-choices">
+      {% for lvl in levels %}
+      <button class="task-btn" data-level="{{ lvl.id }}" data-difficulty="{{ lvl.difficulty }}">
+        <strong>{{ lvl.title }}</strong> <span class="pill">{{ lvl.difficulty }}</span>
+        <span class="muted small">{{ lvl.blurb }} · {{ lvl.variations|length }} prompts to shuffle</span>
+      </button>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section id="panel-write" class="card hidden">
+    <div class="prompt-bar">
+      <span class="pill" id="level-label"></span>
+      <button id="shuffle-btn" class="btn" type="button">🔀 Shuffle question</button>
+    </div>
+    <div class="prompt" id="prompt-text"></div>
+    <textarea id="editor" placeholder="Start writing here…" spellcheck="false"></textarea>
+    <div class="row">
+      <span class="muted small"><span id="wordcount">0</span> words</span>
+      <button id="finish-btn" class="btn primary">Finish &amp; rate effort →</button>
+    </div>
+    <p class="muted small">Pasting is disabled so the typing record stays genuine.</p>
+  </section>
+
+  <section id="panel-rate" class="card hidden">
+    <h2>How much writing effort did this take you?</h2>
+    <p class="muted small">This is <strong>your own</strong> rating of self-rated
+       writing effort — there's no right answer.</p>
+    <div class="scale" id="effort-scale">
+      <button data-v="1">1<span>Very little</span></button>
+      <button data-v="2">2</button>
+      <button data-v="3">3<span>Moderate</span></button>
+      <button data-v="4">4</button>
+      <button data-v="5">5<span>A great deal</span></button>
+    </div>
+    <button id="submit-btn" class="btn primary big" disabled>See my writing report →</button>
+    <p id="submit-status" class="muted small"></p>
+  </section>
+
+</div>
+{% endblock %}
+{% block scripts %}
+<script>window.LEVELS = {{ levels | tojson }};</script>
+<script src="{{ url_for('static', filename='capture.js') }}"></script>
+{% endblock %}
