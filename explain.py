@@ -20,7 +20,13 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import shap
+
+try:
+    import shap
+    _HAS_SHAP = True
+except ImportError:
+    shap = None
+    _HAS_SHAP = False
 
 from train_model import train, READABLE
 from analysis_primary import MODEL_FEATURES
@@ -33,11 +39,15 @@ def load_artifact(path="effort_model.pkl"):
 
 
 def _explainer(artifact):
+    if not _HAS_SHAP:
+        return None
     return shap.TreeExplainer(artifact["rf"])
 
 
 def global_summary(artifact, out="shap_summary.png"):
     """SHAP global importance (bar of mean|impact|) + return values for the doc."""
+    if not _HAS_SHAP:
+        return []
     expl = _explainer(artifact)
     sv = expl.shap_values(artifact["X_train"])
     labels = [READABLE[f] for f in MODEL_FEATURES]
@@ -60,11 +70,25 @@ def explain_session(artifact, feats):
     """Explain ONE session. `feats` = dict feature->value. Returns a dict the
     platform can render directly (predicted effort + ranked contributions +
     plain-language sentences)."""
-    expl = _explainer(artifact)
     x = np.array([[float(feats[f]) for f in MODEL_FEATURES]], float)
-    sv = expl.shap_values(x)[0]
-    base = float(np.ravel(expl.expected_value)[0])
     pred = float(artifact["rf"].predict(x)[0])
+    base = float(artifact.get("train_mean_effort", 3.0))
+
+    if _HAS_SHAP:
+        expl = _explainer(artifact)
+        sv = expl.shap_values(x)[0]
+        base = float(np.ravel(expl.expected_value)[0])
+    else:
+        # Fallback when SHAP is not installed (e.g. lightweight cloud deployment with disk quota).
+        # Uses the standardized linear regression coefficients from the trained artifact.
+        lr = artifact.get("lr")
+        if lr is not None:
+            scaler = lr.named_steps["standardscaler"]
+            reg = lr.named_steps["linearregression"]
+            x_scaled = scaler.transform(x)[0]
+            sv = x_scaled * reg.coef_
+        else:
+            sv = np.zeros(len(MODEL_FEATURES))
 
     contribs = sorted(zip(MODEL_FEATURES, sv), key=lambda t: -abs(t[1]))
     sentences = []
