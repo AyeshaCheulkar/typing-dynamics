@@ -9,6 +9,8 @@ data.db
 
 # Build/deploy artifacts
 deploy.zip
+prototype_files.zip
+
 
 # Local secrets
 .env
