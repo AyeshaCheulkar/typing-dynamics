@@ -8,11 +8,13 @@
       <a href="{{ url_for('admin') }}" class="{{ 'active' if active=='overview' }}">Overview</a>
       <a href="{{ url_for('participants_page') }}" class="{{ 'active' if active=='participants' }}">Participants</a>
       <a href="{{ url_for('research_page') }}" class="{{ 'active' if active=='research' }}">Research results</a>
+      <a href="{{ url_for('methodology_page') }}" class="{{ 'active' if active=='methodology' }}">Methodology</a>
+      <a href="{{ url_for('model_card_page') }}" class="{{ 'active' if active=='modelcard' }}">Model card</a>
       <div class="nav-group">Live platform</div>
       <a href="{{ url_for('live_page') }}" class="{{ 'active' if active=='live' }}">Live submissions</a>
       <div class="sep"></div>
       <a href="{{ url_for('export_csv') }}">Export study CSV</a>
-      <a href="{{ url_for('home') }}">View site</a>
+      <a href="{{ url_for('home') }}">↗ Home (participant site)</a>
       <a href="{{ url_for('logout') }}">Logout</a>
     </nav>
     <div class="legend side-legend">

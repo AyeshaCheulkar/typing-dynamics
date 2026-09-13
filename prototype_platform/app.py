@@ -33,6 +33,7 @@ from tasks import LEVELS, TASKS_BY_ID
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("PROTO_SECRET", "prototype-dev-secret-change-me")
+app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0   # dev: never cache static (JS/CSS)
 db.init_db()
 predict.artifact()
 
@@ -389,6 +390,20 @@ def live_profile(code):
 def live_clear():
     db.clear_all()
     return redirect(url_for("live_page"))
+
+
+@app.route("/admin/methodology")
+@login_required
+def methodology_page():
+    return render_template("methodology.html", active="methodology",
+                           kpis=rd.study_kpis())
+
+
+@app.route("/admin/model-card")
+@login_required
+def model_card_page():
+    return render_template("model_card.html", active="modelcard",
+                           kpis=rd.study_kpis(), model=MODEL_RESULTS)
 
 
 @app.route("/admin/research")

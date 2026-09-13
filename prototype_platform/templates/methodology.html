@@ -1,0 +1,63 @@
+{% extends "admin_base.html" %}
+{% block title %}Methodology · Writing Analytics{% endblock %}
+{% block main %}
+<div class="page-head sticky">
+  <div><div class="eyebrow">How the study works</div><h1>Methodology</h1>
+    <p class="muted small">From a writing session to an explainable, honestly-scoped estimate.</p></div>
+</div>
+
+<section class="section-head"><h2>The pipeline</h2></section>
+<div class="pipeline">
+  <div class="pipe-step"><span class="pipe-n">01</span><div class="pipe-t">Capture</div>
+    <p class="muted small">Every keystroke (down/up), timing and caret position are logged as the participant writes — the text itself is not modelled.</p></div>
+  <div class="pipe-arrow">▸</div>
+  <div class="pipe-step"><span class="pipe-n">02</span><div class="pipe-t">Features</div>
+    <p class="muted small">Keystrokes become behavioural features: speed, pauses, deletions, revisions, writing time and rhythm.</p></div>
+  <div class="pipe-arrow">▸</div>
+  <div class="pipe-step"><span class="pipe-n">03</span><div class="pipe-t">Model</div>
+    <p class="muted small">Linear Regression &amp; Random Forest estimate self-rated effort, tested with leave-one-participant-out CV.</p></div>
+  <div class="pipe-arrow">▸</div>
+  <div class="pipe-step"><span class="pipe-n">04</span><div class="pipe-t">Explain</div>
+    <p class="muted small">SHAP shows which behaviours moved each estimate — describing the model, not proving causes.</p></div>
+  <div class="pipe-arrow">▸</div>
+  <div class="pipe-step"><span class="pipe-n">05</span><div class="pipe-t">Report</div>
+    <p class="muted small">An explainable report: measured behaviour, self-rating, experimental estimate and behaviour-tied suggestions.</p></div>
+</div>
+
+<section class="section-head"><h2>Methods in brief</h2></section>
+<div class="grid-2">
+  <div class="chart-card"><h3>Evaluation</h3>
+    <ul class="recs">
+      <li><strong>Participant-aware CV</strong> (leave-one-participant-out &amp; GroupKFold) — the model is always tested on a person it never trained on.</li>
+      <li><strong>Uncertainty</strong> — participant-bootstrap 95% CIs on every correlation and metric.</li>
+      <li><strong>Honesty checks</strong> — a mean baseline, paired Wilcoxon vs baseline, and a permutation test for R².</li>
+    </ul></div>
+  <div class="chart-card"><h3>Data &amp; scope</h3>
+    <ul class="recs">
+      <li>Primary dataset: {{ kpis.valid_sessions }} valid sessions · {{ kpis.participants }} participants (own study).</li>
+      <li>External datasets (EmoSurv, KeyRecs) used <strong>only</strong> to validate the feature pipeline — never mixed with the effort labels.</li>
+      <li>Target = <strong>self-perceived writing effort</strong>; no claim about mental effort, stress, or any psychological state.</li>
+    </ul></div>
+</div>
+
+<section class="section-head"><h2>Extended analysis (same data)</h2>
+  <p class="muted small">Additional analyses that deepen the study without new data.</p></section>
+<div class="grid-2">
+  <div class="chart-card"><h3>Task difficulty → effort</h3>
+    <p>Moderate tasks were rated <strong>~0.9 points higher</strong> in self-rated effort than Easy
+       (participant-clustered model: <strong>+0.89, p = 0.063</strong>) — the strongest, nearly-significant
+       result, and a face-validity check on the effort measure.</p>
+    <img src="{{ url_for('static', filename='difficulty_analysis.png') }}" alt="Easy vs Moderate difficulty analysis" style="max-width:100%;border:1px solid var(--line);border-radius:var(--radius);margin-top:10px">
+  </div>
+  <div class="chart-card"><h3>Deeper features &amp; modelling</h3>
+    <ul class="recs">
+      <li><strong>Where pauses fall:</strong> 57% of long pauses are between words, 12% within words, 1% between sentences.</li>
+      <li><strong>Where edits happen:</strong> ~2 characters from the writing frontier — fixing recent typos, not revising far back.</li>
+      <li><strong>Participant-aware model:</strong> pausing is the strongest behavioural predictor (+0.93 per SD, p=0.16).</li>
+      <li>All behaviour effects remain exploratory at n={{ kpis.valid_sessions }} — sample-size limited, not method-limited.</li>
+    </ul></div>
+</div>
+
+<footer class="disclaimer">Research prototype. Describes writing-process behaviour for
+  research purposes only. It does not measure mental effort or any psychological state.</footer>
+{% endblock %}

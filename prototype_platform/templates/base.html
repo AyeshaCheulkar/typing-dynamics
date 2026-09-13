@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>(function(){try{var t=localStorage.getItem('wa-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
   <title>{% block title %}Writing Analytics{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,6 +14,17 @@
 </head>
 <body>
 {% block body %}{% endblock %}
+<button id="theme-toggle" class="theme-toggle no-print" title="Toggle dark / light mode" aria-label="Toggle dark or light mode">🌙</button>
+<script>
+(function(){
+  var el=document.documentElement, btn=document.getElementById('theme-toggle');
+  function cur(){return el.getAttribute('data-theme')==='dark'?'dark':'light';}
+  function apply(t){el.setAttribute('data-theme',t);try{localStorage.setItem('wa-theme',t);}catch(e){}
+    btn.textContent=(t==='dark'?'☀️':'🌙');}
+  apply(cur());
+  btn.addEventListener('click',function(){apply(cur()==='dark'?'light':'dark');});
+})();
+</script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

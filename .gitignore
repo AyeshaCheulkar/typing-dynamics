@@ -30,3 +30,4 @@ effort_model.pkl
 
 # --- Local design tooling ---
 .impeccable/
+extra_features.csv

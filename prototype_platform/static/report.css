@@ -7,7 +7,7 @@
 
 /* metric strip */
 .report-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:0;
-  border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin:6px 0 4px;background:#fff}
+  border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin:6px 0 4px;background:var(--card)}
 .rmetric{padding:18px 16px;text-align:center;border-right:1px solid var(--line);
   animation:fadeUp .5s ease both}
 .rmetric:last-child{border-right:0}
@@ -20,7 +20,7 @@
   background:var(--bg);padding:10px 0;z-index:10;border-bottom:1px solid var(--line)}
 .stepper a{flex:1;min-width:120px;display:flex;align-items:center;gap:8px;padding:8px 10px;
   border:1px solid var(--line);border-radius:8px;font:600 .68rem "Space Grotesk";
-  text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:#fff;transition:border-color .2s,color .2s}
+  text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--card);transition:border-color .2s,color .2s}
 .stepper a:hover{border-color:var(--brand);color:var(--brand);transform:translateY(-1px)}
 .stepper a b{font-size:.8rem;color:var(--brand)}
 
@@ -46,13 +46,13 @@
 .rating-big i{font-size:1.2rem;color:var(--muted);font-style:normal}
 .rating-big.self{color:var(--self)} .rating-big.exp{color:var(--exp)}
 .dots{display:flex;gap:9px}
-.dots span{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);background:#fff}
+.dots span{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);background:var(--card)}
 .dots span.on{background:var(--brand);border-color:var(--brand)}
 .dots span.on.self{background:var(--self);border-color:var(--self)}
 
 /* experimental 1–5 scale */
 .exp-scale{margin:12px 0 14px;max-width:520px}
-.exp-track{position:relative;height:4px;background:linear-gradient(90deg,#efece6,#e2ddd4);border-radius:3px}
+.exp-track{position:relative;height:4px;background:linear-gradient(90deg,var(--track),#e2ddd4);border-radius:3px}
 .exp-marker{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:var(--exp);
   border:3px solid #fff;box-shadow:0 0 0 1px var(--exp);transform:translate(-50%,-50%);transition:left 1s ease}
 .exp-ticks{display:flex;justify-content:space-between;margin-top:8px;font:600 .72rem "Space Grotesk";color:var(--muted)}
@@ -63,7 +63,7 @@
 .diverging{margin-bottom:14px}
 .dg-row{display:grid;grid-template-columns:180px 1fr 56px;align-items:center;gap:12px;margin:9px 0}
 .dg-name{font-size:.86rem}
-.dg-track{position:relative;height:16px;background:#f3f1ec;border-radius:4px}
+.dg-track{position:relative;height:16px;background:var(--track);border-radius:4px}
 .dg-mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line)}
 .dg-bar{position:absolute;top:0;height:100%;border-radius:3px;animation:growx .7s ease both}
 .dg-bar.up{left:50%;background:var(--exp)}
@@ -92,8 +92,10 @@ ul.res li{margin:5px 0;font-size:.9rem}
    ============================================================ */
 @media print{
   @page{margin:14mm}
-  :root{--bg:#fff;--paper:#fff}
-  body{background:#fff}
+  :root,:root[data-theme="dark"]{--bg:#fff;--paper:#fff;--card:#fff;--ink:#0f1b33;
+    --ink-2:#33415c;--line:#e2e8f4;--track:#eeece7;--muted:#7286a6}
+  body{background:#fff;color:#0f1b33}
+  .theme-toggle{display:none !important}
   .topnav,.stepper,.no-print,.report-foot a{display:none !important}
   .wrap.report{max-width:100%;padding:0}
   .card,.report-metrics,.snapshot,.behaviour-grid,.signal-grid,.insight,.insight-grid,

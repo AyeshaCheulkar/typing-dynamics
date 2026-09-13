@@ -1,0 +1,58 @@
+{% extends "admin_base.html" %}
+{% block title %}Model Card · Writing Analytics{% endblock %}
+{% block main %}
+<div class="page-head sticky">
+  <div><div class="eyebrow">Transparency</div><h1>Model card</h1>
+    <p class="muted small">Honest documentation of the experimental effort model.</p></div>
+</div>
+
+<div class="mc-grid">
+  <div class="chart-card"><h3>Model details</h3>
+    <ul class="recs">
+      <li><strong>Task:</strong> estimate self-perceived writing effort (1–5) from typing behaviour.</li>
+      <li><strong>Models:</strong> Random Forest (primary) &amp; Linear Regression (baseline comparison).</li>
+      <li><strong>Inputs:</strong> 9 behavioural features (speed, pauses, deletions, revisions, writing time, rhythm). The text is never used.</li>
+      <li><strong>Status:</strong> <span class="exp-badge badge">Experimental</span> research prototype.</li>
+    </ul></div>
+
+  <div class="chart-card"><h3>Training data</h3>
+    <ul class="recs">
+      <li>{{ kpis.valid_sessions }} behaviourally-valid sessions from {{ kpis.participants }} participants (own study).</li>
+      <li>Self-rated effort labels; ratings concentrated at 2–3 (mean {{ kpis.mean_effort }}).</li>
+      <li>Participant identifiers are pseudonymous and kept local — not distributed.</li>
+    </ul></div>
+
+  <div class="chart-card"><h3>Performance (leave-one-participant-out)</h3>
+    <table class="clean"><thead><tr><th>Model</th><th>MAE [95% CI]</th><th>R²</th></tr></thead>
+      <tbody>{% for name, mae, rmse, r2 in model.rows %}
+        <tr><td>{{ name }}</td><td>{{ mae }}</td><td>{{ r2 }}</td></tr>{% endfor %}</tbody></table>
+    <p class="caveat">The model does <strong>not</strong> outperform a mean baseline
+       (paired Wilcoxon significant; permutation R² p≈0.99). The estimate is
+       indicative only.</p></div>
+
+  <div class="chart-card"><h3>Intended &amp; out-of-scope use</h3>
+    <ul class="recs">
+      <li><strong>Intended:</strong> research demonstration of an explainable writing-process pipeline.</li>
+      <li><strong>Not for:</strong> assessment, grading, selection, diagnosis, or any decision about a person.</li>
+      <li>The estimate must always be shown as experimental, alongside (never replacing) the self-rating.</li>
+    </ul></div>
+
+  <div class="chart-card"><h3>Limitations</h3>
+    <ul class="recs">
+      <li>Small sample (n={{ kpis.valid_sessions }}); results exploratory, not confirmatory.</li>
+      <li>Composed writing only; external transcription data differs in pause structure.</li>
+      <li>Self-report labels carry subjective variability.</li>
+      <li>Keyboard/device differences can affect timing.</li>
+    </ul></div>
+
+  <div class="chart-card"><h3>Ethics &amp; explainability</h3>
+    <ul class="recs">
+      <li>Every estimate is explained with SHAP (which behaviours moved it).</li>
+      <li>Recommendations are tied to observed behaviour, never to the predicted score.</li>
+      <li>Target = <strong>self-perceived writing effort</strong>. No claim about mental effort, stress, intelligence, emotion, or any psychological/medical state.</li>
+    </ul></div>
+</div>
+
+<footer class="disclaimer">Research prototype. Experimental estimate for research
+  purposes only — not a measure of any psychological or medical state.</footer>
+{% endblock %}

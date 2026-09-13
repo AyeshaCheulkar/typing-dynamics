@@ -9,7 +9,6 @@
     Chart.defaults.color = "#7286a6";
     Chart.defaults.plugins.legend.labels.usePointStyle = true;
     Chart.defaults.plugins.legend.labels.font = { family: "Space Grotesk", size: 11 };
-    Chart.defaults.scale.grid = { color: GRID };
   }
   function el(id) { return document.getElementById(id); }
 
