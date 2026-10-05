@@ -10,26 +10,33 @@
 </div>
 
 <!-- Visual summary: self-rated vs experimental -->
-<div class="summary-2">
+<div class="summary-2 three">
   <div class="sum-card self">
     <div class="sum-label">Self-rated effort <span class="self-badge badge">participant</span></div>
     <div class="sum-big">{{ row.effort_rating }}<i>/5</i></div>
     <div class="muted small">The participant's own rating.</div>
   </div>
   <div class="sum-card exp">
-    <div class="sum-label">Experimental estimate <span class="exp-badge badge">Experimental model</span></div>
+    <div class="sum-label">Experimental Model Estimate <span class="exp-badge badge">Experimental model</span></div>
     {% if estimate.available %}
     <div class="sum-big">{{ estimate.predicted_effort }}<i>/5</i>
       <span class="pill">{{ estimate.band }}</span></div>
-    <div class="muted small">Research model output — not a measurement.</div>
+    <div class="muted small">{{ estimate.model_name }} output — not a measurement.</div>
     {% else %}
     <div class="sum-big muted">—</div>
     <div class="muted small">{{ estimate.reason }}</div>
     {% endif %}
   </div>
+  {% if estimate.available %}
+  <div class="sum-card">
+    <div class="sum-label">Mean baseline (reference)</div>
+    <div class="sum-big">{{ estimate.baseline_effort }}<i>/5</i></div>
+    <div class="muted small">Benchmark only — not this participant's prediction.</div>
+  </div>
+  {% endif %}
 </div>
-<p class="caveat">The experimental estimate is produced by a research model that does
-   not outperform a simple average on this pilot. It is <strong>not</strong> a measure
+<p class="caveat">The Experimental Model Estimate is produced by a research model that is not
+   clinically or scientifically validated and does not outperform a simple average on this pilot. It is <strong>not</strong> a measure
    of mental effort, stress, intelligence, or any psychological state.</p>
 
 <!-- Writing Behaviour Profile (rings) -->

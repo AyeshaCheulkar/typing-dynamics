@@ -18,7 +18,8 @@ if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
 from features import extract_features            # shared, read-only
-from explain import load_artifact, explain_session  # shared, read-only
+import explain as _explain                       # shared, read-only
+from explain import load_artifact, explain_session
 
 # Load the trained artifact once (read-only). Kept module-level so the Flask app
 # and SHAP explainer are initialised a single time.
@@ -105,9 +106,16 @@ def estimate_and_explain(features):
     ex = explain_session(art, features)
     baseline = float(art["train_mean_effort"])
     pred = max(1.0, min(5.0, float(ex["predicted_effort"])))   # clip to 1-5
+    shap_used = bool(_explain._HAS_SHAP)
     return {
         "available": True,
+        "model_name": "Random Forest",
+        "n_features": len(art["features"]),
         "predicted_effort": round(pred, 2),
+        "diff_vs_baseline": round(pred - baseline, 2),
+        "explanation_method": ("SHAP (TreeExplainer on the Random Forest)" if shap_used
+                               else "Linear-model attribution (SHAP not installed on this server)"),
+        "shap_used": shap_used,
         "band": _band(pred, baseline),
         "baseline_effort": round(baseline, 2),
         "contributions": ex["contributions"],   # [(readable name, signed value), ...]
