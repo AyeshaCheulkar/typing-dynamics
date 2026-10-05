@@ -33,3 +33,8 @@ effort_model.pkl
 # --- Local design tooling ---
 .impeccable/
 extra_features.csv
+
+# --- Local tooling / scratch (not part of the project) ---
+graphify-out/
+.agents/
+tmp/
