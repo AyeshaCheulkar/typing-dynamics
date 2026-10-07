@@ -55,7 +55,7 @@
         {% endfor %}
       </div>
       <p class="field-err" id="start-err" role="alert"></p>
-      <p class="muted small start-note">{% if research_mode %}Research mode: afterwards you will rate how it felt. Those ratings are only used to check the typing-based readings.{% else %}There are no questionnaires. Your report comes from your typing and your words alone.{% endif %}</p>
+      <p class="muted small start-note">After you write, you will answer a few short questions about how you felt and how focused you were. They help us check the typing-based readings.</p>
     </div>
   </section>
 
@@ -71,8 +71,8 @@
 
   <section id="panel-rate" class="card hidden">
     <h2>A few quick ratings</h2>
-    <p class="muted small">These are <strong>your own</strong> ratings, with no right answers. They let us
-       check whether the typing-based readings match how you actually felt.</p>
+    <p class="muted small">These are <strong>your own</strong> answers, with no right answers. They let us
+       check whether the typing-based readings match how you actually felt and focused.</p>
 
 {% macro scale(key, title, lo, mid, hi) %}
     <div class="rate-block"><h3>{{ title }}</h3>
@@ -87,7 +87,9 @@
     {{ scale("focus", "How focused were you while writing?", "Very distracted", "Somewhat", "Fully focused") }}
     {{ scale("wander", "How much did your mind wander while writing?", "Not at all", "Sometimes", "A lot") }}
     {{ scale("stress", "How tense did you feel while writing?", "Not at all", "Somewhat", "Very") }}
+    {% if research_mode %}
     {{ scale("effort", "How much effort did the writing take?", "Very little", "Moderate", "A great deal") }}
+    {% endif %}
     <div class="rate-block"><h3>Were you interrupted while writing?</h3>
       <div class="choice-seg" role="radiogroup" aria-label="Were you interrupted" data-key="interrupted" id="interrupted-seg">
         <button type="button" role="radio" aria-checked="false" data-v="0">No</button>

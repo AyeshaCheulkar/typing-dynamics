@@ -3,7 +3,8 @@
    event shape ../features.py expects. Independent of the Stage-1 logger.
 
    Flow: participant ID + typing context + choose a happy or sad moment -> write (page
-   takes a warm or cool mood theme) -> (research mode only) ratings -> report. */
+   takes a warm or cool mood theme) -> short questions (focus, mood, mind-wandering, ...;
+   plus perceived effort in research mode) -> report. */
 
 (function () {
   "use strict";
@@ -67,8 +68,7 @@
       document.getElementById("level-label").textContent = lvl.title;
       document.getElementById("prompt-text").textContent = lvl.free_prompt;
       editor.placeholder = "Write about whatever comes to mind…";
-      document.getElementById("finish-label").textContent =
-        window.RESEARCH_MODE ? "Finish and rate how it felt" : "Finish and see my report";
+      document.getElementById("finish-label").textContent = "Finish and answer a few questions";
       panelStart.classList.add("hidden");
       panelWrite.classList.remove("hidden");
       window.scrollTo(0, 0);
@@ -119,27 +119,16 @@
       if (!confirm("That's quite short. Finish anyway?")) return;
     }
     state.endedAt = Date.now();
-    if (window.RESEARCH_MODE) {
-      panelWrite.classList.add("hidden");
-      panelRate.classList.remove("hidden");
-      window.scrollTo(0, 0);
-      return;
-    }
-    finishBtn.disabled = true;
-    postSession({}).then(function (res) {
-      if (res.ok) { window.location.href = res.report_url; return; }
-      finishBtn.disabled = false;
-      alert("Could not save: " + (res.error || "error"));
-    }).catch(function () {
-      finishBtn.disabled = false;
-      alert("Network error. Please try again.");
-    });
+    panelWrite.classList.add("hidden");       // everyone answers the short questions next
+    panelRate.classList.remove("hidden");
+    window.scrollTo(0, 0);
   });
 
-  // --- Research mode: ratings + submit --------------------------------------
+  // --- Short questions (everyone) + effort (research mode only), then submit --------------------------------------
   var submitBtn = document.getElementById("submit-btn");
   var ratings = {};
-  var KEYS = ["effort", "mood", "focus", "stress", "relive", "arousal", "wander"];
+  var KEYS = ["mood", "focus", "stress", "relive", "arousal", "wander"];
+  if (window.RESEARCH_MODE) KEYS.push("effort");     // perceived effort: research mode only
   function refreshSubmit() {
     submitBtn.disabled = !(KEYS.every(function (k) { return ratings[k]; }) && ratings.interrupted !== undefined);
   }

@@ -90,11 +90,12 @@ emotional writing than in the same person's baseline. On EmoSurv it holds on 108
 normalised classifier did not beat raw features, so neither is claimed. The test runs on
 `/admin/behaviour` once ≥ 8 baseline+emotional pairs exist.
 
-### Label-free participant mode vs research mode
-- **Participant mode (default):** no questionnaires. The report is inferred only from typing
-  and text, using rules/models validated in the research phase.
-- **Research mode** (`/test?mode=research` or `PROTO_RESEARCH_MODE=1`): additionally asks for
-  effort, mood, focus and stress ratings, used only to validate the readings.
+### Participant mode vs research mode
+- **Participant mode (default):** after writing, everyone answers a few short questions
+  (relive, mood, energy, focus, mind-wandering, tension, interrupted). No perceived-effort
+  question. These answers are the labels used to validate the focus / mind-space readings.
+- **Research mode** (`/test?mode=research` or `PROTO_RESEARCH_MODE=1`): the same questions plus
+  perceived writing effort.
 
 **Engagement-shift rule** (the prototype's validated "mind-state" algorithm): the passage with
 the lower rhythm CV than the person's baseline is the emotional one. On EmoSurv it picks the

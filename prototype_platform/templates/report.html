@@ -80,7 +80,7 @@
       {% for r in insight.index_rows if r.key in ('focus','mind_space') %}
       <tr><td><b>{{ r.label }}</b><br><span class="muted small">literature-informed formula</span></td>
         <td>{{ r.value|round|int }}/100 · {{ r.band }}<br><span class="muted small">relative to the pilot sample</span></td>
-        <td><span class="badge exp-badge">proxy</span><br><span class="muted small">Not yet validated against focus or stress labels. Checked against self-ratings only in research mode.</span></td></tr>
+        <td><span class="badge exp-badge">proxy</span><br><span class="muted small">Not yet validated against focus or stress labels. {% if insight.compare %}Your own answers are compared with it below.{% else %}It is checked against participants&rsquo; own answers on the researcher page.{% endif %}</span></td></tr>
       {% endfor %}
     </table>
     {% endif %}
