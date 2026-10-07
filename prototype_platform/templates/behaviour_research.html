@@ -1,0 +1,147 @@
+{% extends "admin_base.html" %}
+{% block title %}Behaviour &amp; emotion · Writing Analytics{% endblock %}
+{% block main %}
+<div class="page-head sticky">
+  <div><div class="eyebrow">Emotion-writing extension · formulas, external validation, live check</div>
+    <h1>Behaviour &amp; emotion</h1></div>
+</div>
+
+<div class="paper">
+  <div class="paper-sec"><div class="paper-n">01</div><div>
+    <h2>Research question</h2>
+    <p class="lead-q">Does writing about a happy or a sad moment show up in typing behaviour,
+       focus and mind-space — and do transparent formulas track what people report?</p>
+    <p class="muted small">Participants write about a happy or a sad moment, then rate mood, focus,
+       stress and effort. The indices are relative proxies of typing behaviour, not clinical measures.</p>
+  </div></div>
+
+  <div class="paper-sec"><div class="paper-n">02</div><div>
+    <h2>Formulas (equal-weight, no fitted parameters)</h2>
+    <p class="muted small">pct(·) = percentile rank against the pilot-study sessions. Inputs follow the
+       keystroke-emotion / stress literature: pause frequency and length, rhythm variability, deletion use.</p>
+    <table class="aff-table">
+      <tr><th>Index</th><th>Formula</th><th>Higher means</th></tr>
+      {% for k in order %}<tr><td><b>{{ meta[k].label }}</b></td><td><code>{{ meta[k].formula }}</code></td><td>{{ meta[k].higher }}</td></tr>{% endfor %}
+    </table>
+    <p class="muted small">Rhythm CV = standard deviation ÷ mean of the inter-key interval.
+       Pause = gap ≥ 500 ms; long pause = gap ≥ 2 s.</p>
+  </div></div>
+
+  <div class="paper-sec"><div class="paper-n">03</div><div>
+    <h2>External validation — EmoSurv</h2>
+    {% if ext %}
+    <p class="muted small">{{ ext.dataset }}: {{ ext.n_sessions }} valid sessions, {{ ext.n_participants }} participants
+       (Happy {{ ext.emotion_counts.Happy }}, Sad {{ ext.emotion_counts.Sad }}, Neutral {{ ext.emotion_counts.Neutral }},
+       Angry {{ ext.emotion_counts.Angry }}, Calm {{ ext.emotion_counts.Calm }}). Same feature extractor as our data;
+       indices computed against the EmoSurv distribution itself.</p>
+    <table class="aff-table">
+      <tr><th>Index</th><th>Happy</th><th>Sad</th><th>Neutral</th><th>Angry</th><th>Calm</th>
+          <th>Kruskal p (5 emotions)</th><th>Happy vs Sad (paired)</th></tr>
+      {% for k in order %}{% set i = ext.indices[k] %}
+      <tr><td><b>{{ meta[k].label }}</b></td>
+        <td>{{ i.medians.Happy }}</td><td>{{ i.medians.Sad }}</td><td>{{ i.medians.Neutral }}</td>
+        <td>{{ i.medians.Angry }}</td><td>{{ i.medians.Calm }}</td>
+        <td>{{ i.kruskal_p }}{% if i.kruskal_p < 0.05 %} ✱{% endif %}</td>
+        <td>{% if i.happy_vs_sad %}n={{ i.happy_vs_sad.n }}, p={{ i.happy_vs_sad.p }}{% else %}—{% endif %}</td></tr>
+      {% endfor %}
+    </table>
+    <p class="muted small">Medians of each 0–100 index by induced emotion. ✱ = the five emotions differ (p &lt; 0.05).
+       Note the direction: in EmoSurv, <em>sad</em> typing is slower and steadier (fewer pauses), so a
+       lower "mind-space load" there does not mean "less sad" — the indices describe typing, not feelings.
+       Happy vs Sad among the participants who typed both is not significant.</p>
+    <div class="caveat small">
+      Happy-like vs sad-like Random Forest (leave-one-participant-out, {{ ext.happy_sad_model.n_sessions }} sessions):
+      balanced accuracy <b>{{ ext.happy_sad_model.lopo_balanced_accuracy }}</b> vs baseline
+      {{ ext.happy_sad_model.baseline_balanced_accuracy }}; permutation p = {{ ext.happy_sad_model.permutation_p }}.
+      Above baseline but <b>not statistically distinguishable from chance</b> — shown to participants only as an
+      exploratory curiosity.
+    </div>
+    {% else %}
+    <p class="muted">Run <code>python prototype_platform/build_emotion_validation.py</code> to generate the
+       external validation numbers.</p>
+    {% endif %}
+  </div></div>
+
+  <div class="paper-sec"><div class="paper-n">04</div><div>
+    <h2>Headline test — emotional writing vs the person's own baseline</h2>
+    <p class="lead-q">H1: rhythm variability (CV of the inter-key interval) is lower when writing about an
+       emotional moment than in the same person's neutral baseline passage.</p>
+    <p class="muted small">Why this test: a personal-baseline classifier did <em>not</em> improve happy-vs-sad
+       accuracy on EmoSurv, but a paired within-person comparison revealed one effect that survives length
+       matching. We derived H1 from EmoSurv and now test it prospectively on our own participants
+       (each writes a length-matched neutral baseline first).</p>
+    {% if ext and ext.engagement_shift %}{% set e = ext.engagement_shift %}
+    <table class="aff-table">
+      <tr><th>EmoSurv (external, derivation)</th><th>n</th><th>Median Δ CV</th><th>Share lower</th><th>Wilcoxon p</th></tr>
+      <tr><td>All emotion-vs-neutral pairs</td><td>{{ e.all_pairs.n }}</td><td>{{ e.all_pairs.median_delta_cv }}</td><td>{{ (e.all_pairs.share_lower*100)|round|int }}%</td><td>{{ e.all_pairs.p if e.all_pairs.p > 0 else '< 0.0001' }}</td></tr>
+      <tr><td>Length-matched pairs (0.6–1.67×)</td><td>{{ e.length_matched.n }}</td><td>{{ e.length_matched.median_delta_cv }}</td><td>{{ (e.length_matched.share_lower*100)|round|int }}%</td><td>{{ e.length_matched.p }}</td></tr>
+      <tr><td>One averaged pair per participant</td><td>{{ e.per_participant.n }}</td><td>{{ e.per_participant.median_delta_cv }}</td><td>{{ (e.per_participant.share_lower*100)|round|int }}%</td><td>{{ e.per_participant.p }}</td></tr>
+    </table>
+    <p class="muted small">{{ e.note }} (Neutral blocks were ~{{ (1/e.median_length_ratio)|round(1) }}× longer than emotional ones.)</p>
+    {% endif %}
+    {% if ext and ext.engagement_rule %}{% set er = ext.engagement_rule %}
+    <h3 class="aff-h">The algorithm: engagement-shift rule</h3>
+    <p><b>Rule:</b> {{ er.rule }}. No fitted weights, one threshold-free comparison, one feature.</p>
+    <table class="aff-table">
+      <tr><th>EmoSurv, paired test</th><th>n</th><th>Accuracy</th><th>95% CI</th><th>Binomial p vs 50%</th></tr>
+      {% for x in er.rows %}<tr><td>{{ x.label }}</td><td>{{ x.n }}</td><td>{{ (x.accuracy*100)|round|int }}%</td>
+        <td>{{ (x.ci95[0]*100)|round|int }}–{{ (x.ci95[1]*100)|round|int }}%</td><td>{{ x.binom_p }}</td></tr>{% endfor %}
+    </table>
+    <p class="muted small">A multi-feature logistic model (leave-one-participant-out) reached {{ (er.multi_feature_accuracy*100)|round|int }}% —
+       <b>no better than the single rule</b>, so the simple, explainable rule is used. If a passage must be flagged on its own,
+       a ≥10% CV drop below baseline catches {{ (er.sensitivity_at_drop_pct['10']*100)|round|int }}% of emotional passages,
+       ≥20% catches {{ (er.sensitivity_at_drop_pct['20']*100)|round|int }}%.
+       <em>{{ er.limitation }}</em></p>
+    {% endif %}
+    {% set rp = live.replication %}
+    <table class="aff-table">
+      <tr><th>Our data (replication)</th><th>n pairs</th><th>Median Δ CV</th><th>Share lower</th><th>Wilcoxon p</th></tr>
+      {% for label, r in [('All pairs', rp.all), ('Length-matched pairs', rp.matched)] %}
+      <tr><td>{{ label }}</td><td>{{ r.n }}</td>
+        {% if r.ready %}<td>{{ r.median }}</td><td>{{ (r.share_lower*100)|round|int }}%</td><td>{{ r.p if r.p is not none else '—' }}</td>
+        {% else %}<td colspan="3" class="muted">need ≥ {{ live.min_n }} pairs (baseline + emotional) — {{ r.n }} so far</td>{% endif %}</tr>
+      {% endfor %}
+    </table>
+    <p class="muted small">A negative median Δ with a small p would replicate the external finding. A null result
+       is reported as such.</p>
+  </div></div>
+
+  <div class="paper-sec"><div class="paper-n">05</div><div>
+    <h2>Live check — self-report vs formulas ({{ live.n }} emotion-writing sessions so far)</h2>
+    {% if live.n == 0 %}
+    <p class="muted">No emotion-writing sessions have been submitted yet. Once participants complete the happy/sad
+       task, this section reports how their own mood, focus and stress ratings relate to the indices.</p>
+    {% else %}
+    <table class="aff-table">
+      <tr><th>Pair</th><th>n</th><th>Spearman ρ</th><th>p</th></tr>
+      {% for p in live.pairs %}<tr><td>{{ p.label }}</td><td>{{ p.n }}</td>
+        {% if p.result %}<td>{{ '%+.2f'|format(p.result.rho) }}</td><td>{{ p.result.p }}</td>
+        {% else %}<td colspan="2" class="muted">need ≥ {{ live.min_n }} sessions with varied ratings</td>{% endif %}</tr>{% endfor %}
+    </table>
+    <h3 class="aff-h">By chosen moment (medians)</h3>
+    <table class="aff-table">
+      <tr><th>Moment</th><th>n</th><th>Self mood</th><th>Self focus</th><th>Self stress</th><th>Focus idx</th><th>Mind-space idx</th><th>Text sentiment</th></tr>
+      {% for e in live.by_emotion %}<tr><td>{{ e.emotion }}</td><td>{{ e.n }}</td><td>{{ e.mood }}</td><td>{{ e.focus_self }}</td>
+        <td>{{ e.stress_self }}</td><td>{{ e.focus_idx }}</td><td>{{ e.mind_idx }}</td><td>{{ e.sentiment }}</td></tr>{% endfor %}
+    </table>
+    {% if live.text %}<p class="muted small">Text-sentiment sign matched the chosen moment in {{ live.text.hits }}/{{ live.text.n }}
+       sessions ({{ (live.text.accuracy*100)|round|int }}%) — a manipulation check.</p>{% endif %}
+    {% if live.external %}<p class="muted small">EmoSurv-trained model matched the chosen moment in {{ live.external.hits }}/{{ live.external.n }}
+       sessions ({{ (live.external.accuracy*100)|round|int }}%); chance is about 50%.</p>{% endif %}
+    {% endif %}
+  </div></div>
+
+  <div class="paper-sec"><div class="paper-n">06</div><div>
+    <h2>Literature &amp; caution</h2>
+    <ul class="muted small">
+      <li>Epp, Lippold &amp; Mandryk (2011) — emotional states from keystroke dynamics.</li>
+      <li>Vizer, Zhou &amp; Sears (2009) — stress detection from keystroke and linguistic features.</li>
+      <li>BiAffect studies (e.g. JMIR 2024) — typing variability, speed and accuracy linked to mood.</li>
+      <li>Maalej &amp; Kallel — EmoSurv keystroke-emotion dataset (IEEE DataPort).</li>
+      <li>Hutto &amp; Gilbert (2014) — VADER; Rude, Gortner &amp; Pennebaker (2004) — first-person pronouns in emotional writing.</li>
+    </ul>
+    <p class="caveat small">Small sample, self-selected recall, no diagnostic claim. Differences between emotions in
+       external data are group-level; they do not let us label an individual's feelings.</p>
+  </div></div>
+</div>
+{% endblock %}

@@ -30,7 +30,8 @@
   <!-- stepper -->
   <nav class="stepper">
     <a href="#s-behaviour"><b>01</b> Behaviour</a>
-    <a href="#s-self"><b>02</b> Self-rating</a>
+    <a href="#s-mind"><b>1b</b> Emotion &amp; mind-space</a>
+    {% if has_self %}<a href="#s-self"><b>02</b> Self-rating</a>{% endif %}
     <a href="#s-exp"><b>03</b> Experimental</a>
     <a href="#s-why"><b>04</b> Explanation</a>
     <a href="#s-sugg"><b>05</b> Suggestions</a>
@@ -52,6 +53,122 @@
       </div>
       {% endfor %}
     </div>
+  </section>
+
+  {% set aff = insight.affect %}
+  <!-- 1b Emotion & mind-space (text emotion + behavioural indices + self-report) -->
+  <section id="s-mind" class="card affect">
+    <div class="sec-tag"><h2>Emotion &amp; mind-space</h2>
+      <span class="badge measured-badge">behaviour + text</span></div>
+    <p class="muted small">You wrote about
+      <strong>{{ 'a happy' if s.emotion=='happy' else 'a sad' if s.emotion=='sad' else 'an everyday' }}
+      {{ 'moment' if s.emotion else 'topic' }}</strong>. Below: the tone of your text, then
+      transparent typing-based indices. They describe <em>how you typed</em>, relative
+      to other writers — they do not diagnose any feeling or condition.</p>
+
+    {% if insight.shift or insight.index_rows %}
+    <h3 class="aff-h">Mind-state reading</h3>
+    <table class="aff-table state-table">
+      <tr><th>Reading</th><th>Result</th><th>Evidence</th></tr>
+      {% if insight.shift %}
+      <tr><td><b>Emotional-engagement shift</b><br><span class="muted small">rule: rhythm CV vs your baseline</span></td>
+        <td>{{ insight.shift.state }}<br><span class="muted small">CV {{ insight.shift.base_cv }} → {{ insight.shift.cv }} ({{ '%+d'|format(insight.shift.delta_pct) }}%)</span></td>
+        <td><span class="badge self-badge">validated</span><br>
+          <span class="muted small">{% if ext_rule %}EmoSurv: picks the emotional passage {{ (ext_rule.rows[0].accuracy*100)|round|int }}% of the time
+          (95% CI {{ (ext_rule.rows[0].ci95[0]*100)|round|int }}–{{ (ext_rule.rows[0].ci95[1]*100)|round|int }}%); length-matched {{ (ext_rule.rows[1].accuracy*100)|round|int }}%.{% else %}see researcher page{% endif %}</span></td></tr>
+      {% endif %}
+      {% for r in insight.index_rows if r.key in ('focus','mind_space') %}
+      <tr><td><b>{{ r.label }}</b><br><span class="muted small">literature-informed formula</span></td>
+        <td>{{ r.value|round|int }}/100 · {{ r.band }}<br><span class="muted small">relative to the pilot sample</span></td>
+        <td><span class="badge exp-badge">proxy</span><br><span class="muted small">Not yet validated against focus or stress labels. Checked against self-ratings only in research mode.</span></td></tr>
+      {% endfor %}
+    </table>
+    {% endif %}
+
+    {% if insight.shift %}
+    {% set sh = insight.shift %}
+    <h3 class="aff-h">Your rhythm vs your own baseline</h3>
+    <div class="shift-card">
+      <div class="shift-big"><span class="{{ 'down' if sh.delta_pct <= -10 else 'up' if sh.delta_pct >= 10 else '' }}">{{ '%+d'|format(sh.delta_pct) }}%</span>
+        <small>change in rhythm variability</small></div>
+      <div class="shift-bars">
+        <div class="shift-row"><span>Baseline passage</span><div class="b-bar"><span style="width: {{ [sh.base_cv/3*100,100]|min }}%"></span></div><b>{{ sh.base_cv }}</b></div>
+        <div class="shift-row"><span>This passage</span><div class="b-bar"><span style="width: {{ [sh.cv/3*100,100]|min }}%"></span></div><b>{{ sh.cv }}</b></div>
+      </div>
+    </div>
+    <p>Your key-to-key rhythm in this passage was <strong>{{ sh.reading }}</strong>
+      (variability = standard deviation ÷ mean of the gap between keystrokes; lower = steadier).</p>
+    <p class="muted small">Why this measure: in the public EmoSurv dataset, people typed with a steadier rhythm
+      under an induced emotion than in their own neutral block, and this was the one effect that survived
+      matching passage length (median {{ ext_shift.length_matched.median_delta_cv if ext_shift else '−0.2' }} CV, p = {{ ext_shift.length_matched.p if ext_shift else '0.02' }}).
+      {% if not sh.length_matched %}<em>Your two passages differed noticeably in length, so treat this comparison with extra care.</em>{% endif %}
+      One person's shift is not a diagnosis — the researcher page tests whether the pattern replicates in our own data.</p>
+    <table class="aff-table">
+      <tr><th>Context (length-sensitive)</th><th>Baseline</th><th>This passage</th></tr>
+      {% for x in sh.context %}<tr><td>{{ x.label }}</td><td>{{ x.base }}{{ x.unit or '' }}</td><td>{{ x.now }}{{ x.unit or '' }}</td></tr>{% endfor %}
+    </table>
+    {% endif %}
+
+    {% if aff.text %}
+    <h3 class="aff-h">What your text says</h3>
+    <div class="aff-grid">
+      <div class="aff-box"><span class="aff-v">{{ aff.text.tone }}</span>
+        <span class="aff-l">Overall tone (sentiment {{ '%+.2f'|format(aff.text.compound) }})</span></div>
+      <div class="aff-box"><span class="aff-v">{{ aff.text.pos_words_pct }}% / {{ aff.text.neg_words_pct }}%</span>
+        <span class="aff-l">Positive / negative words</span></div>
+      <div class="aff-box"><span class="aff-v">{{ aff.text.first_person_pct }}%</span>
+        <span class="aff-l">First-person words (I, me, my)</span></div>
+      <div class="aff-box"><span class="aff-v">{{ aff.text.lexical_diversity }}</span>
+        <span class="aff-l">Vocabulary variety</span></div>
+    </div>
+    <p class="muted small">Sentiment from VADER (a validated lexicon-and-rules model), averaged over
+      {{ aff.text.n_sentences }} sentences. First-person word use is a documented marker of
+      self-focus in emotional writing (Rude et al., 2004).</p>
+    {% endif %}
+
+    {% if insight.index_rows %}
+    <h3 class="aff-h">How you typed — behavioural indices</h3>
+    <div class="idx-list">
+      {% for r in insight.index_rows %}
+      <div class="idx-row">
+        <div class="idx-top"><b>{{ r.label }}</b><span>{{ r.value|round|int }}/100 · {{ r.band }}</span></div>
+        <div class="b-bar"><span style="width: {{ r.value }}%"></span></div>
+        <div class="muted small">Higher = {{ r.higher }}. <code>{{ r.formula }}</code></div>
+      </div>
+      {% endfor %}
+    </div>
+    <p class="muted small">Each index is the average percentile rank of its parts against the pilot-study
+      sessions (equal weights, no fitted parameters). A score of 50 means "typical of the pilot sample".</p>
+    {% else %}
+    <p class="muted">Not enough keystrokes were captured to compute behavioural indices for this session.</p>
+    {% endif %}
+
+    {% if insight.compare %}
+    <h3 class="aff-h">Your ratings vs the typing-based scores</h3>
+    <table class="aff-table">
+      <tr><th>You rated</th><th>Your rating</th><th>Typing-based index</th><th>Match</th></tr>
+      {% for c in insight.compare %}
+      <tr><td>{{ c.label }}</td><td>{{ c.self }} / 5</td>
+          <td>{{ c.index_name }}: {{ c.index|round|int }}/100 (≈ {{ c.index_level }}/5)</td>
+          <td>{{ c.agreement }}</td></tr>
+      {% endfor %}
+    </table>
+    <p class="muted small">One session cannot show whether the formulas are accurate — the researcher view
+      tests this across all sessions.</p>
+    {% endif %}
+
+    {% if aff.external %}
+    <h3 class="aff-h">Pattern check against external data <span class="badge exp-badge">exploratory</span></h3>
+    <p>A model trained on the public EmoSurv typing dataset rates your typing rhythm as
+      <strong>{{ aff.external.label }}</strong>
+      ({{ (aff.external.p_sad_like*100)|round|int }}% sad-like / {{ (aff.external.p_happy_like*100)|round|int }}% happy-like).</p>
+    <p class="muted small">EmoSurv recorded short fixed-text typing after video-induced emotions; its
+      happy-vs-sad accuracy on unseen people was modest and not statistically significant
+      (see the researcher page). Treat this as a curiosity, not a result about you.</p>
+    {% endif %}
+
+    <p class="caveat small">Research prototype. These scores are not a clinical or diagnostic measure.
+      If recalling this memory left you feeling low, it is okay to take a break or talk to someone you trust.</p>
   </section>
 
   <!-- behaviour profile radar -->
@@ -91,6 +208,7 @@
   </section>
 
   <!-- 02 Self-rated -->
+  {% if has_self %}
   <section id="s-self" class="card selfrated">
     <div class="sec-tag"><span class="num">02</span><h2>Your self-rated writing effort</h2>
       <span class="badge self-badge">what you reported</span></div>
@@ -105,6 +223,7 @@
        primary ground-truth label in the research.</p>
     {% else %}<p class="muted">No self-rating was recorded.</p>{% endif %}
   </section>
+  {% endif %}
 
   <!-- 03 Experimental Model Estimate -->
   <section id="s-exp" class="card experimental">

@@ -1,0 +1,197 @@
+{
+  "dataset": "EmoSurv (external, supporting data only)",
+  "n_sessions": 190,
+  "n_participants": 81,
+  "emotion_counts": {
+    "Happy": 32,
+    "Sad": 29,
+    "Neutral": 79,
+    "Angry": 23,
+    "Calm": 27
+  },
+  "indices": {
+    "focus": {
+      "medians": {
+        "Happy": 48.1,
+        "Sad": 74.4,
+        "Neutral": 37.6,
+        "Angry": 60.7,
+        "Calm": 44.4
+      },
+      "kruskal_p": 0.0013,
+      "happy_vs_sad": {
+        "n": 9,
+        "p": 1.0,
+        "median_diff_H_minus_S": 2.3
+      }
+    },
+    "hesitation": {
+      "medians": {
+        "Happy": 47.2,
+        "Sad": 23.9,
+        "Neutral": 61.2,
+        "Angry": 35.5,
+        "Calm": 56.6
+      },
+      "kruskal_p": 0.0012,
+      "happy_vs_sad": {
+        "n": 9,
+        "p": 0.8203,
+        "median_diff_H_minus_S": -3.4
+      }
+    },
+    "correction": {
+      "medians": {
+        "Happy": 53.8,
+        "Sad": 39.9,
+        "Neutral": 56.7,
+        "Angry": 38.4,
+        "Calm": 56.9
+      },
+      "kruskal_p": 0.1881,
+      "happy_vs_sad": {
+        "n": 9,
+        "p": 0.9102,
+        "median_diff_H_minus_S": 3.5
+      }
+    },
+    "irregularity": {
+      "medians": {
+        "Happy": 51.5,
+        "Sad": 22.8,
+        "Neutral": 60.4,
+        "Angry": 46.5,
+        "Calm": 55.4
+      },
+      "kruskal_p": 0.0003,
+      "happy_vs_sad": {
+        "n": 9,
+        "p": 0.6523,
+        "median_diff_H_minus_S": 6.9
+      }
+    },
+    "mind_space": {
+      "medians": {
+        "Happy": 47.8,
+        "Sad": 28.4,
+        "Neutral": 59.2,
+        "Angry": 38.0,
+        "Calm": 52.9
+      },
+      "kruskal_p": 0.0004,
+      "happy_vs_sad": {
+        "n": 9,
+        "p": 0.5898,
+        "median_diff_H_minus_S": 1.2
+      }
+    }
+  },
+  "happy_sad_model": {
+    "n_sessions": 61,
+    "n_participants": 52,
+    "lopo_balanced_accuracy": 0.685,
+    "baseline_balanced_accuracy": 0.5,
+    "permutation_p": 0.344
+  },
+  "engagement_shift": {
+    "hypothesis": "Rhythm variability (CV) is lower in emotional writing than in the same person's neutral baseline.",
+    "all_pairs": {
+      "n": 108,
+      "median_delta_cv": -0.346,
+      "share_lower": 0.73,
+      "p": 0.0
+    },
+    "length_matched": {
+      "n": 38,
+      "median_delta_cv": -0.212,
+      "share_lower": 0.68,
+      "p": 0.0225
+    },
+    "per_participant": {
+      "n": 67,
+      "median_delta_cv": -0.29,
+      "share_lower": 0.69,
+      "p": 0.0024
+    },
+    "median_length_ratio": 0.55,
+    "note": "Pause-count and pause-time effects vanish after length matching; only rhythm variability survives."
+  },
+  "engagement_rule": {
+    "rule": "emotional passage = the one with lower rhythm CV than the person's baseline",
+    "rows": [
+      {
+        "label": "All pairs",
+        "n": 108,
+        "participants": 67,
+        "accuracy": 0.731,
+        "ci95": [
+          0.63,
+          0.82
+        ],
+        "binom_p": 0.0
+      },
+      {
+        "label": "Length-matched pairs",
+        "n": 38,
+        "participants": 33,
+        "accuracy": 0.684,
+        "ci95": [
+          0.53,
+          0.83
+        ],
+        "binom_p": 0.0336
+      },
+      {
+        "label": "Only Happy",
+        "n": 30,
+        "participants": 30,
+        "accuracy": 0.7,
+        "ci95": [
+          0.53,
+          0.87
+        ],
+        "binom_p": 0.0428
+      },
+      {
+        "label": "Only Sad",
+        "n": 29,
+        "participants": 29,
+        "accuracy": 0.793,
+        "ci95": [
+          0.62,
+          0.93
+        ],
+        "binom_p": 0.0023
+      },
+      {
+        "label": "Only Angry",
+        "n": 23,
+        "participants": 23,
+        "accuracy": 0.696,
+        "ci95": [
+          0.48,
+          0.87
+        ],
+        "binom_p": 0.0931
+      },
+      {
+        "label": "Only Calm",
+        "n": 26,
+        "participants": 26,
+        "accuracy": 0.731,
+        "ci95": [
+          0.58,
+          0.88
+        ],
+        "binom_p": 0.029
+      }
+    ],
+    "multi_feature_accuracy": 0.704,
+    "sensitivity_at_drop_pct": {
+      "10": 0.64,
+      "20": 0.56,
+      "30": 0.45
+    },
+    "limitation": "Two-alternative test (needs the baseline and a second passage). Specificity on a single new passage is not estimable from EmoSurv."
+  }
+}

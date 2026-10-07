@@ -53,3 +53,53 @@ from `../data.db`).
 - `tasks.py` — writing prompts (copied, decoupled from Stage 1)
 - `templates/` — `write.html`, `report.html`, `dashboard.html`, `history.html`
 - `static/` — `capture.js`, `style.css`, result images
+
+
+## Emotion-writing extension (happy / sad moment)
+Participants now choose to write about **a happy or a sad moment**, then rate
+effort, mood, focus and stress. The report adds an *Emotion & mind-space* section:
+- **Text emotion** — VADER sentiment + first-person word rate (`affect.py`).
+- **Behavioural indices** — focus, hesitation, self-correction, rhythm irregularity,
+  mind-space load; transparent equal-weight percentile formulas (`behaviour.py`).
+- **External validation** — EmoSurv (via the shared feature extractor): index medians
+  by emotion and an exploratory happy-like vs sad-like Random Forest.
+- **Self-report check** — ratings vs indices per session, and Spearman across sessions
+  on the researcher page `/admin/behaviour`.
+
+One-off build (reads `../external_features_emosurv.csv` and `../features.csv`, read-only):
+
+```bash
+python prototype_platform/build_emotion_validation.py
+```
+
+This writes `reference_stats.json`, `emotion_validation.json` and `emotion_model.pkl`
+(the pkl is git-ignored like `effort_model.pkl`; regenerate it on a new server — the
+page hides the external-model card if it is missing). Indices are research proxies,
+not clinical measures.
+
+### Baseline step and within-person test (headline hypothesis)
+Every participant first writes a neutral, length-matched **baseline passage**
+("describe the room you are in"), then the happy/sad passage. The emotional session is
+linked to the baseline (`baseline_id`), and the report shows the **rhythm shift** (CV of the
+inter-key interval) against the person's own baseline.
+
+H1 (derived from EmoSurv, tested prospectively on our data): rhythm variability is lower in
+emotional writing than in the same person's baseline. On EmoSurv it holds on 108 pairs
+(median ΔCV −0.35, p < 0.0001), after length matching (n=38, p=0.02) and per participant
+(n=67, p=0.002). Pause-count effects did not survive length matching, and a baseline-
+normalised classifier did not beat raw features, so neither is claimed. The test runs on
+`/admin/behaviour` once ≥ 8 baseline+emotional pairs exist.
+
+### Label-free participant mode vs research mode
+- **Participant mode (default):** no questionnaires. The report is inferred only from typing
+  and text, using rules/models validated in the research phase.
+- **Research mode** (`/test?mode=research` or `PROTO_RESEARCH_MODE=1`): additionally asks for
+  effort, mood, focus and stress ratings, used only to validate the readings.
+
+**Engagement-shift rule** (the prototype's validated "mind-state" algorithm): the passage with
+the lower rhythm CV than the person's baseline is the emotional one. On EmoSurv it picks the
+emotional passage in 73% of paired comparisons (95% CI 63–82%), 68% length-matched; a
+multi-feature logistic model does no better (70%). It is a two-alternative test — single-passage
+specificity cannot be estimated from EmoSurv. Focus index and mind-space load are shown as
+unvalidated proxies. Numbers come from `emotion_validation.json`
+(`python prototype_platform/build_emotion_validation.py --only-shift` refreshes them).

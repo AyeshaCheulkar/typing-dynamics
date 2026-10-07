@@ -25,11 +25,13 @@ from functools import wraps
 from flask import (Flask, render_template, request, jsonify, abort, Response,
                    url_for, redirect, session)
 
+import affect
+import behaviour as bh
 import db
 import predict
 import recommendations as recs
 import research_data as rd
-from tasks import LEVELS, TASKS_BY_ID
+from tasks import LEVELS, MOMENTS, BASELINE, TASKS_BY_ID
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("PROTO_SECRET", "prototype-dev-secret-change-me")
@@ -71,9 +73,20 @@ def home():
     return render_template("landing.html")
 
 
+def research_mode():
+    """Research mode collects the participant's own ratings (effort, mood, focus,
+    stress) as validation labels. The default PARTICIPANT mode is label-free: it asks
+    for nothing and reports only what the validated rules and models infer from
+    behaviour and text. Enable research mode with /test?mode=research or the env var
+    PROTO_RESEARCH_MODE=1."""
+    return (request.args.get("mode") == "research"
+            or os.environ.get("PROTO_RESEARCH_MODE") == "1")
+
+
 @app.route("/test")
 def test():
-    return render_template("write.html", levels=LEVELS)
+    return render_template("write.html", levels=MOMENTS, baseline=BASELINE,
+                           research_mode=research_mode())
 
 
 @app.route("/api/submit", methods=["POST"])
@@ -95,15 +108,33 @@ def submit():
     features["word_count"] = len(final_text.split())
     estimate = predict.estimate_and_explain(features)
     predicted = estimate["predicted_effort"] if estimate["available"] else None
+    emotion = TASKS_BY_ID[data["task_id"]]["level_id"]
+    emotion = {"happy": "happy", "sad": "sad", "baseline": "neutral"}.get(emotion)
+    baseline_id = None
+    if emotion in ("happy", "sad") and data.get("baseline_id"):
+        b = db.get_session(int(data["baseline_id"]))
+        if b and b["participant_code"] == code and b.get("emotion") == "neutral":
+            baseline_id = b["id"]
+    affect_data = affect.analyse(features, final_text, emotion)
+
+    def _likert(key):
+        try:
+            v = int(data.get(key))
+            return v if 1 <= v <= 5 else None
+        except (TypeError, ValueError):
+            return None
+
     meta = {
         "participant_code": code, "task_id": data["task_id"],
         "difficulty": TASKS_BY_ID[data["task_id"]]["difficulty"],
+        "emotion": emotion, "baseline_id": baseline_id, "self_mood": _likert("self_mood"),
+        "self_focus": _likert("self_focus"), "self_stress": _likert("self_stress"),
         "started_at": int(data["started_at"]), "ended_at": int(data["ended_at"]),
         "final_text": final_text,
         "self_rated_effort": (int(data["self_rated_effort"])
                               if data.get("self_rated_effort") else None),
     }
-    sid = db.insert_session(meta, events, features, predicted)
+    sid = db.insert_session(meta, events, features, predicted, affect_data)
     return jsonify({"ok": True, "session_id": sid,
                     "report_url": url_for("report", session_id=sid)})
 
@@ -210,8 +241,23 @@ def report(session_id):
     timeline = predict.timeline_from_events(db.get_keystrokes(session_id))
     has_rec = recommendations and recommendations[0]["behaviour"] != "none"
 
+    # emotion-writing extension (computed on the fly for sessions saved before it)
+    aff = s.get("affect") or affect.analyse(feats, s["final_text"], s.get("emotion"))
+    base = db.get_session(s["baseline_id"]) if s.get("baseline_id") else None
+    insight = {
+        "shift": affect.rhythm_shift(feats, base["features"]) if base else None,
+        "affect": aff,
+        "index_rows": [dict(key=k, value=aff["indices"][k], band=bh.band(aff["indices"][k]),
+                            **bh.INDEX_META[k]) for k in bh.INDEX_ORDER] if aff.get("indices") else [],
+        "compare": affect.compare_self_report(aff.get("indices"), s),
+    }
+
+    _v = affect.load_validation_json()
     return render_template(
-        "report.html", s=s, feats=feats, estimate=estimate, context=context,
+        "report.html", s=s, insight=insight,
+        ext_shift=(_v or {}).get("engagement_shift"),
+        ext_rule=(_v or {}).get("engagement_rule"),
+        has_self=bool(s.get("self_rated_effort")), feats=feats, estimate=estimate, context=context,
         recommendations=recommendations, has_rec=has_rec,
         general_tips=recs.GENERAL_TIPS,
         task=TASKS_BY_ID.get(s["task_id"], {}), metrics=metrics, profile=profile,
@@ -390,6 +436,15 @@ def live_profile(code):
 def live_clear():
     db.clear_all()
     return redirect(url_for("live_page"))
+
+
+@app.route("/admin/behaviour")
+@login_required
+def behaviour_page():
+    return render_template(
+        "behaviour_research.html", active="behaviour",
+        ext=affect.load_validation_json(), meta=bh.INDEX_META, order=bh.INDEX_ORDER,
+        live=affect.live_validation(db.list_sessions()))
 
 
 @app.route("/admin/methodology")

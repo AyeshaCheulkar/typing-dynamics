@@ -108,3 +108,25 @@ ul.res li{margin:5px 0;font-size:.9rem}
   .report-head{border-bottom:2px solid var(--ink);padding-bottom:10px}
   .profile-wrap{max-width:360px}
 }
+
+/* ---- emotion & mind-space section ---- */
+.aff-h{font:600 .8rem "Space Grotesk";text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);margin:20px 0 10px}
+.aff-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.aff-box{border:1px solid var(--line);border-radius:var(--radius);padding:14px;background:var(--card)}
+.aff-v{display:block;font:700 1.3rem "Space Grotesk";color:var(--ink)}
+.aff-l{display:block;margin-top:4px;font-size:.72rem;color:var(--muted)}
+.idx-row{margin-bottom:14px}
+.idx-top{display:flex;justify-content:space-between;font-size:.88rem;margin-bottom:5px}
+.idx-top span{color:var(--muted);font-size:.8rem}
+.idx-row code{font-size:.72rem;background:var(--paper);padding:1px 5px;border-radius:4px}
+.aff-table{width:100%;border-collapse:collapse;font-size:.86rem}
+.aff-table th,.aff-table td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+.aff-table th{font:600 .68rem "Space Grotesk";text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.exp-badge{background:var(--exp-bg);color:var(--exp)}
+
+.shift-card{display:flex;gap:24px;align-items:center;flex-wrap:wrap;border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;background:var(--card);margin-bottom:10px}
+.shift-big{min-width:150px}
+.shift-big span{font:700 2.2rem "Space Grotesk";color:var(--ink)} .shift-big span.down{color:var(--self)} .shift-big span.up{color:var(--exp)}
+.shift-big small{display:block;font-size:.72rem;color:var(--muted)}
+.shift-bars{flex:1;min-width:220px}
+.shift-row{display:grid;grid-template-columns:120px 1fr 44px;gap:10px;align-items:center;font-size:.8rem;margin:6px 0}

@@ -65,8 +65,63 @@ LEVELS = [
     },
 ]
 
+# Emotion-writing task (current participant flow): the participant chooses to
+# write about a HAPPY or a SAD personal moment. `difficulty` carries the emotion
+# label so existing pages (which show a pill) keep working.
+MOMENTS = [
+    {
+        "id": "happy",
+        "title": "A happy moment",
+        "difficulty": "Happy",
+        "blurb": "Write about a moment in your life that made you genuinely happy.",
+        "variations": [
+            {"id": "happy_moment",
+             "prompt": "Write about a happy moment in your life. What happened, "
+                       "where were you, who was there, and how did it feel? "
+                       "About 120–200 words."},
+            {"id": "happy_achievement",
+             "prompt": "Write about a time you felt proud or delighted about "
+                       "something you achieved or received. What led up to it and "
+                       "how did you feel? About 120–200 words."},
+            {"id": "happy_people",
+             "prompt": "Write about a joyful time you spent with people you care "
+                       "about. What made it special? About 120–200 words."},
+        ],
+    },
+    {
+        "id": "sad",
+        "title": "A sad moment",
+        "difficulty": "Sad",
+        "blurb": "Write about a moment that made you sad. Choose one you are "
+                 "comfortable recalling — you may stop at any time.",
+        "variations": [
+            {"id": "sad_moment",
+             "prompt": "Write about a sad moment in your life. What happened, "
+                       "where were you, and how did it feel? About 120–200 words."},
+            {"id": "sad_loss",
+             "prompt": "Write about a time you felt disappointed, lonely or "
+                       "missed someone. What was happening and how did you cope? "
+                       "About 120–200 words."},
+            {"id": "sad_change",
+             "prompt": "Write about a change or goodbye that made you feel sad. "
+                       "What did it mean to you? About 120–200 words."},
+        ],
+    },
+]
+
+# Neutral BASELINE passage written first by every participant. It is length-matched
+# to the emotional passage so each person's emotional writing can be compared with
+# their OWN neutral typing (within-person design; see affect.rhythm_shift).
+BASELINE = {
+    "id": "baseline", "title": "Baseline passage", "difficulty": "Baseline",
+    "variations": [{"id": "baseline_room",
+                    "prompt": "Describe the room you are in right now: the furniture, "
+                              "the objects around you and how it is laid out. "
+                              "About 120–200 words."}],
+}
+
 TASKS_BY_ID = {}
-for _lvl in LEVELS:
+for _lvl in LEVELS + MOMENTS + [BASELINE]:
     for _v in _lvl["variations"]:
         TASKS_BY_ID[_v["id"]] = {
             "prompt": _v["prompt"],

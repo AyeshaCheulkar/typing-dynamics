@@ -61,11 +61,18 @@ def init_db():
         CREATE INDEX IF NOT EXISTS idx_pt_ks_session ON pt_keystrokes(session_id);
         """
     )
+    # additive migration for the emotion-writing extension (safe on old DBs)
+    have = {r[1] for r in conn.execute("PRAGMA table_info(pt_sessions)")}
+    for col, typ in (("emotion", "TEXT"), ("self_mood", "INTEGER"),
+                     ("self_focus", "INTEGER"), ("self_stress", "INTEGER"),
+                     ("affect_json", "TEXT"), ("baseline_id", "INTEGER")):
+        if col not in have:
+            conn.execute("ALTER TABLE pt_sessions ADD COLUMN %s %s" % (col, typ))
     conn.commit()
     conn.close()
 
 
-def insert_session(meta, events, features, predicted_effort):
+def insert_session(meta, events, features, predicted_effort, affect=None):
     """Store one session + its keystrokes. Returns the new session id."""
     conn = get_connection()
     try:
@@ -76,8 +83,9 @@ def insert_session(meta, events, features, predicted_effort):
                 (participant_code, task_id, difficulty, started_at, ended_at,
                  duration_ms, final_text, char_count, word_count,
                  self_rated_effort, predicted_effort, behavioural_valid,
-                 features_json)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 features_json, emotion, self_mood, self_focus, self_stress,
+                 affect_json, baseline_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 meta["participant_code"], meta["task_id"], meta.get("difficulty"),
@@ -89,6 +97,10 @@ def insert_session(meta, events, features, predicted_effort):
                 predicted_effort,
                 int(features.get("behavioural_valid", 1)),
                 json.dumps(features),
+                meta.get("emotion"), meta.get("self_mood"),
+                meta.get("self_focus"), meta.get("self_stress"),
+                json.dumps(affect) if affect is not None else None,
+                meta.get("baseline_id"),
             ),
         )
         sid = cur.lastrowid
@@ -119,6 +131,7 @@ def get_session(session_id):
         return None
     d = dict(row)
     d["features"] = json.loads(d["features_json"]) if d["features_json"] else {}
+    d["affect"] = json.loads(d["affect_json"]) if d.get("affect_json") else None
     return d
 
 
@@ -131,6 +144,7 @@ def list_sessions():
     for r in rows:
         d = dict(r)
         d["features"] = json.loads(d["features_json"]) if d["features_json"] else {}
+        d["affect"] = json.loads(d["affect_json"]) if d.get("affect_json") else None
         out.append(d)
     return out
 
@@ -157,6 +171,7 @@ def list_for_participant(code):
     for r in rows:
         d = dict(r)
         d["features"] = json.loads(d["features_json"]) if d["features_json"] else {}
+        d["affect"] = json.loads(d["affect_json"]) if d.get("affect_json") else None
         out.append(d)
     return out
 

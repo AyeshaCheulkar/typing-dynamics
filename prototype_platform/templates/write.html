@@ -16,26 +16,40 @@
   </div>
 
   <header class="site-head">
-    <div class="eyebrow">Writing test</div>
-    <h1>Write a short passage</h1>
-    <p class="muted">We record <em>how</em> you type (not the meaning of your words).
-       It does <strong>not</strong> measure intelligence, stress, or any mental state.</p>
+    <div class="eyebrow">Emotion-writing test</div>
+    <h1>Write about a moment that mattered</h1>
+    <p class="muted">You will write about <strong>a happy moment or a sad moment</strong>.
+       We record <em>how</em> you type, and the tone of what you wrote, to study how
+       writing about feelings relates to focus and typing behaviour. This is a
+       research prototype — it is <strong>not</strong> a diagnosis or a measure of
+       your mental health.</p>
   </header>
 
   <section id="panel-start" class="card">
     <h2>Before you start</h2>
-    <p>You'll write a short passage. As you write, the page records your keystroke
-       timing so we can describe your writing process. Then you'll rate how much
-       effort it took you.</p>
+    <p>Choose one prompt below and write for about 2–4 minutes. The page records
+       your keystroke timing and analyses the emotional tone of your text. Afterwards
+       you will rate how you felt and how much effort it took.</p>
+    <p class="muted small">Pick a moment you are comfortable recalling. You may stop
+       at any time — just close this page.</p>
     <label class="field">Participant code
       <input id="code" type="text" placeholder="e.g. P01" autocomplete="off"></label>
-    <p class="muted small">Choose a difficulty level — a prompt is picked at random,
-       and you can shuffle to a different one:</p>
+    {% if research_mode %}<p class="caveat small">Research mode: you will also be asked to rate effort, mood, focus and stress. These are used only to validate the typing-based readings.</p>{% else %}<p class="muted small">No questionnaires: the report is inferred from your typing and your text only.</p>{% endif %}
+    <p class="muted small"><strong>Step 1 of 2.</strong> You will first write a short, neutral
+       <em>baseline</em> passage. This lets us compare your emotional writing with
+       <em>your own</em> normal typing rhythm.</p>
+    <button id="baseline-btn" class="btn primary big" type="button">Start baseline passage →</button>
+  </section>
+
+  <section id="panel-choose" class="card hidden">
+    <h2>Now choose what to write about</h2>
+    <p class="muted small"><strong>Step 2 of 2.</strong> Pick one. Choose a moment you are comfortable
+       recalling — you may stop at any time.</p>
     <div id="task-choices">
       {% for lvl in levels %}
       <button class="task-btn" data-level="{{ lvl.id }}" data-difficulty="{{ lvl.difficulty }}">
         <strong>{{ lvl.title }}</strong> <span class="pill">{{ lvl.difficulty }}</span>
-        <span class="muted small">{{ lvl.blurb }} · {{ lvl.variations|length }} prompts to shuffle</span>
+        <span class="muted small">{{ lvl.blurb }}</span>
       </button>
       {% endfor %}
     </div>
@@ -50,29 +64,48 @@
     <textarea id="editor" placeholder="Start writing here…" spellcheck="false"></textarea>
     <div class="row">
       <span class="muted small"><span id="wordcount">0</span> words</span>
-      <button id="finish-btn" class="btn primary">Finish &amp; rate effort →</button>
+      <button id="finish-btn" class="btn primary"><span id="finish-label">Finish →</span></button>
     </div>
     <p class="muted small">Pasting is disabled so the typing record stays genuine.</p>
   </section>
 
   <section id="panel-rate" class="card hidden">
-    <h2>How much writing effort did this take you?</h2>
-    <p class="muted small">This is <strong>your own</strong> rating of self-rated
-       writing effort — there's no right answer.</p>
-    <div class="scale" id="effort-scale">
-      <button data-v="1">1<span>Very little</span></button>
-      <button data-v="2">2</button>
-      <button data-v="3">3<span>Moderate</span></button>
-      <button data-v="4">4</button>
-      <button data-v="5">5<span>A great deal</span></button>
-    </div>
-    <button id="submit-btn" class="btn primary big" disabled>See my writing report →</button>
+    <h2>A few quick ratings</h2>
+    <p class="muted small">These are <strong>your own</strong> ratings — there are no
+       right answers. They let us check whether the typing-based scores match how
+       you actually felt.</p>
+
+    <div class="rate-block"><h3>How much writing effort did this take?</h3>
+      <div class="scale" data-key="effort">
+        <button data-v="1">1<span>Very little</span></button><button data-v="2">2</button>
+        <button data-v="3">3<span>Moderate</span></button><button data-v="4">4</button>
+        <button data-v="5">5<span>A great deal</span></button></div></div>
+
+    <div class="rate-block"><h3>How do you feel right now? (mood)</h3>
+      <div class="scale" data-key="mood">
+        <button data-v="1">1<span>Very unhappy</span></button><button data-v="2">2</button>
+        <button data-v="3">3<span>Neutral</span></button><button data-v="4">4</button>
+        <button data-v="5">5<span>Very happy</span></button></div></div>
+
+    <div class="rate-block"><h3>How focused were you while writing?</h3>
+      <div class="scale" data-key="focus">
+        <button data-v="1">1<span>Very distracted</span></button><button data-v="2">2</button>
+        <button data-v="3">3<span>Somewhat</span></button><button data-v="4">4</button>
+        <button data-v="5">5<span>Fully focused</span></button></div></div>
+
+    <div class="rate-block"><h3>How tense or anxious did you feel while writing?</h3>
+      <div class="scale" data-key="stress">
+        <button data-v="1">1<span>Not at all</span></button><button data-v="2">2</button>
+        <button data-v="3">3<span>Somewhat</span></button><button data-v="4">4</button>
+        <button data-v="5">5<span>Very</span></button></div></div>
+
+    <button id="submit-btn" class="btn primary big" disabled>See my report →</button>
     <p id="submit-status" class="muted small"></p>
   </section>
 
 </div>
 {% endblock %}
 {% block scripts %}
-<script>window.LEVELS = {{ levels | tojson }};</script>
+<script>window.LEVELS = {{ levels | tojson }}; window.BASELINE = {{ baseline | tojson }}; window.RESEARCH_MODE = {{ 1 if research_mode else 0 }};</script>
 <script src="{{ url_for('static', filename='capture.js') }}"></script>
 {% endblock %}
