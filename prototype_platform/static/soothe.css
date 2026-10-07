@@ -1,0 +1,93 @@
+/* soothe.css — recolours the existing design system (style.css / premium.css) in a
+   calm teal-sage palette. Loaded after them in base.html, so the structure, type and
+   components stay exactly as before; only colour changes. The participant writing page
+   additionally takes a mood theme: body.mood-happy (warm) / body.mood-sad (cool). */
+
+:root {
+  --ink: #1d3338; --ink-2: #3f5a5e; --muted: #4f686c; --line: #d8e3df;
+  --bg: #f1f6f4; --paper: #e3efea; --card: #ffffff; --dark: #16312f;
+  --brand: #3f7f78; --brand-2: #5a9a91; --brand-3: #8fc1b8; --brand-dark: #2e625c;
+  --accent: #3f7f78;
+  --measured: #33515a; --measured-bg: #e8f0ee;
+  --self: #3b6ea5; --self-bg: #e4eef6;
+  --exp: #c4691f; --exp-bg: #fbf0e2;
+  --valid: #2f8f6b; --valid-bg: #e6f5ee;
+  --grad: linear-gradient(135deg, #2e625c 0%, #3f7f78 48%, #6aa89d 100%);
+  --grad-soft: linear-gradient(135deg, #3f7f78, #8fc1b8);
+  --track: #e4ebe8;
+  --shadow: 0 18px 50px rgba(46, 98, 92, .16);
+}
+:root[data-theme="dark"] {
+  --ink: #e6f0ee; --ink-2: #b4c9c5; --muted: #8fa9a5; --line: #26403d;
+  --bg: #0d1b1a; --paper: #122523; --card: #142826; --dark: #0a1514;
+  --brand: #6fb3a8; --brand-2: #8cc7bd; --brand-3: #a9d8d0; --brand-dark: #a9d8d0;
+  --accent: #6fb3a8;
+  --measured: #b4c9c5; --measured-bg: #163330;
+  --self: #7fb0e3; --self-bg: #16303f;
+  --exp: #f0a04b; --exp-bg: #2e2312;
+  --grad: linear-gradient(135deg, #1f4b46 0%, #2f6d66 48%, #4f9a90 100%);
+  --grad-soft: linear-gradient(135deg, #3f7f78, #8fc1b8);
+  --track: #1f3633;
+  --shadow: 0 18px 50px rgba(0, 0, 0, .55);
+}
+
+/* literal blue in the base components -> palette colour */
+.btn.primary { box-shadow: 0 8px 20px color-mix(in oklab, var(--brand) 30%, transparent); }
+.btn.primary:hover { box-shadow: 0 12px 28px color-mix(in oklab, var(--brand) 42%, transparent); }
+.field input:focus { box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand) 16%, transparent); }
+textarea#editor:focus { box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand) 14%, transparent); }
+.scale button.sel { box-shadow: 0 8px 18px color-mix(in oklab, var(--brand) 30%, transparent); }
+.topnav { background: color-mix(in oklab, var(--card) 90%, transparent); }
+::selection { background: var(--brand); color: #fff; }
+:focus-visible { outline: 3px solid var(--brand); outline-offset: 3px; }
+a { color: var(--brand-dark); }
+
+/* ---------- mood themes (writing page) ---------- */
+body { transition: background-color .9s ease, color .9s ease; }
+.card, #editor, .prompt, .pill, .topnav { transition: background-color .6s ease, border-color .6s ease, color .6s ease; }
+:root:not([data-theme="dark"]) body.mood-happy {
+  --bg: #fdf3e3; --paper: #fbe6c2; --card: #fffaf1; --line: #efd9b8;
+  --ink: #3a2a1c; --ink-2: #6a4a2e; --muted: #7a5a3c;
+  --brand: #b45a14; --brand-2: #d27a2c; --brand-3: #f0b36b; --brand-dark: #8f450c; --accent: #b45a14;
+  --self-bg: #fdecd0; --track: #f3e3c6;
+  --grad: linear-gradient(135deg, #8f450c 0%, #b45a14 50%, #e0902f 100%);
+  --shadow: 0 18px 50px rgba(150, 90, 20, .2);
+  background: radial-gradient(60rem 28rem at 85% -10%, rgba(255, 196, 94, .45), transparent 62%), var(--bg);
+}
+:root:not([data-theme="dark"]) body.mood-sad {
+  --bg: #e8edf4; --paper: #d8e2f0; --card: #f4f7fb; --line: #cdd7e5;
+  --ink: #24303f; --ink-2: #44566d; --muted: #55677d;
+  --brand: #4f6d96; --brand-2: #6c88ad; --brand-3: #9db3d1; --brand-dark: #3b5578; --accent: #4f6d96;
+  --self-bg: #dbe5f2; --track: #d6dfeb;
+  --grad: linear-gradient(135deg, #3b5578 0%, #4f6d96 50%, #7f9ac0 100%);
+  --shadow: 0 18px 50px rgba(36, 48, 63, .2);
+  background: radial-gradient(60rem 28rem at 85% -10%, rgba(120, 145, 185, .3), transparent 62%), var(--bg);
+}
+
+/* ---------- participant start / choice ---------- */
+.mood-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 10px 0 4px; }
+.mood-choices .task-btn { margin: 0; padding: 22px 22px 24px; }
+.mood-choices .task-btn svg { width: 34px; height: 34px; margin-bottom: 10px; display: block; }
+.task-btn.happy-btn { --tone: #b45a14; --tone-bg: #fdf0d8; }
+.task-btn.sad-btn { --tone: #4f6d96; --tone-bg: #e4ebf5; }
+.task-btn.happy-btn svg, .task-btn.sad-btn svg { color: var(--tone); }
+.task-btn.happy-btn:hover, .task-btn.sad-btn:hover { border-color: var(--tone); background: var(--tone-bg); }
+.task-btn.happy-btn strong, .task-btn.sad-btn strong { color: #2c2a26; }
+.task-btn.happy-btn .muted, .task-btn.sad-btn .muted { color: #55524c; }
+.start-note { margin: 14px 0 0; }
+.field-err { color: #a3361f; font-size: .88rem; min-height: 1.3em; margin: 8px 0 0; }
+.choice-seg { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.choice-seg button { cursor: pointer; font: 600 .9rem Inter, sans-serif; color: var(--ink); background: var(--card);
+  border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 16px; text-align: left; line-height: 1.25;
+  transition: border-color .2s, background-color .2s, transform .15s; }
+.choice-seg button small { display: block; font: 400 .75rem Inter, sans-serif; color: var(--muted); margin-top: 2px; }
+.choice-seg button:hover { border-color: var(--brand); transform: translateY(-1px); }
+.choice-seg button[aria-checked="true"] { background: var(--grad); border-color: transparent; color: #fff; }
+.choice-seg button[aria-checked="true"] small { color: rgba(255, 255, 255, .8); }
+.ctx-q { display: block; margin-top: 16px; font: 600 .74rem "Space Grotesk", sans-serif; text-transform: uppercase;
+  letter-spacing: .1em; color: var(--muted); }
+.rate-block { margin: 22px 0 6px; }
+.rate-block h3 { margin: 0 0 4px; }
+
+@media (max-width: 620px) { .mood-choices { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { body, .card, #editor, .prompt, .pill, .topnav { transition: none !important; } }

@@ -1,0 +1,484 @@
+{
+  "paired_all": [
+    {
+      "feature": "mean_iki_s",
+      "n": 108,
+      "median_delta": -0.019549999999999984,
+      "share_lower": 0.6111111111111112,
+      "p": 0.01227212906256122,
+      "p_holm": 0.0613606453128061
+    },
+    {
+      "feature": "median_iki_ms",
+      "n": 108,
+      "median_delta": 4.25,
+      "share_lower": 0.46296296296296297,
+      "p": 0.3519230092701977,
+      "p_holm": 0.9879060646074527
+    },
+    {
+      "feature": "backspace_ratio",
+      "n": 108,
+      "median_delta": -0.013999999999999999,
+      "share_lower": 0.5648148148148148,
+      "p": 0.32930202153581756,
+      "p_holm": 0.9879060646074527
+    },
+    {
+      "feature": "long_pause_100",
+      "n": 108,
+      "median_delta": -0.41000000000000003,
+      "share_lower": 0.5648148148148148,
+      "p": 0.004786499072292106,
+      "p_holm": 0.028718994433752636
+    },
+    {
+      "feature": "pause_ratio",
+      "n": 108,
+      "median_delta": -0.07000000000000003,
+      "share_lower": 0.6296296296296297,
+      "p": 0.001413143663271406,
+      "p_holm": 0.009892005642899843
+    },
+    {
+      "feature": "revision_100",
+      "n": 108,
+      "median_delta": -0.2599999999999999,
+      "share_lower": 0.5462962962962963,
+      "p": 0.5099602155300167,
+      "p_holm": 0.9879060646074527
+    },
+    {
+      "feature": "rhythm_cv",
+      "n": 108,
+      "median_delta": -0.34638944979734343,
+      "share_lower": 0.7314814814814815,
+      "p": 8.674197732773482e-07,
+      "p_holm": 9.54161750605083e-06
+    },
+    {
+      "feature": "chars_per_s",
+      "n": 108,
+      "median_delta": 0.35350000000000015,
+      "share_lower": 0.3425925925925926,
+      "p": 0.0002663633732768227,
+      "p_holm": 0.0021309069862145815
+    },
+    {
+      "feature": "focus",
+      "n": 108,
+      "median_delta": 9.899999999999995,
+      "share_lower": 0.2962962962962963,
+      "p": 5.0907559857962105e-06,
+      "p_holm": 4.581680387216589e-05
+    },
+    {
+      "feature": "hesitation",
+      "n": 108,
+      "median_delta": -10.04999999999999,
+      "share_lower": 0.7037037037037037,
+      "p": 1.4807431785180259e-06,
+      "p_holm": 1.4807431785180258e-05
+    },
+    {
+      "feature": "correction",
+      "n": 108,
+      "median_delta": -3.75,
+      "share_lower": 0.5462962962962963,
+      "p": 0.05638346417626446,
+      "p_holm": 0.22553385670505785
+    },
+    {
+      "feature": "mind_space",
+      "n": 108,
+      "median_delta": -12.450000000000006,
+      "share_lower": 0.7314814814814815,
+      "p": 1.5286779979097753e-07,
+      "p_holm": 1.8344135974917304e-06
+    }
+  ],
+  "paired_matched": [
+    {
+      "feature": "mean_iki_s",
+      "n": 38,
+      "median_delta": 0.0014000000000000123,
+      "share_lower": 0.47368421052631576,
+      "p": 0.8521784276745166,
+      "p_holm": 1.0
+    },
+    {
+      "feature": "median_iki_ms",
+      "n": 38,
+      "median_delta": 5.5,
+      "share_lower": 0.42105263157894735,
+      "p": 0.37746033079094987,
+      "p_holm": 1.0
+    },
+    {
+      "feature": "backspace_ratio",
+      "n": 38,
+      "median_delta": -0.0005000000000000004,
+      "share_lower": 0.5,
+      "p": 0.8563337030388868,
+      "p_holm": 1.0
+    },
+    {
+      "feature": "long_pause_100",
+      "n": 38,
+      "median_delta": -0.10500000000000043,
+      "share_lower": 0.5,
+      "p": 0.23506647907613576,
+      "p_holm": 1.0
+    },
+    {
+      "feature": "pause_ratio",
+      "n": 38,
+      "median_delta": -0.0050000000000000044,
+      "share_lower": 0.5,
+      "p": 0.8675427193112377,
+      "p_holm": 1.0
+    },
+    {
+      "feature": "revision_100",
+      "n": 38,
+      "median_delta": 0.29499999999999993,
+      "share_lower": 0.4473684210526316,
+      "p": 0.49244451322854665,
+      "p_holm": 1.0
+    },
+    {
+      "feature": "rhythm_cv",
+      "n": 38,
+      "median_delta": -0.2124310904124792,
+      "share_lower": 0.6842105263157895,
+      "p": 0.02245430199400289,
+      "p_holm": 0.2694516239280347
+    },
+    {
+      "feature": "chars_per_s",
+      "n": 38,
+      "median_delta": 0.11999999999999988,
+      "share_lower": 0.42105263157894735,
+      "p": 0.43781869251602024,
+      "p_holm": 1.0
+    },
+    {
+      "feature": "focus",
+      "n": 38,
+      "median_delta": 6.599999999999996,
+      "share_lower": 0.3157894736842105,
+      "p": 0.12071872788388253,
+      "p_holm": 1.0
+    },
+    {
+      "feature": "hesitation",
+      "n": 38,
+      "median_delta": -5.499999999999999,
+      "share_lower": 0.631578947368421,
+      "p": 0.11132200749852927,
+      "p_holm": 1.0
+    },
+    {
+      "feature": "correction",
+      "n": 38,
+      "median_delta": 4.700000000000001,
+      "share_lower": 0.47368421052631576,
+      "p": 0.9542836940090638,
+      "p_holm": 1.0
+    },
+    {
+      "feature": "mind_space",
+      "n": 38,
+      "median_delta": -7.449999999999999,
+      "share_lower": 0.6052631578947368,
+      "p": 0.10903545579448547,
+      "p_holm": 1.0
+    }
+  ],
+  "paired_per_person": [
+    {
+      "feature": "mean_iki_s",
+      "n": 67,
+      "median_delta": -0.01579999999999998,
+      "share_lower": 0.5373134328358209,
+      "p": 0.2743222349351031,
+      "p_holm": 1.0
+    },
+    {
+      "feature": "median_iki_ms",
+      "n": 67,
+      "median_delta": 7.0,
+      "share_lower": 0.44776119402985076,
+      "p": 0.46485963107888817,
+      "p_holm": 1.0
+    },
+    {
+      "feature": "backspace_ratio",
+      "n": 67,
+      "median_delta": 0.0005000000000000004,
+      "share_lower": 0.4925373134328358,
+      "p": 0.7500428835515345,
+      "p_holm": 1.0
+    },
+    {
+      "feature": "long_pause_100",
+      "n": 67,
+      "median_delta": -0.37,
+      "share_lower": 0.5522388059701493,
+      "p": 0.06280125674263021,
+      "p_holm": 0.426457405489206
+    },
+    {
+      "feature": "pause_ratio",
+      "n": 67,
+      "median_delta": -0.043999999999999984,
+      "share_lower": 0.582089552238806,
+      "p": 0.05330717568615075,
+      "p_holm": 0.426457405489206
+    },
+    {
+      "feature": "revision_100",
+      "n": 67,
+      "median_delta": -0.0900000000000003,
+      "share_lower": 0.5074626865671642,
+      "p": 0.8106758207072069,
+      "p_holm": 1.0
+    },
+    {
+      "feature": "rhythm_cv",
+      "n": 67,
+      "median_delta": -0.28985327544418255,
+      "share_lower": 0.6865671641791045,
+      "p": 0.0023984287411537887,
+      "p_holm": 0.02300916973584765
+    },
+    {
+      "feature": "chars_per_s",
+      "n": 67,
+      "median_delta": 0.19399999999999995,
+      "share_lower": 0.40298507462686567,
+      "p": 0.054358732956572835,
+      "p_holm": 0.426457405489206
+    },
+    {
+      "feature": "focus",
+      "n": 67,
+      "median_delta": 9.1,
+      "share_lower": 0.31343283582089554,
+      "p": 0.002300916973584765,
+      "p_holm": 0.02300916973584765
+    },
+    {
+      "feature": "hesitation",
+      "n": 67,
+      "median_delta": -9.3,
+      "share_lower": 0.6716417910447762,
+      "p": 0.0013824871203173585,
+      "p_holm": 0.015207358323490943
+    },
+    {
+      "feature": "correction",
+      "n": 67,
+      "median_delta": -3.5,
+      "share_lower": 0.5373134328358209,
+      "p": 0.3206043727551874,
+      "p_holm": 1.0
+    },
+    {
+      "feature": "mind_space",
+      "n": 67,
+      "median_delta": -9.9,
+      "share_lower": 0.6865671641791045,
+      "p": 0.0007180961925116166,
+      "p_holm": 0.008617154310139399
+    }
+  ],
+  "happy_vs_sad": [
+    {
+      "feature": "mean_iki_s",
+      "n_happy": 32,
+      "n_sad": 29,
+      "median_happy": 0.28790000000000004,
+      "median_sad": 0.3334,
+      "rank_biserial": -0.14224137931034486,
+      "p": 0.3441744777877812,
+      "p_holm": 1.0
+    },
+    {
+      "feature": "median_iki_ms",
+      "n_happy": 32,
+      "n_sad": 29,
+      "median_happy": 186.75,
+      "median_sad": 238.5,
+      "rank_biserial": -0.3405172413793104,
+      "p": 0.022929289833799917,
+      "p_holm": 0.2522221881717991
+    },
+    {
+      "feature": "backspace_ratio",
+      "n_happy": 32,
+      "n_sad": 29,
+      "median_happy": 0.078,
+      "median_sad": 0.038,
+      "rank_biserial": 0.10883620689655182,
+      "p": 0.4692391951618988,
+      "p_holm": 1.0
+    },
+    {
+      "feature": "long_pause_100",
+      "n_happy": 32,
+      "n_sad": 29,
+      "median_happy": 1.175,
+      "median_sad": 0.0,
+      "rank_biserial": 0.22521551724137923,
+      "p": 0.10957989875879273,
+      "p_holm": 0.8766391900703419
+    },
+    {
+      "feature": "pause_ratio",
+      "n_happy": 32,
+      "n_sad": 29,
+      "median_happy": 0.454,
+      "median_sad": 0.406,
+      "rank_biserial": 0.17887931034482762,
+      "p": 0.2334472365012109,
+      "p_holm": 1.0
+    },
+    {
+      "feature": "revision_100",
+      "n_happy": 32,
+      "n_sad": 29,
+      "median_happy": 2.67,
+      "median_sad": 2.35,
+      "rank_biserial": 0.11637931034482762,
+      "p": 0.4387317777874815,
+      "p_holm": 1.0
+    },
+    {
+      "feature": "rhythm_cv",
+      "n_happy": 32,
+      "n_sad": 29,
+      "median_happy": 1.3826698181762993,
+      "median_sad": 0.8670501757750081,
+      "rank_biserial": 0.41163793103448265,
+      "p": 0.005938472020329711,
+      "p_holm": 0.07126166424395654
+    },
+    {
+      "feature": "chars_per_s",
+      "n_happy": 32,
+      "n_sad": 29,
+      "median_happy": 3.1334999999999997,
+      "median_sad": 2.743,
+      "rank_biserial": 0.0431034482758621,
+      "p": 0.7782389271212647,
+      "p_holm": 1.0
+    },
+    {
+      "feature": "focus",
+      "n_happy": 32,
+      "n_sad": 29,
+      "median_happy": 48.1,
+      "median_sad": 74.4,
+      "rank_biserial": -0.2941810344827587,
+      "p": 0.04950849697226575,
+      "p_holm": 0.4455764727503918
+    },
+    {
+      "feature": "hesitation",
+      "n_happy": 32,
+      "n_sad": 29,
+      "median_happy": 47.25,
+      "median_sad": 23.9,
+      "rank_biserial": 0.2230603448275863,
+      "p": 0.13686629228311212,
+      "p_holm": 0.9580640459817849
+    },
+    {
+      "feature": "correction",
+      "n_happy": 32,
+      "n_sad": 29,
+      "median_happy": 53.75,
+      "median_sad": 39.9,
+      "rank_biserial": 0.14116379310344818,
+      "p": 0.3467713710230741,
+      "p_holm": 1.0
+    },
+    {
+      "feature": "mind_space",
+      "n_happy": 32,
+      "n_sad": 29,
+      "median_happy": 47.8,
+      "median_sad": 28.4,
+      "rank_biserial": 0.30711206896551735,
+      "p": 0.040287665449285456,
+      "p_holm": 0.4028766544928546
+    }
+  ],
+  "meta": {
+    "features": {
+      "mean_iki_s": {
+        "label": "Mean inter-key delay (s)",
+        "definition": "average time between keystrokes",
+        "source": "Zulueta2018"
+      },
+      "median_iki_ms": {
+        "label": "Median inter-key delay (ms)",
+        "definition": "typical key-to-key latency",
+        "source": "Epp2011"
+      },
+      "backspace_ratio": {
+        "label": "Backspace/delete ratio",
+        "definition": "backspace presses / total key presses",
+        "source": "Zulueta2018; Vizer2009"
+      },
+      "long_pause_100": {
+        "label": "Cognitive pauses per 100 keys",
+        "definition": "gaps >= 2 s (P-burst boundary)",
+        "source": "Chenoweth&Hayes2001; Leijten&VanWaes2013"
+      },
+      "pause_ratio": {
+        "label": "Time spent in pauses",
+        "definition": "share of time in gaps >= 0.5 s",
+        "source": "Epp2011; Vizer2009"
+      },
+      "revision_100": {
+        "label": "Revision bursts per 100 keys",
+        "definition": "runs of deletions (R-bursts)",
+        "source": "Conijn2019"
+      },
+      "rhythm_cv": {
+        "label": "Rhythm variability (CV)",
+        "definition": "std / mean of inter-key interval",
+        "source": "Epp2011 (variance); Khare2026 (hint)"
+      },
+      "chars_per_s": {
+        "label": "Typing speed (chars/s)",
+        "definition": "characters per active second",
+        "source": "Epp2011; Vizer2009; Lau2018"
+      },
+      "focus": {
+        "label": "Focus index (ours)",
+        "definition": "composite, see behaviour.py",
+        "source": "this project"
+      },
+      "hesitation": {
+        "label": "Hesitation index (ours)",
+        "definition": "composite, see behaviour.py",
+        "source": "this project"
+      },
+      "correction": {
+        "label": "Self-correction index (ours)",
+        "definition": "composite, see behaviour.py",
+        "source": "this project"
+      },
+      "mind_space": {
+        "label": "Mind-space load (ours)",
+        "definition": "composite, see behaviour.py",
+        "source": "this project"
+      }
+    },
+    "n_sessions": 190,
+    "n_participants": 81
+  }
+}

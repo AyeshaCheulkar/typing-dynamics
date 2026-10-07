@@ -85,7 +85,7 @@ def research_mode():
 
 @app.route("/test")
 def test():
-    return render_template("write.html", levels=MOMENTS, baseline=BASELINE,
+    return render_template("write.html", levels=MOMENTS,
                            research_mode=research_mode())
 
 
@@ -451,7 +451,8 @@ def live_clear():
 def behaviour_page():
     return render_template(
         "behaviour_research.html", active="behaviour",
-        ext=affect.load_validation_json(), meta=bh.INDEX_META, order=bh.INDEX_ORDER,
+        ext=affect.load_validation_json(), lit=affect.load_literature_validation(),
+        meta=bh.INDEX_META, order=bh.INDEX_ORDER,
         live=affect.live_validation(db.list_sessions()))
 
 

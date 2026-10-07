@@ -66,6 +66,9 @@
     <h2>Headline test — emotional writing vs the person's own baseline</h2>
     <p class="lead-q">H1: rhythm variability (CV of the inter-key interval) is lower when writing about an
        emotional moment than in the same person's neutral baseline passage.</p>
+    {% if live.replication.n_pairs == 0 %}<p class="caveat small">The current participant flow no longer asks for a baseline passage, so no
+       baseline-and-emotional pairs are being collected. This test runs only if a baseline is added back
+       (or on returning participants with two sessions).</p>{% endif %}
     <p class="muted small">Why this test: a personal-baseline classifier did <em>not</em> improve happy-vs-sad
        accuracy on EmoSurv, but a paired within-person comparison revealed one effect that survives length
        matching. We derived H1 from EmoSurv and now test it prospectively on our own participants
@@ -153,6 +156,30 @@
     </ul>
     <p class="caveat small">Small sample, self-selected recall, no diagnostic claim. Differences between emotions in
        external data are group-level; they do not let us label an individual's feelings.</p>
+  </div></div>
+
+  <div class="paper-sec"><div class="paper-n">07</div><div>
+    <h2>Literature formulas tested on EmoSurv</h2>
+    {% if lit %}
+    <p class="muted small">Each feature is defined as in its cited paper and tested the same way, with Holm correction across
+       {{ lit.meta.features|length }} features. Within person = emotional block minus the same person's neutral block.
+       Full source list and verification status: <code>LITERATURE.md</code>.</p>
+    <table class="aff-table">
+      <tr><th>Feature</th><th>Source</th><th>Per person: median Δ</th><th>Holm p</th><th>Length-matched Holm p</th><th>Happy vs sad Holm p</th><th>Verdict</th></tr>
+      {% for r in lit.paired_per_person %}{% set m = lit.meta.features[r.feature] %}
+      {% set lm = lit.paired_matched[loop.index0] %}{% set hs = lit.happy_vs_sad[loop.index0] %}
+      <tr><td><b>{{ m.label }}</b></td><td class="small">{{ m.source }}</td>
+        <td>{{ '%+.3f'|format(r.median_delta) }}</td><td>{{ '%.3f'|format(r.p_holm) }}</td>
+        <td>{{ '%.2f'|format(lm.p_holm) }}</td><td>{{ '%.2f'|format(hs.p_holm) }}</td>
+        <td>{% if r.p_holm < 0.05 %}<span class="badge self-badge">supported</span>{% else %}<span class="badge exp-badge">not supported</span>{% endif %}</td></tr>
+      {% endfor %}
+    </table>
+    <p class="muted small">"Supported" means the within-person difference survives multiple-testing correction. No feature separates
+       happy from sad after correction, and none has been tested against focus or stress labels yet. Features that look
+       significant before length-matching are mostly a passage-length effect.</p>
+    {% else %}
+    <p class="muted">Run <code>python prototype_platform/validate_literature_formulas.py</code> to generate this table.</p>
+    {% endif %}
   </div></div>
 </div>
 {% endblock %}

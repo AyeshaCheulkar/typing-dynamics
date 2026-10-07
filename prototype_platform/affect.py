@@ -288,3 +288,11 @@ def load_validation_json():
             return json.load(fh)
     except (OSError, ValueError):
         return None
+
+
+def load_literature_validation():
+    try:
+        with open(os.path.join(_HERE, "literature_validation.json"), encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return None
