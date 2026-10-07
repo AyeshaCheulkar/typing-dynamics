@@ -27,6 +27,7 @@ from flask import (Flask, render_template, request, jsonify, abort, Response,
 
 import affect
 import behaviour as bh
+import plain_report as pr
 import db
 import predict
 import recommendations as recs
@@ -260,9 +261,17 @@ def report(session_id):
         "compare": affect.compare_self_report(aff.get("indices"), s),
     }
 
+    _idx = aff.get("indices")
+    plain = {
+        "overview": pr.overview(feats, context, _idx),
+        "cards": pr.cards(feats, context, _idx),
+        "tone": pr.tone(aff.get("text"), s.get("emotion")),
+        "compare": pr.compare(_idx, s),
+        "evidence": pr.EVIDENCE,
+    }
     _v = affect.load_validation_json()
     return render_template(
-        "report.html", s=s, insight=insight,
+        "report.html", s=s, insight=insight, plain=plain,
         ext_shift=(_v or {}).get("engagement_shift"),
         ext_rule=(_v or {}).get("engagement_rule"),
         has_self=bool(s.get("self_rated_effort")), feats=feats, estimate=estimate, context=context,
