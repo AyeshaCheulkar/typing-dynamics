@@ -1,33 +1,61 @@
-{% extends "base.html" %}
-{% block title %}Writing Analytics{% endblock %}
+{% extends "calm_base.html" %}
+{% block title %}Typing &amp; Mind-space{% endblock %}
 {% block body %}
-<div class="topnav">
-  <div class="wordmark">Writing Analytics</div>
-  <a class="navlink" href="{{ url_for('admin_login') }}">Researcher login →</a>
-</div>
+{% set heights = [62,18,74,30,88,24,52,12,70,40,92,20,58,34,80,26,
+                  48,36,60,32,54,38,50,42,
+                  46,44,48,45,47,44,46,45,48,44,46,45,47,44,46,45,46,45,47,45] %}
+<div class="calm" data-mood="neutral">
+  <header class="cm-top">
+    <a class="cm-mark" href="{{ url_for('home') }}">Typing &amp; Mind-space</a>
+    <a class="cm-link" href="{{ url_for('admin_login') }}">Researcher login</a>
+  </header>
 
-<section class="hero">
-  <div class="ghost-word">WRITE</div>
-  <div class="hero-inner">
-    <div class="eyebrow">Research prototype · Typing dynamics</div>
-    <h1>See how<br>you write</h1>
-    <p class="lead">Write a short passage and get an objective read of your writing
-      process — speed, pauses, revisions and time — with an experimental, fully
-      explained estimate of your self-rated writing effort.</p>
-    <div class="cta">
-      <a class="btn primary big" href="{{ url_for('test') }}">Start the writing test</a>
-      <a class="btn ghost big" href="{{ url_for('admin_login') }}">Researcher login</a>
-    </div>
-    <p class="disc">A research prototype. It describes writing-process behaviour and
-      shows an experimental estimate for research purposes only — it does
-      <strong>not</strong> measure mental effort, stress, intelligence, or any
-      psychological state.</p>
-  </div>
-</section>
+  <main>
+    <section class="lp-hero">
+      <div class="lp-copy">
+        <h1>Your typing has a rhythm. <em>Feelings</em> may change it.</h1>
+        <p class="lp-lead">When you pause, rush, or go back to fix a word, your keyboard quietly records how your
+          mind is moving. This study looks at how remembering a happy or a sad moment shapes that rhythm: your
+          focus, your hesitation, and the steadiness of your mind-space.</p>
+        <div class="lp-cta">
+          <a class="cm-btn" href="{{ url_for('test') }}">Begin
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <span class="lp-time">About five minutes. No questionnaires.</span>
+        </div>
+      </div>
+      <figure class="lp-rhythm">
+        <div class="rhythm" aria-hidden="true">
+          {% for h in heights %}<i style="--h: {{ h }}; --i: {{ loop.index0 }}; --t: {{ '%.3f'|format(loop.index0 / (heights|length - 1)) }}"></i>{% endfor %}
+        </div>
+        <figcaption>The gaps between keystrokes, drawn as a rhythm. Uneven on the left, settling toward the right.</figcaption>
+      </figure>
+    </section>
 
-<div class="feature-strip">
-  <div><span class="eyebrow">Capture</span><p>Keystroke timing recorded as you type</p></div>
-  <div><span class="eyebrow">Analyse</span><p>Speed · pauses · revisions · writing time</p></div>
-  <div><span class="eyebrow">Explain</span><p>Every estimate broken down with SHAP</p></div>
+    <section class="lp-path" aria-label="What happens">
+      <ol>
+        <li><h2>Settle in</h2><p>A short, neutral warm-up so we learn your own usual typing rhythm.</p></li>
+        <li><h2>Write freely</h2><p>Choose a happy or a sad moment and write about whatever comes to mind. There is no right way.</p></li>
+        <li><h2>See your pattern</h2><p>Get a gentle report on your rhythm, focus and the tone of your words.</p></li>
+      </ol>
+    </section>
+
+    <section class="lp-notes">
+      <div>
+        <h2>We read how you type, not who you are</h2>
+        <p>The report describes patterns in your typing and the emotional tone of your text. It is a research
+          prototype, and it is not a diagnosis or a measure of your mental health.</p>
+        <p>Choose a moment you are comfortable recalling. You can stop at any time by closing the page.</p>
+      </div>
+      <dl>
+        <div><dt>Pauses and hesitation</dt><dd>How often, and for how long, you stop to think.</dd></div>
+        <div><dt>Rhythm steadiness</dt><dd>How even the timing is from one keystroke to the next.</dd></div>
+        <div><dt>Self-correction</dt><dd>How much you go back, delete and rephrase.</dd></div>
+        <div><dt>Tone of your words</dt><dd>Whether what you wrote reads as positive, negative or mixed.</dd></div>
+      </dl>
+    </section>
+  </main>
+
+  <footer class="cm-foot"><strong>Research prototype.</strong> Your keystroke timing and text are stored under your participant ID for this study.</footer>
 </div>
 {% endblock %}

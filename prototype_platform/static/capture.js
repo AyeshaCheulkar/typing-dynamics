@@ -1,9 +1,15 @@
 /* capture.js — the prototype's OWN keystroke logger + participant flow.
    Records keydown/keyup/paste with ms timestamps and caret position, in the exact
-   event shape ../features.py expects. Independent of the Stage-1 logger. */
+   event shape ../features.py expects. Independent of the Stage-1 logger.
+
+   Flow: participant ID + choice of a happy/sad moment -> neutral warm-up (baseline)
+   in the neutral theme -> the chosen moment in its mood theme -> (research mode only)
+   ratings -> report. The page theme is the data-mood attribute on #calm. */
 
 (function () {
   "use strict";
+
+  var root = document.getElementById("calm");
 
   // --- Laptop/desktop-only check ------------------------------------------
   var isTouch = ("ontouchstart" in window) || navigator.maxTouchPoints > 0;
@@ -13,102 +19,103 @@
   }
 
   var state = {
-    code: "", taskId: "", difficulty: "", prompt: "",
+    code: "", lvl: null, taskId: "", difficulty: "", prompt: "",
     startedAt: 0, endedAt: 0, events: [], phase: "", baselineId: null
   };
 
   var panelStart = document.getElementById("panel-start");
+  var panelChoose = document.getElementById("panel-choose");
   var panelWrite = document.getElementById("panel-write");
   var panelRate = document.getElementById("panel-rate");
   var editor = document.getElementById("editor");
   var wordcount = document.getElementById("wordcount");
-
-  // --- Task pools (from the server) + random / shuffle selection ----------
+  var finishBtn = document.getElementById("finish-btn");
+  var finishLabel = document.getElementById("finish-label");
+  var codeInput = document.getElementById("code");
+  var continueBtn = document.getElementById("baseline-btn");
   var LEVELS = window.LEVELS || [];
-  state.pool = [];        // variations for the chosen level
-  state.varIndex = -1;    // index of the current variation
 
   function levelById(id) {
     for (var i = 0; i < LEVELS.length; i++) if (LEVELS[i].id === id) return LEVELS[i];
     return null;
   }
-  function applyVariation(idx) {
-    state.varIndex = idx;
-    var v = state.pool[idx];
-    state.taskId = v.id;
-    state.prompt = v.prompt;
-    document.getElementById("prompt-text").textContent = v.prompt;
-  }
-  function randomIndex(exclude) {
-    if (state.pool.length <= 1) return 0;
-    var i;
-    do { i = Math.floor(Math.random() * state.pool.length); } while (i === exclude);
-    return i;
+  function now() { return Date.now() - state.startedAt; }
+  function show(panel) {
+    [panelStart, panelChoose, panelWrite, panelRate].forEach(function (p) {
+      p.classList.toggle("hidden", p !== panel);
+    });
+    window.scrollTo(0, 0);
   }
 
-  var panelChoose = document.getElementById("panel-choose");
-  var shuffleBtn0 = document.getElementById("shuffle-btn");
-  var finishLabel = document.getElementById("finish-label");
+  // --- Step 1: participant ID + choose a happy / sad moment ----------------
+  var cards = document.querySelectorAll(".mood-card");
+  var context = {};                       // typing skill + keyboard (both modes)
+  // generic segmented choice: stores the selected data-v under the group's data-key
+  function wireSeg(seg, store, after) {
+    seg.querySelectorAll("button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        store[seg.dataset.key] = b.dataset.v;
+        seg.querySelectorAll("button").forEach(function (x) {
+          x.setAttribute("aria-checked", x === b ? "true" : "false");
+        });
+        if (after) after();
+      });
+    });
+  }
+  document.querySelectorAll(".cm-ctx .seg").forEach(function (seg) { wireSeg(seg, context, refreshContinue); });
+  function refreshContinue() {
+    continueBtn.disabled = !((codeInput.value || "").trim() && state.lvl &&
+                             context.typing_skill && context.keyboard);
+  }
+  cards.forEach(function (card) {
+    card.addEventListener("click", function () {
+      state.lvl = levelById(card.dataset.level);
+      cards.forEach(function (c) { c.setAttribute("aria-checked", c === card ? "true" : "false"); });
+      refreshContinue();
+    });
+  });
+  codeInput.addEventListener("input", refreshContinue);
 
   function beginWriting() {
     state.events = [];
     editor.value = "";
     wordcount.textContent = "0";
-    panelStart.classList.add("hidden");
-    panelChoose.classList.add("hidden");
-    panelWrite.classList.remove("hidden");
+    show(panelWrite);
     state.startedAt = Date.now();
     editor.focus();
   }
 
-  // --- Step 1: neutral BASELINE passage (same person, same prompt) --------
-  document.getElementById("baseline-btn").addEventListener("click", function () {
-    var code = (document.getElementById("code").value || "").trim();
-    if (!code) { alert("Please enter a participant code first."); return; }
+  // --- Step 2: neutral BASELINE warm-up (neutral theme, same prompt for all) -
+  continueBtn.addEventListener("click", function () {
+    var code = (codeInput.value || "").trim();
+    if (!code || !state.lvl) return;
     state.code = code;
     state.phase = "baseline";
     state.baselineId = null;
     var v = (window.BASELINE.variations || [])[0];
     state.taskId = v.id;
     state.difficulty = window.BASELINE.difficulty;
-    state.prompt = v.prompt;
-    state.pool = [];
-    document.getElementById("level-label").textContent = "Baseline passage · Step 1 of 2";
+    root.dataset.mood = "neutral";
+    document.getElementById("level-label").textContent = "Warm-up";
     document.getElementById("prompt-text").textContent = v.prompt;
-    shuffleBtn0.classList.add("hidden");
-    finishLabel.textContent = "Finish baseline →";
+    editor.placeholder = "Start writing here…";
+    finishLabel.textContent = "Finish warm-up";
     beginWriting();
   });
 
-  // --- Step 2: choose happy / sad moment, then a random prompt ------------
-  document.querySelectorAll(".task-btn").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      var lvl = levelById(btn.dataset.level);
-      if (!lvl) return;
-      state.phase = "moment";
-      state.difficulty = btn.dataset.difficulty;
-      state.pool = lvl.variations;
-      document.getElementById("level-label").textContent =
-        lvl.title + " · Step 2 of 2";
-      applyVariation(randomIndex(-1));   // random prompt to start
-      shuffleBtn0.classList.remove("hidden");
-      finishLabel.textContent = window.RESEARCH_MODE ? "Finish & rate how it felt →" : "Finish & see my report →";
-      beginWriting();
-    });
+  // --- Step 3: the chosen moment, in its mood theme, with no specific prompt -
+  document.getElementById("moment-btn").addEventListener("click", function () {
+    var lvl = state.lvl;
+    state.phase = "moment";
+    state.taskId = lvl.variations[0].id;
+    state.difficulty = lvl.difficulty;
+    root.dataset.mood = lvl.id;
+    document.getElementById("level-label").textContent = lvl.title;
+    document.getElementById("prompt-text").textContent = lvl.free_prompt;
+    editor.placeholder = "Write about whatever comes to mind…";
+    finishLabel.textContent = window.RESEARCH_MODE ? "Finish and rate how it felt" : "Finish and see my report";
+    beginWriting();
   });
-
-  // Shuffle to a different prompt in the same level.
-  var shuffleBtn = document.getElementById("shuffle-btn");
-  if (shuffleBtn) shuffleBtn.addEventListener("click", function () {
-    if (!state.pool.length) return;
-    applyVariation(randomIndex(state.varIndex));
-    if (editor.value.trim().length) {
-      // if they had started, don't wipe silently — just refocus the editor
-    }
-    editor.focus();
-  });
-
-  function now() { return Date.now() - state.startedAt; }
 
   // --- Keystroke capture ---------------------------------------------------
   editor.addEventListener("keydown", function (e) {
@@ -130,12 +137,13 @@
     wordcount.textContent = w;
   });
 
-  // --- Step 2 -> 3: finish -------------------------------------------------
+  // --- Saving --------------------------------------------------------------
   function postSession(extra) {
     var body = {
       participant_code: state.code, task_id: state.taskId, difficulty: state.difficulty,
       started_at: state.startedAt, ended_at: state.endedAt,
-      final_text: editor.value, events: state.events
+      final_text: editor.value, events: state.events,
+      typing_skill: context.typing_skill, keyboard: context.keyboard
     };
     for (var k in extra) body[k] = extra[k];
     return fetch("/api/submit", {
@@ -144,40 +152,52 @@
     }).then(function (r) { return r.json(); });
   }
 
-  document.getElementById("finish-btn").addEventListener("click", function () {
+  function failBack(msg) {
+    finishBtn.disabled = false;
+    alert(msg);
+  }
+
+  // --- Finish: warm-up -> hand-over; moment -> (ratings ->) report ----------
+  finishBtn.addEventListener("click", function () {
     if (editor.value.trim().length < 20) {
       if (!confirm("That's quite short. Finish anyway?")) return;
     }
     state.endedAt = Date.now();
+    finishBtn.disabled = true;
+
     if (state.phase === "baseline") {
-      var btn = document.getElementById("finish-btn");
-      btn.disabled = true;
       postSession({}).then(function (res) {
-        btn.disabled = false;
-        if (res.ok) {
-          state.baselineId = res.session_id;
-          panelWrite.classList.add("hidden");
-          panelChoose.classList.remove("hidden");
-        } else { alert("Could not save the baseline: " + (res.error || "error")); }
-      }).catch(function () { btn.disabled = false; alert("Network error."); });
+        finishBtn.disabled = false;
+        if (!res.ok) { return failBack("Could not save the warm-up: " + (res.error || "error")); }
+        state.baselineId = res.session_id;
+        var lvl = state.lvl;
+        root.dataset.mood = lvl.id;                 // the page takes on the chosen mood
+        document.getElementById("ready-title").textContent = lvl.ready_title;
+        document.getElementById("ready-text").textContent = lvl.ready_text;
+        show(panelChoose);
+      }).catch(function () { failBack("Network error. Please try again."); });
       return;
     }
-    panelWrite.classList.add("hidden");
-    if (!window.RESEARCH_MODE) {              // label-free participant mode: no ratings
-      document.getElementById("finish-btn").disabled = true;
+
+    if (!window.RESEARCH_MODE) {                    // label-free participant mode
       postSession({ baseline_id: state.baselineId }).then(function (res) {
         if (res.ok) { window.location.href = res.report_url; }
-        else { alert("Could not save: " + (res.error || "error")); panelWrite.classList.remove("hidden"); document.getElementById("finish-btn").disabled = false; }
-      }).catch(function () { alert("Network error."); panelWrite.classList.remove("hidden"); document.getElementById("finish-btn").disabled = false; });
+        else { failBack("Could not save: " + (res.error || "error")); }
+      }).catch(function () { failBack("Network error. Please try again."); });
       return;
     }
-    panelRate.classList.remove("hidden");
+    finishBtn.disabled = false;
+    show(panelRate);
   });
 
-  // --- Step 3: ratings (effort, mood, focus, stress) + submit --------------
+  // --- Research mode: ratings (effort, mood, focus, stress) + submit --------
   var submitBtn = document.getElementById("submit-btn");
   var ratings = {};
-  var KEYS = ["effort", "mood", "focus", "stress"];
+  var KEYS = ["effort", "mood", "focus", "stress", "relive", "arousal", "wander"];
+  function refreshSubmit() {
+    submitBtn.disabled = !(KEYS.every(function (k) { return ratings[k]; }) && ratings.interrupted !== undefined);
+  }
+  wireSeg(document.getElementById("interrupted-seg"), ratings, refreshSubmit);
   document.querySelectorAll("#panel-rate .scale").forEach(function (scale) {
     scale.querySelectorAll("button").forEach(function (b) {
       b.addEventListener("click", function () {
@@ -185,7 +205,7 @@
         scale.querySelectorAll("button")
           .forEach(function (x) { x.classList.remove("sel"); });
         b.classList.add("sel");
-        submitBtn.disabled = !KEYS.every(function (k) { return ratings[k]; });
+        refreshSubmit();
       });
     });
   });
@@ -196,6 +216,8 @@
     postSession({
       self_rated_effort: ratings.effort, self_mood: ratings.mood,
       self_focus: ratings.focus, self_stress: ratings.stress,
+      self_relive: ratings.relive, self_arousal: ratings.arousal,
+      self_wander: ratings.wander, interrupted: ratings.interrupted,
       baseline_id: state.baselineId
     }).then(function (res) {
       if (res.ok) { window.location.href = res.report_url; }

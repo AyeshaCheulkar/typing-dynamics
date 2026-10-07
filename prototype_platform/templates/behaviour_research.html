@@ -103,7 +103,18 @@
       {% endfor %}
     </table>
     <p class="muted small">A negative median Δ with a small p would replicate the external finding. A null result
-       is reported as such.</p>
+       is reported as such. Sessions where the participant said they were interrupted are excluded
+       ({{ rp.n_interrupted }} so far).</p>
+    {% if rp.by_skill %}
+    <h3 class="aff-h">Does typing skill change the shift? (median Δ CV, descriptive)</h3>
+    <table class="aff-table">
+      <tr><th>Typing style</th><th>n pairs</th><th>Median Δ CV</th></tr>
+      {% for x in rp.by_skill %}<tr><td>{{ x.label }}</td><td>{{ x.n }}</td><td>{{ x.median }}</td></tr>{% endfor %}
+    </table>
+    {% endif %}
+    <p class="muted small">Manipulation check: people who relived the moment more vividly should show a larger drop in CV.
+       {% if rp.relive %}Spearman ρ (relived vividly ↔ Δ CV) = {{ '%+.2f'|format(rp.relive.rho) }}, p = {{ rp.relive.p }}, n = {{ rp.relive.n }} (a negative ρ is the expected direction).
+       {% else %}Needs ≥ {{ live.min_n }} research-mode sessions ({{ rp.n_relive }} so far).{% endif %}</p>
   </div></div>
 
   <div class="paper-sec"><div class="paper-n">05</div><div>

@@ -150,16 +150,24 @@ def replication_test(sessions):
     prospective replication."""
     from scipy import stats
     by_id = {s["id"]: s for s in sessions}
-    deltas, matched = [], []
+    deltas, matched, relive, skill = [], [], [], {}
+    n_interrupted = 0
     for s in sessions:
         b = by_id.get(s.get("baseline_id"))
         if not b or s.get("emotion") not in ("happy", "sad"):
+            continue
+        if s.get("interrupted") == 1:          # quality control: drop interrupted sessions
+            n_interrupted += 1
             continue
         sh = rhythm_shift(s["features"], b["features"])
         if not sh:
             continue
         d = sh["cv"] - sh["base_cv"]
         deltas.append(d)
+        if s.get("self_relive"):
+            relive.append((s["self_relive"], d))
+        if s.get("typing_skill"):
+            skill.setdefault(s["typing_skill"], []).append(d)
         if sh["length_matched"]:
             matched.append(d)
 
@@ -172,7 +180,14 @@ def replication_test(sessions):
         return {"n": len(ds), "ready": True, "median": round(ds_sorted[len(ds) // 2], 3),
                 "share_lower": round(sum(x < 0 for x in ds) / len(ds), 2),
                 "p": round(float(p), 4) if p is not None else None}
-    return {"all": summ(deltas), "matched": summ(matched), "n_pairs": len(deltas)}
+    names = {"touch": "Touch typist", "some": "Some looking at keys", "hunt": "Hunt-and-peck"}
+    by_skill = [{"label": names[k], "n": len(v), "median": round(sorted(v)[len(v) // 2], 3)}
+                for k, v in skill.items() if k in names]
+    return {"all": summ(deltas), "matched": summ(matched), "n_pairs": len(deltas),
+            "n_interrupted": n_interrupted, "by_skill": by_skill,
+            "relive": _spearman([a for a, _ in relive], [b for _, b in relive])
+                      if relive else None,
+            "n_relive": len(relive)}
 
 
 def _level(score):
@@ -190,9 +205,13 @@ def compare_self_report(indices, s):
                     "index_name": "Focus index", "index": indices["focus"],
                     "index_level": _level(indices["focus"])})
     if s.get("self_stress"):
-        out.append({"label": "Stress / anxiety", "self": s["self_stress"],
+        out.append({"label": "Tension", "self": s["self_stress"],
                     "index_name": "Mind-space load", "index": indices["mind_space"],
                     "index_level": _level(indices["mind_space"])})
+    if s.get("self_wander"):
+        out.append({"label": "Focus (from mind-wandering)", "self": 6 - s["self_wander"],
+                    "index_name": "Focus index", "index": indices["focus"],
+                    "index_level": _level(indices["focus"])})
     for r in out:
         d = abs(r["self"] - r["index_level"])
         r["agreement"] = ("Close match" if d <= 1 else
@@ -226,7 +245,9 @@ def live_validation(sessions):
     pair_defs = [("self_focus", "focus", "Self-rated focus ↔ Focus index"),
                  ("self_stress", "mind_space", "Self-rated stress ↔ Mind-space load"),
                  ("self_stress", "hesitation", "Self-rated stress ↔ Hesitation"),
-                 ("self_mood", "focus", "Self-rated mood ↔ Focus index")]
+                 ("self_mood", "focus", "Self-rated mood ↔ Focus index"),
+                 ("self_wander", "focus", "Mind-wandering ↔ Focus index (expect negative)"),
+                 ("self_arousal", "mind_space", "Self-rated energy ↔ Mind-space load")]
     for col, idx, label in pair_defs:
         pts = [(s[col], s["affect"]["indices"][idx]) for s in rows if s.get(col)]
         res = _spearman([a for a, _ in pts], [b for _, b in pts])

@@ -65,7 +65,10 @@ def init_db():
     have = {r[1] for r in conn.execute("PRAGMA table_info(pt_sessions)")}
     for col, typ in (("emotion", "TEXT"), ("self_mood", "INTEGER"),
                      ("self_focus", "INTEGER"), ("self_stress", "INTEGER"),
-                     ("affect_json", "TEXT"), ("baseline_id", "INTEGER")):
+                     ("affect_json", "TEXT"), ("baseline_id", "INTEGER"),
+                     ("typing_skill", "TEXT"), ("keyboard", "TEXT"),
+                     ("self_relive", "INTEGER"), ("self_arousal", "INTEGER"),
+                     ("self_wander", "INTEGER"), ("interrupted", "INTEGER")):
         if col not in have:
             conn.execute("ALTER TABLE pt_sessions ADD COLUMN %s %s" % (col, typ))
     conn.commit()
@@ -84,8 +87,9 @@ def insert_session(meta, events, features, predicted_effort, affect=None):
                  duration_ms, final_text, char_count, word_count,
                  self_rated_effort, predicted_effort, behavioural_valid,
                  features_json, emotion, self_mood, self_focus, self_stress,
-                 affect_json, baseline_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 affect_json, baseline_id, typing_skill, keyboard, self_relive,
+                 self_arousal, self_wander, interrupted)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 meta["participant_code"], meta["task_id"], meta.get("difficulty"),
@@ -100,7 +104,9 @@ def insert_session(meta, events, features, predicted_effort, affect=None):
                 meta.get("emotion"), meta.get("self_mood"),
                 meta.get("self_focus"), meta.get("self_stress"),
                 json.dumps(affect) if affect is not None else None,
-                meta.get("baseline_id"),
+                meta.get("baseline_id"), meta.get("typing_skill"), meta.get("keyboard"),
+                meta.get("self_relive"), meta.get("self_arousal"), meta.get("self_wander"),
+                meta.get("interrupted"),
             ),
         )
         sid = cur.lastrowid

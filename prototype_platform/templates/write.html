@@ -1,108 +1,163 @@
-{% extends "base.html" %}
-{% block title %}Writing Test{% endblock %}
+{% extends "calm_base.html" %}
+{% block title %}Write · Typing &amp; Mind-space{% endblock %}
 {% block body %}
-<div class="topnav">
-  <a class="wordmark" href="{{ url_for('home') }}">Writing Analytics</a>
-  <a class="navlink" href="{{ url_for('home') }}">← Home</a>
-</div>
-<div class="wrap">
+<div class="calm" id="calm" data-mood="neutral">
+  <header class="cm-top">
+    <a class="cm-mark" href="{{ url_for('home') }}">Typing &amp; Mind-space</a>
+    <a class="cm-link" href="{{ url_for('home') }}">Home</a>
+  </header>
 
-  <div id="device-block" class="overlay hidden">
-    <div class="card center">
-      <h2>Please use a laptop or desktop</h2>
-      <p class="muted">This study measures typing behaviour and needs a physical
-         keyboard. Please reopen this page on a laptop or desktop.</p>
+  <div id="device-block" class="cm-overlay hidden" role="alertdialog" aria-labelledby="db-title">
+    <div class="sheet">
+      <h2 id="db-title">Please use a laptop or desktop</h2>
+      <p class="cm-sub" style="margin:0">This study measures typing rhythm and needs a physical keyboard.
+        Please reopen this page on a laptop or desktop.</p>
     </div>
   </div>
 
-  <header class="site-head">
-    <div class="eyebrow">Emotion-writing test</div>
-    <h1>Write about a moment that mattered</h1>
-    <p class="muted">You will write about <strong>a happy moment or a sad moment</strong>.
-       We record <em>how</em> you type, and the tone of what you wrote, to study how
-       writing about feelings relates to focus and typing behaviour. This is a
-       research prototype — it is <strong>not</strong> a diagnosis or a measure of
-       your mental health.</p>
-  </header>
+  <main class="cm-main">
 
-  <section id="panel-start" class="card">
-    <h2>Before you start</h2>
-    <p>Choose one prompt below and write for about 2–4 minutes. The page records
-       your keystroke timing and analyses the emotional tone of your text. Afterwards
-       you will rate how you felt and how much effort it took.</p>
-    <p class="muted small">Pick a moment you are comfortable recalling. You may stop
-       at any time — just close this page.</p>
-    <label class="field">Participant code
-      <input id="code" type="text" placeholder="e.g. P01" autocomplete="off"></label>
-    {% if research_mode %}<p class="caveat small">Research mode: you will also be asked to rate effort, mood, focus and stress. These are used only to validate the typing-based readings.</p>{% else %}<p class="muted small">No questionnaires: the report is inferred from your typing and your text only.</p>{% endif %}
-    <p class="muted small"><strong>Step 1 of 2.</strong> You will first write a short, neutral
-       <em>baseline</em> passage. This lets us compare your emotional writing with
-       <em>your own</em> normal typing rhythm.</p>
-    <button id="baseline-btn" class="btn primary big" type="button">Start baseline passage →</button>
-  </section>
+    <!-- ID + choose a moment -->
+    <section id="panel-start" class="cm-panel">
+      <h1 class="cm-h">Let&rsquo;s begin</h1>
+      <p class="cm-sub">Tell us who you are and which kind of moment you would like to write about. Pick one
+        you are comfortable recalling; you can stop at any time.</p>
 
-  <section id="panel-choose" class="card hidden">
-    <h2>Now choose what to write about</h2>
-    <p class="muted small"><strong>Step 2 of 2.</strong> Pick one. Choose a moment you are comfortable
-       recalling — you may stop at any time.</p>
-    <div id="task-choices">
-      {% for lvl in levels %}
-      <button class="task-btn" data-level="{{ lvl.id }}" data-difficulty="{{ lvl.difficulty }}">
-        <strong>{{ lvl.title }}</strong> <span class="pill">{{ lvl.difficulty }}</span>
-        <span class="muted small">{{ lvl.blurb }}</span>
+      <label class="cm-field" for="code">Participant ID
+        <input id="code" type="text" placeholder="e.g. P01" autocomplete="off" spellcheck="false">
+      </label>
+
+      <fieldset class="cm-moods">
+        <legend>Which moment would you like to write about?</legend>
+        <div class="mood-row" role="radiogroup" aria-label="Choose a moment">
+          {% for lvl in levels %}
+          <button type="button" class="task-btn mood-card" role="radio" aria-checked="false"
+                  data-level="{{ lvl.id }}" data-difficulty="{{ lvl.difficulty }}">
+            {% if lvl.id == 'happy' %}
+            <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="20" cy="20" r="7"/><path d="M20 4v4M20 32v4M4 20h4M32 20h4M8.7 8.7l2.8 2.8M28.5 28.5l2.8 2.8M31.3 8.7l-2.8 2.8M11.5 28.5l-2.8 2.8"/></svg>
+            {% else %}
+            <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 24a7 7 0 0 1 1.2-13.9A9 9 0 0 1 29.4 12 6 6 0 0 1 29 24H11z"/><path d="M15 29v4M21 29v6M27 29v4"/></svg>
+            {% endif %}
+            <strong>{{ lvl.title }}</strong>
+            <span class="mc-d">{{ lvl.blurb }}</span>
+            <span class="mc-tick">Selected</span>
+          </button>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <fieldset class="cm-moods cm-ctx">
+        <legend>About your typing</legend>
+        <p class="cm-note" style="margin:0 0 12px">These help us account for differences between typists. They are not a test.</p>
+        <div class="ctx-grid">
+          <div class="seg-block"><span class="seg-q" id="q-skill">How do you usually type?</span>
+            <div class="seg" role="radiogroup" aria-labelledby="q-skill" data-key="typing_skill">
+              <button type="button" role="radio" aria-checked="false" data-v="touch">Touch typist<small>rarely look at keys</small></button>
+              <button type="button" role="radio" aria-checked="false" data-v="some">Mixed<small>sometimes look</small></button>
+              <button type="button" role="radio" aria-checked="false" data-v="hunt">Hunt-and-peck<small>look at keys</small></button>
+            </div></div>
+          <div class="seg-block"><span class="seg-q" id="q-kb">Which keyboard are you using?</span>
+            <div class="seg" role="radiogroup" aria-labelledby="q-kb" data-key="keyboard">
+              <button type="button" role="radio" aria-checked="false" data-v="laptop">Laptop</button>
+              <button type="button" role="radio" aria-checked="false" data-v="external">External</button>
+            </div></div>
+        </div>
+      </fieldset>
+
+      <button id="baseline-btn" class="cm-btn" type="button" disabled>Continue
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </button>
-      {% endfor %}
-    </div>
-  </section>
+      <p class="cm-note">First comes a short neutral warm-up about your surroundings, then your chosen moment.</p>
+      {% if research_mode %}
+      <p class="cm-note mode">Research mode: after writing you will rate effort, mood, focus and tension. These ratings are used only to check the typing-based readings.</p>
+      {% else %}
+      <p class="cm-note">There are no questionnaires. Your report comes from your typing and your words alone.</p>
+      {% endif %}
+    </section>
 
-  <section id="panel-write" class="card hidden">
-    <div class="prompt-bar">
-      <span class="pill" id="level-label"></span>
-      <button id="shuffle-btn" class="btn" type="button">🔀 Shuffle question</button>
-    </div>
-    <div class="prompt" id="prompt-text"></div>
-    <textarea id="editor" placeholder="Start writing here…" spellcheck="false"></textarea>
-    <div class="row">
-      <span class="muted small"><span id="wordcount">0</span> words</span>
-      <button id="finish-btn" class="btn primary"><span id="finish-label">Finish →</span></button>
-    </div>
-    <p class="muted small">Pasting is disabled so the typing record stays genuine.</p>
-  </section>
+    <!-- hand-over between warm-up and the chosen moment -->
+    <section id="panel-choose" class="cm-panel hidden">
+      <h1 class="cm-h" id="ready-title">Now, your moment</h1>
+      <p class="cm-sub" id="ready-text">Take a breath. When you are ready, write about whatever comes to mind.</p>
+      <button id="moment-btn" class="cm-btn" type="button">Begin writing
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </section>
 
-  <section id="panel-rate" class="card hidden">
-    <h2>A few quick ratings</h2>
-    <p class="muted small">These are <strong>your own</strong> ratings — there are no
-       right answers. They let us check whether the typing-based scores match how
-       you actually felt.</p>
+    <!-- writing -->
+    <section id="panel-write" class="cm-panel hidden">
+      <span class="cm-pill" id="level-label"></span>
+      <p class="cm-prompt" id="prompt-text"></p>
+      <textarea id="editor" placeholder="Start writing here&hellip;" spellcheck="false"></textarea>
+      <div class="cm-row">
+        <span class="cm-count"><span id="wordcount">0</span> words &middot; paste is turned off so your typing stays genuine</span>
+        <button id="finish-btn" class="cm-btn" type="button"><span id="finish-label">Finish</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+    </section>
 
-    <div class="rate-block"><h3>How much writing effort did this take?</h3>
-      <div class="scale" data-key="effort">
-        <button data-v="1">1<span>Very little</span></button><button data-v="2">2</button>
-        <button data-v="3">3<span>Moderate</span></button><button data-v="4">4</button>
-        <button data-v="5">5<span>A great deal</span></button></div></div>
+    <!-- research mode only: ratings -->
+    <section id="panel-rate" class="cm-panel hidden">
+      <h1 class="cm-h">A few quick ratings</h1>
+      <p class="cm-sub">These are your own ratings and there are no right answers. They let us check whether the
+        typing-based readings match how you actually felt.</p>
 
-    <div class="rate-block"><h3>How do you feel right now? (mood)</h3>
-      <div class="scale" data-key="mood">
-        <button data-v="1">1<span>Very unhappy</span></button><button data-v="2">2</button>
-        <button data-v="3">3<span>Neutral</span></button><button data-v="4">4</button>
-        <button data-v="5">5<span>Very happy</span></button></div></div>
+      <div class="rate-block"><h3>How strongly did you relive that moment while writing?</h3>
+        <div class="scale" data-key="relive">
+          <button type="button" data-v="1">1<span>Not at all</span></button><button type="button" data-v="2">2<span></span></button>
+          <button type="button" data-v="3">3<span>Somewhat</span></button><button type="button" data-v="4">4<span></span></button>
+          <button type="button" data-v="5">5<span>Vividly</span></button></div></div>
 
-    <div class="rate-block"><h3>How focused were you while writing?</h3>
-      <div class="scale" data-key="focus">
-        <button data-v="1">1<span>Very distracted</span></button><button data-v="2">2</button>
-        <button data-v="3">3<span>Somewhat</span></button><button data-v="4">4</button>
-        <button data-v="5">5<span>Fully focused</span></button></div></div>
+      <div class="rate-block"><h3>How pleasant or unpleasant do you feel right now?</h3>
+        <div class="scale" data-key="mood">
+          <button type="button" data-v="1">1<span>Very unpleasant</span></button><button type="button" data-v="2">2<span></span></button>
+          <button type="button" data-v="3">3<span>Neutral</span></button><button type="button" data-v="4">4<span></span></button>
+          <button type="button" data-v="5">5<span>Very pleasant</span></button></div></div>
 
-    <div class="rate-block"><h3>How tense or anxious did you feel while writing?</h3>
-      <div class="scale" data-key="stress">
-        <button data-v="1">1<span>Not at all</span></button><button data-v="2">2</button>
-        <button data-v="3">3<span>Somewhat</span></button><button data-v="4">4</button>
-        <button data-v="5">5<span>Very</span></button></div></div>
+      <div class="rate-block"><h3>How calm or energised do you feel right now?</h3>
+        <div class="scale" data-key="arousal">
+          <button type="button" data-v="1">1<span>Very calm</span></button><button type="button" data-v="2">2<span></span></button>
+          <button type="button" data-v="3">3<span>In between</span></button><button type="button" data-v="4">4<span></span></button>
+          <button type="button" data-v="5">5<span>Very energised</span></button></div></div>
 
-    <button id="submit-btn" class="btn primary big" disabled>See my report →</button>
-    <p id="submit-status" class="muted small"></p>
-  </section>
+      <div class="rate-block"><h3>How focused were you while writing?</h3>
+        <div class="scale" data-key="focus">
+          <button type="button" data-v="1">1<span>Very distracted</span></button><button type="button" data-v="2">2<span></span></button>
+          <button type="button" data-v="3">3<span>Somewhat</span></button><button type="button" data-v="4">4<span></span></button>
+          <button type="button" data-v="5">5<span>Fully focused</span></button></div></div>
 
+      <div class="rate-block"><h3>How much did your mind wander while writing?</h3>
+        <div class="scale" data-key="wander">
+          <button type="button" data-v="1">1<span>Not at all</span></button><button type="button" data-v="2">2<span></span></button>
+          <button type="button" data-v="3">3<span>Sometimes</span></button><button type="button" data-v="4">4<span></span></button>
+          <button type="button" data-v="5">5<span>A lot</span></button></div></div>
+
+      <div class="rate-block"><h3>How tense did you feel while writing?</h3>
+        <div class="scale" data-key="stress">
+          <button type="button" data-v="1">1<span>Not at all</span></button><button type="button" data-v="2">2<span></span></button>
+          <button type="button" data-v="3">3<span>Somewhat</span></button><button type="button" data-v="4">4<span></span></button>
+          <button type="button" data-v="5">5<span>Very</span></button></div></div>
+
+      <div class="rate-block"><h3>How much effort did the writing take?</h3>
+        <div class="scale" data-key="effort">
+          <button type="button" data-v="1">1<span>Very little</span></button><button type="button" data-v="2">2<span></span></button>
+          <button type="button" data-v="3">3<span>Moderate</span></button><button type="button" data-v="4">4<span></span></button>
+          <button type="button" data-v="5">5<span>A great deal</span></button></div></div>
+
+      <div class="rate-block"><h3>Were you interrupted while writing?</h3>
+        <div class="seg" role="radiogroup" aria-label="Were you interrupted" data-key="interrupted" id="interrupted-seg">
+          <button type="button" role="radio" aria-checked="false" data-v="0">No</button>
+          <button type="button" role="radio" aria-checked="false" data-v="1">Yes</button>
+        </div></div>
+
+      <button id="submit-btn" class="cm-btn" type="button" disabled>See my report
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+      <p id="submit-status" role="status"></p>
+    </section>
+
+  </main>
 </div>
 {% endblock %}
 {% block scripts %}

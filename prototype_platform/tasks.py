@@ -73,7 +73,10 @@ MOMENTS = [
         "id": "happy",
         "title": "A happy moment",
         "difficulty": "Happy",
-        "blurb": "Write about a moment in your life that made you genuinely happy.",
+        "blurb": "A moment that made you genuinely happy. Any moment, any size.",
+        "free_prompt": "Write about any happy moment. Let it come to you in its own way; there is no right or wrong.",
+        "ready_title": "Now, a happy moment",
+        "ready_text": "Take a breath and let one come to mind. When you are ready, write about it in your own words.",
         "variations": [
             {"id": "happy_moment",
              "prompt": "Write about a happy moment in your life. What happened, "
@@ -92,8 +95,10 @@ MOMENTS = [
         "id": "sad",
         "title": "A sad moment",
         "difficulty": "Sad",
-        "blurb": "Write about a moment that made you sad. Choose one you are "
-                 "comfortable recalling — you may stop at any time.",
+        "blurb": "A moment that made you sad. Choose one you are comfortable recalling.",
+        "free_prompt": "Write about any sad moment. Go gently, take your time, and stop whenever you wish.",
+        "ready_title": "Now, a sad moment",
+        "ready_text": "Take a breath and be gentle with yourself. Choose a moment you are comfortable recalling; you can stop at any time.",
         "variations": [
             {"id": "sad_moment",
              "prompt": "Write about a sad moment in your life. What happened, "

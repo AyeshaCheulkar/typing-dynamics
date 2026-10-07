@@ -129,6 +129,14 @@ def submit():
         "difficulty": TASKS_BY_ID[data["task_id"]]["difficulty"],
         "emotion": emotion, "baseline_id": baseline_id, "self_mood": _likert("self_mood"),
         "self_focus": _likert("self_focus"), "self_stress": _likert("self_stress"),
+        "self_relive": _likert("self_relive"), "self_arousal": _likert("self_arousal"),
+        "self_wander": _likert("self_wander"),
+        "interrupted": (1 if data.get("interrupted") in (1, True, "1", "yes") else
+                        0 if data.get("interrupted") in (0, False, "0", "no") else None),
+        "typing_skill": (data.get("typing_skill") if data.get("typing_skill")
+                         in ("touch", "some", "hunt") else None),
+        "keyboard": (data.get("keyboard") if data.get("keyboard")
+                     in ("laptop", "external") else None),
         "started_at": int(data["started_at"]), "ended_at": int(data["ended_at"]),
         "final_text": final_text,
         "self_rated_effort": (int(data["self_rated_effort"])
