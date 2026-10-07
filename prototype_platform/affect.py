@@ -231,6 +231,37 @@ def _spearman(xs, ys):
     return {"n": len(xs), "rho": round(float(r), 2), "p": round(float(p), 3)}
 
 
+def _adjusted_spearman(rows):
+    """Spearman between x and y after removing differences explained by typing style and
+    keyboard (both are regressed out of x and y; Spearman is taken on the residuals).
+    rows = [(x, y, typing_skill, keyboard)]. p is approximate (residualising uses up
+    degrees of freedom), so it is reported as indicative only."""
+    import numpy as np
+    from scipy import stats
+    rows = [r for r in rows if r[2] and r[3]]
+    if len(rows) < MIN_N:
+        return None
+    cols = []
+    for k in (2, 3):
+        levels = sorted({r[k] for r in rows})
+        for lv in levels[1:]:
+            cols.append([1.0 if r[k] == lv else 0.0 for r in rows])
+    if not cols:
+        return None
+    D = np.column_stack([np.ones(len(rows))] + cols)
+    if len(rows) <= D.shape[1] + 2:
+        return None
+    out = []
+    for j in (0, 1):
+        v = np.array([float(r[j]) for r in rows])
+        beta, *_ = np.linalg.lstsq(D, v, rcond=None)
+        out.append(v - D @ beta)
+    if np.std(out[0]) == 0 or np.std(out[1]) == 0:
+        return None
+    r, p = stats.spearmanr(out[0], out[1])
+    return {"n": len(rows), "rho": round(float(r), 2), "p": round(float(p), 3)}
+
+
 def live_validation(sessions):
     """Aggregate the live (emotion-writing) sessions: do the formulas and the
     external model line up with what people reported / the condition they chose?
@@ -251,7 +282,17 @@ def live_validation(sessions):
     for col, idx, label in pair_defs:
         pts = [(s[col], s["affect"]["indices"][idx]) for s in rows if s.get(col)]
         res = _spearman([a for a, _ in pts], [b for _, b in pts])
-        out["pairs"].append({"label": label, "n": len(pts), "result": res})
+        adj = _adjusted_spearman([(s[col], s["affect"]["indices"][idx],
+                                   s.get("typing_skill"), s.get("keyboard"))
+                                  for s in rows if s.get(col)])
+        out["pairs"].append({"label": label, "n": len(pts), "result": res, "adjusted": adj})
+    skill_names = {"touch": "Touch typist", "some": "Mixed", "hunt": "Hunt-and-peck"}
+    kb_names = {"laptop": "Laptop", "external": "External"}
+    out["composition"] = {
+        "skill": [{"label": skill_names[k], "n": sum(1 for s in rows if s.get("typing_skill") == k)}
+                  for k in skill_names],
+        "keyboard": [{"label": kb_names[k], "n": sum(1 for s in rows if s.get("keyboard") == k)}
+                     for k in kb_names]}
     for emo in ("happy", "sad"):
         g = [s for s in rows if s["emotion"] == emo]
         if not g:

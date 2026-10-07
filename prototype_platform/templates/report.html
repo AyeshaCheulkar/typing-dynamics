@@ -109,6 +109,15 @@
     </table>
     {% endif %}
 
+    {% if s.typing_skill or s.keyboard %}
+    <p class="muted small ctx-line">Your typing context:
+      {{ {'touch': 'touch typist', 'some': 'mixed typing', 'hunt': 'hunt-and-peck'}.get(s.typing_skill, 'style not given') }}
+      · {{ {'laptop': 'laptop keyboard', 'external': 'external keyboard'}.get(s.keyboard, 'keyboard not given') }}.
+      {% if s.typing_skill == 'hunt' %}Because you look at the keys while typing, your gaps between keystrokes are naturally
+      longer and less even, so the pause and rhythm readings below may overstate hesitation. Read them against how you usually
+      type.{% else %}We record this so typing skill and keyboard are not mistaken for focus or mood.{% endif %}</p>
+    {% endif %}
+
     {% if aff.text %}
     <h3 class="aff-h">What your text says</h3>
     <div class="aff-grid">

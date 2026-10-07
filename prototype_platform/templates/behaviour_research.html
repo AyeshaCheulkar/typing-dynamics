@@ -127,11 +127,22 @@
        task, this section reports how their own mood, focus and stress ratings relate to the indices.</p>
     {% else %}
     <table class="aff-table">
-      <tr><th>Pair</th><th>n</th><th>Spearman ρ</th><th>p</th></tr>
+      <tr><th>Pair</th><th>n</th><th>Spearman ρ</th><th>p</th><th>ρ adjusted for typing style and keyboard</th><th>p (approx.)</th></tr>
       {% for p in live.pairs %}<tr><td>{{ p.label }}</td><td>{{ p.n }}</td>
         {% if p.result %}<td>{{ '%+.2f'|format(p.result.rho) }}</td><td>{{ p.result.p }}</td>
-        {% else %}<td colspan="2" class="muted">need ≥ {{ live.min_n }} sessions with varied ratings</td>{% endif %}</tr>{% endfor %}
+        {% else %}<td colspan="2" class="muted">need ≥ {{ live.min_n }} sessions with varied ratings</td>{% endif %}
+        {% if p.adjusted %}<td>{{ '%+.2f'|format(p.adjusted.rho) }}</td><td>{{ p.adjusted.p }}</td>
+        {% else %}<td colspan="2" class="muted">needs both typing questions answered and more than one style</td>{% endif %}</tr>{% endfor %}
     </table>
+    <p class="muted small">Adjusted = typing style and keyboard are regressed out of both the index and the rating first, so a
+       correlation that only reflects who types faster or on which keyboard does not count. Compare the two columns: if ρ
+       drops a lot after adjusting, the raw correlation was partly a typing-skill effect.</p>
+    {% if live.composition %}
+    <p class="muted small"><b>Who is in the sample.</b>
+      Typing style: {% for x in live.composition.skill %}{{ x.label }} {{ x.n }}{{ ', ' if not loop.last }}{% endfor %}.
+      Keyboard: {% for x in live.composition.keyboard %}{{ x.label }} {{ x.n }}{{ ', ' if not loop.last }}{% endfor %}.
+      A very lopsided sample limits what the adjustment can do.</p>
+    {% endif %}
     <h3 class="aff-h">By chosen moment (medians)</h3>
     <table class="aff-table">
       <tr><th>Moment</th><th>n</th><th>Self mood</th><th>Self focus</th><th>Self stress</th><th>Focus idx</th><th>Mind-space idx</th><th>Text sentiment</th></tr>
