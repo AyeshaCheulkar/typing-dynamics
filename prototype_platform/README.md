@@ -23,59 +23,44 @@ data-collection app.
   any psychological state.
 
 ## Run locally
-From the repository root:
+See the repository `README.md` for the layout and run commands. Short version, from the repo root:
 
 ```bash
-# 1. (once) make sure the shared artifact exists
-python train_model.py            # creates ../effort_model.pkl if missing
-
-# 2. install prototype deps (ideally in the project venv)
 pip install -r prototype_platform/requirements.txt
-
-# 3. start the prototype (its own port 5001; Stage-1 uses 5000)
-python prototype_platform/app.py
+python prototype_platform/app.py        # http://127.0.0.1:5001  (admin: /admin)
 ```
 
-Then open:
-- Participant page: http://127.0.0.1:5001/
-- Researcher dashboard: http://127.0.0.1:5001/admin
-  (local machine is allowed without a password; to require one, set
-  `PROTO_ADMIN_PASSWORD`.)
+Data is stored in `prototype_platform/data/prototype.db` (created on first run; separate from the
+Stage-1 `data.db`).
 
-Data is stored in `prototype_platform/prototype.db` (created on first run; separate
-from `../data.db`).
+## Folders
+- `app.py` — Flask routes only
+- `core/` — logic (`paths`, `tasks`, `questionnaire`, `behaviour`, `affect`, `plain_report`, `predict`,
+  `recommendations`, `research_data`, `db`)
+- `templates/participant/`, `templates/admin/` — pages; `static/css|js|img|vendor/`
+- `data/` — database, reference stats, validation JSON, EmoSurv model (`emotion_model.pkl`, git-ignored)
+- `scripts/` — `build_emotion_validation.py`, `validate_literature_formulas.py` (offline, not run by the app)
 
-## Files
-- `app.py` — Flask routes (own port, own DB)
-- `db.py` — prototype SQLite layer (`prototype.db`)
-- `predict.py` — features + experimental estimate + SHAP (reuses shared code)
-- `recommendations.py` — behaviour-tied suggestions (thresholds from `../features.csv`)
-- `tasks.py` — writing prompts (copied, decoupled from Stage 1)
-- `templates/` — `write.html`, `report.html`, `dashboard.html`, `history.html`
-- `static/` — `capture.js`, `style.css`, result images
-
+## Post-writing questions
+Ten short items from published instruments, scored in `core/questionnaire.py`: Self-Assessment Manikin
+(emotional intensity), NASA-TLX (cognitive load) and Flow Short Scale. The admin page `/admin/behaviour`
+correlates them with the typing indices. Research mode (`/test?mode=research`) adds perceived effort.
 
 ## Emotion-writing extension (happy / sad moment)
-Participants now choose to write about **a happy or a sad moment**, then rate
-effort, mood, focus and stress. The report adds an *Emotion & mind-space* section:
-- **Text emotion** — VADER sentiment + first-person word rate (`affect.py`).
-- **Behavioural indices** — focus, hesitation, self-correction, rhythm irregularity,
-  mind-space load; transparent equal-weight percentile formulas (`behaviour.py`).
-- **External validation** — EmoSurv (via the shared feature extractor): index medians
-  by emotion and an exploratory happy-like vs sad-like Random Forest.
-- **Self-report check** — ratings vs indices per session, and Spearman across sessions
-  on the researcher page `/admin/behaviour`.
+Participants choose a happy or sad moment. The report has four sections: writing dynamics, behavioural
+state (self-reported vs typing-suggested), practical insight, evidence and method.
+- **Text emotion** — VADER sentiment + first-person word rate (`core/affect.py`).
+- **Behavioural indices** — equal-weight percentile formulas (`core/behaviour.py`).
+- **External validation** — EmoSurv index medians by mood and an exploratory happy-like vs sad-like model.
 
-One-off build (reads `../external_features_emosurv.csv` and `../features.csv`, read-only):
+Offline build (reads `data/external/external_features_emosurv.csv` and `data/study/features.csv`):
 
 ```bash
-python prototype_platform/build_emotion_validation.py
+python prototype_platform/scripts/build_emotion_validation.py
 ```
 
-This writes `reference_stats.json`, `emotion_validation.json` and `emotion_model.pkl`
-(the pkl is git-ignored like `effort_model.pkl`; regenerate it on a new server — the
-page hides the external-model card if it is missing). Indices are research proxies,
-not clinical measures.
+It writes `data/reference_stats.json`, `data/emotion_validation.json` and `data/emotion_model.pkl`.
+Indices are research proxies, not clinical measures.
 
 ### Baseline step and within-person test (headline hypothesis)
 Every participant first writes a neutral, length-matched **baseline passage**

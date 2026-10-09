@@ -2,8 +2,8 @@
 app.py — the PROTOTYPE Writing Analytics Platform (Flask).
 
 Separate from the Stage-1 data-collection app: own port, own database
-(prototype.db), and it reuses ../features.py, ../explain.py, ../effort_model.pkl
-and the study CSVs READ-ONLY. It never imports or writes the Stage-1 app.
+(data/prototype.db), and it reuses research/features.py, research/explain.py,
+research/effort_model.pkl and the study CSVs in data/study/ READ-ONLY. It never imports or writes the Stage-1 app.
 
 Two experiences:
   • Participant  — landing (/), writing test (/test), live report (/report/<id>)
@@ -25,14 +25,12 @@ from functools import wraps
 from flask import (Flask, render_template, request, jsonify, abort, Response,
                    url_for, redirect, session)
 
-import affect
-import behaviour as bh
-import plain_report as pr
-import db
-import predict
-import recommendations as recs
-import research_data as rd
-from tasks import LEVELS, MOMENTS, BASELINE, TASKS_BY_ID
+from core import affect, db, predict
+from core import behaviour as bh
+from core import plain_report as pr
+from core import recommendations as recs
+from core import research_data as rd
+from core.tasks import MOMENTS, TASKS_BY_ID
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("PROTO_SECRET", "prototype-dev-secret-change-me")
@@ -71,7 +69,7 @@ def login_required(view):
 # ===================== Participant experience =====================
 @app.route("/")
 def home():
-    return render_template("landing.html")
+    return render_template("participant/landing.html")
 
 
 def research_mode():
@@ -86,7 +84,7 @@ def research_mode():
 
 @app.route("/test")
 def test():
-    return render_template("write.html", levels=MOMENTS,
+    return render_template("participant/write.html", levels=MOMENTS,
                            research_mode=research_mode())
 
 
@@ -132,6 +130,9 @@ def submit():
         "self_focus": _likert("self_focus"), "self_stress": _likert("self_stress"),
         "self_relive": _likert("self_relive"), "self_arousal": _likert("self_arousal"),
         "self_wander": _likert("self_wander"),
+        **{c: _likert(c) for c in ("tlx_mental", "tlx_effort", "tlx_frustration",
+                                   "flow_fluent", "flow_concentrate", "flow_absorbed",
+                                   "flow_time")},
         "interrupted": (1 if data.get("interrupted") in (1, True, "1", "yes") else
                         0 if data.get("interrupted") in (0, False, "0", "no") else None),
         "typing_skill": (data.get("typing_skill") if data.get("typing_skill")
@@ -148,16 +149,9 @@ def submit():
                     "report_url": url_for("report", session_id=sid)})
 
 
-_BAND_OBS = {"lower than most sessions": "Lower than typical",
-             "within the typical range": "Within typical range",
-             "higher than most sessions": "Higher than typical"}
 _PROFILE_MAP = {"chars_per_sec": "Speed", "pause_time_ratio": "Pausing",
                 "active_time_s": "Writing time", "revisions_per_100": "Revisions",
                 "delete_rate": "Deletions"}
-_GLANCE_MAP = {"chars_per_sec": "Typing", "pause_time_ratio": "Pausing",
-               "revisions_per_100": "Revisions", "active_time_s": "Writing time"}
-
-
 def _fmt_time(sec):
     sec = int(round(sec))
     return "%dm %02ds" % (sec // 60, sec % 60) if sec >= 60 else "%ds" % sec
@@ -231,14 +225,10 @@ def report(session_id):
         {"value": "%d%%" % round(feats.get("pause_time_ratio", 0) * 100), "label": "Time paused"},
     ]
     profile = {"labels": [], "values": []}
-    glance = []
     for c in context:
         if c["feature"] in _PROFILE_MAP:
             profile["labels"].append(_PROFILE_MAP[c["feature"]])
             profile["values"].append(c["percentile"])
-        if c["feature"] in _GLANCE_MAP:
-            glance.append({"area": _GLANCE_MAP[c["feature"]],
-                           "obs": _BAND_OBS.get(c["band"], c["band"])})
 
     contrib_view = None
     if estimate["available"] and estimate["contributions"]:
@@ -252,34 +242,34 @@ def report(session_id):
 
     # emotion-writing extension (computed on the fly for sessions saved before it)
     aff = s.get("affect") or affect.analyse(feats, s["final_text"], s.get("emotion"))
-    base = db.get_session(s["baseline_id"]) if s.get("baseline_id") else None
-    insight = {
-        "shift": affect.rhythm_shift(feats, base["features"]) if base else None,
-        "affect": aff,
-        "index_rows": [dict(key=k, value=aff["indices"][k], band=bh.band(aff["indices"][k]),
-                            **bh.INDEX_META[k]) for k in bh.INDEX_ORDER] if aff.get("indices") else [],
-        "compare": affect.compare_self_report(aff.get("indices"), s),
-    }
-
-    _idx = aff.get("indices")
+    _idx = bh.compute_indices(feats)          # fresh, so older sessions also get every index
+    sts = pr.states(s, _idx)
     plain = {
         "overview": pr.overview(feats, context, _idx),
-        "cards": pr.cards(feats, context, _idx),
+        "states": sts,
+        "insight": pr.insight(sts, s.get("emotion")),
+        "uses": pr.USES,
         "tone": pr.tone(aff.get("text"), s.get("emotion")),
-        "compare": pr.compare(_idx, s),
         "evidence": pr.EVIDENCE,
     }
     _v = affect.load_validation_json()
+    # The participant's own readings on the SAME scale as the EmoSurv table (their typing is
+    # positioned among the EmoSurv sessions), so the row can sit next to the moods' medians.
+    _mine = bh.compute_indices(feats, bh.load_reference("emosurv"))
+    mine = None
+    if _mine:
+        def _pos(v):
+            return "lower than most" if v < 34 else "higher than most" if v > 66 else "about typical"
+        mine = [{"key": k, "label": bh.INDEX_META[k]["label"], "value": round(_mine[k]),
+                 "pos": _pos(_mine[k]), "higher": bh.INDEX_META[k]["higher"]} for k in bh.INDEX_ORDER]
     return render_template(
-        "report.html", s=s, insight=insight, plain=plain,
-        ext_shift=(_v or {}).get("engagement_shift"),
-        ext_rule=(_v or {}).get("engagement_rule"),
-        has_self=bool(s.get("self_rated_effort")), feats=feats, estimate=estimate, context=context,
+        "participant/report.html", s=s, plain=plain, mine=mine,
+        val=_v, val_order=bh.INDEX_ORDER, val_meta=bh.INDEX_META,
+        estimate=estimate, context=context,
         recommendations=recommendations, has_rec=has_rec,
-        general_tips=recs.GENERAL_TIPS,
         task=TASKS_BY_ID.get(s["task_id"], {}), metrics=metrics, profile=profile,
         profile_interpretation=_profile_interpretation(profile),
-        glance=glance, contrib_view=contrib_view, timeline=timeline)
+        contrib_view=contrib_view, timeline=timeline)
 
 
 # ===================== Researcher auth =====================
@@ -290,10 +280,10 @@ def admin_login():
                 request.form.get("password") == ADMIN_PASSWORD):
             session["admin"] = True
             return redirect(url_for("admin"))
-        return render_template("login.html", error="Incorrect username or password.")
+        return render_template("admin/login.html", error="Incorrect username or password.")
     if session.get("admin"):
         return redirect(url_for("admin"))
-    return render_template("login.html")
+    return render_template("admin/login.html")
 
 
 @app.route("/admin/logout")
@@ -307,7 +297,7 @@ def logout():
 @login_required
 def admin():
     return render_template(
-        "overview.html", active="overview",
+        "admin/overview.html", active="overview",
         kpis=rd.study_kpis(), signals=rd.research_signals(),
         model=MODEL_RESULTS, live_count=len(db.list_sessions()),
         charts={"effort_dist": rd.effort_distribution(),
@@ -317,7 +307,7 @@ def admin():
 @app.route("/admin/participants")
 @login_required
 def participants_page():
-    return render_template("participants.html", active="participants",
+    return render_template("admin/participants.html", active="participants",
                            participants=rd.participants())
 
 
@@ -327,7 +317,7 @@ def participant_profile(code):
     prof = rd.participant_profile(code)
     if prof is None:
         abort(404)
-    return render_template("participant_profile.html", active="participants",
+    return render_template("admin/participant_profile.html", active="participants",
                            p=prof)
 
 
@@ -353,7 +343,7 @@ def session_report(session_id):
     recommendations = recs.recommend(feats)
     has_rec = recommendations and recommendations[0]["behaviour"] != "none"
     return render_template(
-        "session_report.html", active="participants",
+        "admin/session_report.html", active="participants",
         sid=session_id, row=row, feats=feats, estimate=estimate,
         profile=profile, timeline=rd.typing_timeline(session_id),
         context=recs.context_labels(feats),
@@ -434,7 +424,7 @@ def live_page():
         "mean_self_rated": round(_avg([x["self_rated_effort"] for x in sessions]), 2),
         "mean_predicted": round(_avg([x["predicted_effort"] for x in sessions]), 2),
     }
-    return render_template("live.html", active="live", sessions=sessions,
+    return render_template("admin/live.html", active="live", sessions=sessions,
                            summary=summary,
                            participants=_live_participants(sessions))
 
@@ -445,7 +435,7 @@ def live_profile(code):
     prof = _live_profile(code)
     if prof is None:
         abort(404)
-    return render_template("live_profile.html", active="live", p=prof)
+    return render_template("admin/live_profile.html", active="live", p=prof)
 
 
 @app.route("/admin/live/clear", methods=["POST"])
@@ -459,7 +449,7 @@ def live_clear():
 @login_required
 def behaviour_page():
     return render_template(
-        "behaviour_research.html", active="behaviour",
+        "admin/behaviour_research.html", active="behaviour",
         ext=affect.load_validation_json(), lit=affect.load_literature_validation(),
         meta=bh.INDEX_META, order=bh.INDEX_ORDER,
         live=affect.live_validation(db.list_sessions()))
@@ -468,21 +458,21 @@ def behaviour_page():
 @app.route("/admin/methodology")
 @login_required
 def methodology_page():
-    return render_template("methodology.html", active="methodology",
+    return render_template("admin/methodology.html", active="methodology",
                            kpis=rd.study_kpis())
 
 
 @app.route("/admin/model-card")
 @login_required
 def model_card_page():
-    return render_template("model_card.html", active="modelcard",
+    return render_template("admin/model_card.html", active="modelcard",
                            kpis=rd.study_kpis(), model=MODEL_RESULTS)
 
 
 @app.route("/admin/research")
 @login_required
 def research_page():
-    return render_template("research.html", active="research",
+    return render_template("admin/research.html", active="research",
                            kpis=rd.study_kpis(), signals=rd.research_signals(),
                            model=MODEL_RESULTS)
 

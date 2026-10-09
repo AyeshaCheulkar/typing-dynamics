@@ -1,4 +1,4 @@
-prototype.db
+data/prototype.db
 __pycache__/
 *.pyc
-emotion_model.pkl
+data/emotion_model.pkl

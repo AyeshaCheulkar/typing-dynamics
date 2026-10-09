@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% block title %}Your Writing Report{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/report.css') }}">{% endblock %}
+{% block body %}
+<div class="topnav">
+  <a class="wordmark" href="{{ url_for('home') }}">Writing Analytics</a>
+  <span class="navlink">Writing-process research prototype</span>
+</div>
+<div class="wrap report">
+
+  <header class="report-head">
+    <div class="report-head-row">
+      <div>
+        <div class="eyebrow">Your writing report</div>
+        <h1>How you wrote</h1>
+        <p class="muted">Participant <strong>{{ s.participant_code }}</strong> ·
+           {{ task.get('level_title','Task') }} <span class="pill">{{ s.difficulty }}</span></p>
+      </div>
+      <button class="btn no-print" onclick="window.print()">⬇ Download PDF</button>
+    </div>
+  </header>
+
+  <!-- metric strip -->
+  <div class="report-metrics">
+    {% for m in metrics %}
+    <div class="rmetric"><span class="rm-v">{{ m.value }}</span><span class="rm-l">{{ m.label }}</span></div>
+    {% endfor %}
+  </div>
+
+  <nav class="stepper">
+    <a href="#s-dynamics"><b>01</b> Writing dynamics</a>
+    <a href="#s-state"><b>02</b> Behavioural state</a>
+    <a href="#s-insight"><b>03</b> Practical insight</a>
+    <a href="#s-evidence"><b>04</b> Evidence &amp; method</a>
+  </nav>
+
+  <!-- 01 Writing dynamics -->
+  <section id="s-dynamics" class="card measured">
+    <div class="sec-tag"><span class="num">01</span><h2>Writing dynamics</h2>
+      <span class="badge measured-badge">measured from your keystrokes</span></div>
+    <p class="plain-lead">{{ plain.overview }}</p>
+    <p class="muted small">You wrote about
+      <strong>{{ 'a happy' if s.emotion=='happy' else 'a sad' if s.emotion=='sad' else 'an everyday' }}
+      {{ 'moment' if s.emotion else 'topic' }}</strong>.
+      {% if s.typing_skill or s.keyboard %}Typing context:
+      {{ {'touch': 'touch typist', 'some': 'mixed typing', 'hunt': 'hunt-and-peck'}.get(s.typing_skill, 'style not given') }},
+      {{ {'laptop': 'laptop keyboard', 'external': 'external keyboard'}.get(s.keyboard, 'keyboard not given') }}.
+      {% if s.typing_skill == 'hunt' %}Because you look at the keys, your gaps between keystrokes are naturally longer and less
+      even, so pauses may look bigger than they are.{% endif %}{% endif %}</p>
+    <div class="behaviour-grid">
+      {% for c in context %}
+      <div class="behaviour">
+        <div class="b-label">{{ c.label }}</div>
+        <div class="b-value">{{ c.display }}</div>
+        <div class="b-bar"><span style="width: {{ c.percentile }}%"></span></div>
+        <div class="b-band muted small">{{ c.band|capitalize }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="dyn-cols">
+      <div>
+        <h3 class="aff-h">Your profile against the study sample</h3>
+        <div class="profile-wrap"><canvas id="c-profile"></canvas></div>
+        <p class="muted small">{{ profile_interpretation }}</p>
+      </div>
+      <div>
+        <h3 class="aff-h">Your writing timeline</h3>
+        {% if timeline.insufficient %}
+        <p class="muted">Not enough keystroke data to reconstruct a timeline.</p>
+        {% else %}
+        <div class="timeline" id="timeline">
+          {% for seg in timeline.segments %}
+          <span class="tl-seg tl-{{ seg.cls }}" style="width:{{ seg.pct }}%"
+            data-tip="{% if seg.cls=='pause' %}Pause · {{ seg.dur_s }} s{% elif seg.cls=='revision' %}Revision · Backspace ({{ seg.n }}){% else %}Typing · {{ seg.dur_s }} s{% endif %}"></span>
+          {% endfor %}
+        </div>
+        <div class="tl-legend">
+          <span><i class="sw tl-type"></i> Typing</span>
+          <span><i class="sw tl-pause"></i> Long pause</span>
+          <span><i class="sw tl-revision"></i> Revision</span>
+        </div>
+        <p class="muted small">{{ timeline.n_pause }} long pauses, the longest {{ timeline.longest_pause_s }} s.</p>
+        {% endif %}
+        {% if plain.tone %}
+        <h3 class="aff-h">The tone of your words</h3>
+        <p class="small">{{ plain.tone.headline }}{% if plain.tone.fits %} {{ plain.tone.fits }}{% endif %}</p>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 Behavioural state -->
+  <section id="s-state" class="card plain">
+    <div class="sec-tag"><span class="num">02</span><h2>Behavioural state</h2></div>
+    <p class="muted small">For each state, your own answers (short versions of published questionnaires) sit next to what your typing
+      pattern indicates. How often the two agree is what our study tests.</p>
+    <div class="state-grid">
+      {% for x in plain.states %}
+      <div class="state-card">
+        <div class="pc-top"><b>{{ x.label }}</b>
+          {% if x.agree %}<span class="agree agree-{{ x.agree.cls }}">{{ x.agree.word }}</span>{% endif %}</div>
+        <div class="srow"><span class="s-k">You reported</span>
+          {% if x.self %}<div class="s-bar self"><span style="width: {{ x.self.pct }}%"></span></div>
+            <span class="s-v">{{ x.self.level }}</span>
+          {% else %}<span class="muted small s-none">not answered</span>{% endif %}</div>
+        <div class="srow"><span class="s-k">Typing suggests</span>
+          {% if x.typing %}<div class="s-bar typ"><span style="width: {{ x.typing.pct }}%"></span></div>
+            <span class="s-v">{{ x.typing.level }}</span>
+          {% else %}<span class="muted small s-none">too few keystrokes</span>{% endif %}</div>
+        {% if x.self %}<p class="s-line">You described {{ x.self.text }}.</p>{% endif %}
+        {% if x.sentence %}<p class="muted small">{{ x.sentence }}</p>{% endif %}
+        {% if x.drivers %}
+        <ul class="s-drv">{% for d in x.drivers %}<li><b>{{ d.label }}:</b> {{ d.text }}</li>{% endfor %}</ul>
+        {% endif %}
+        <p class="s-src small">{{ x.source }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- 03 Practical insight -->
+  <section id="s-insight" class="card">
+    <div class="sec-tag"><span class="num">03</span><h2>Practical insight</h2></div>
+    {% if plain.insight %}
+    <div class="interpretation">
+      <div class="eyebrow">What your session suggests</div>
+      {% for line in plain.insight %}<p>{{ line }}</p>{% endfor %}
+    </div>
+    {% endif %}
+
+    {% if has_rec %}
+    <h3 class="aff-h">Writing-process suggestions</h3>
+    <div class="insight-grid">
+      {% for r in recommendations[:2] %}
+      <div class="insight">
+        <div class="ins-title">{{ r.title }}</div>
+        <div class="ins-observed">{{ r.observed }}</div>
+        <div class="ins-strategy"><span class="eyebrow">Possible strategy</span>{{ r.strategy }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <h3 class="aff-h">Where this kind of measurement could help</h3>
+    <div class="use-grid">
+      {% for u in plain.uses %}
+      <div class="use-card"><b>{{ u.title }}</b><p class="muted small">{{ u.text }}</p></div>
+      {% endfor %}
+    </div>
+    <p class="caveat small">If recalling this memory left you feeling low, it is okay to take a break or talk to someone you trust.</p>
+  </section>
+
+  <!-- 04 Evidence & method -->
+  <section id="s-evidence" class="card">
+    <div class="sec-tag"><span class="num">04</span><h2>Evidence &amp; method</h2></div>
+    <div class="sure-box" style="margin-top:0">
+      <div class="sure-grid">
+        <div><b>Solid</b><ul>{% for x in plain.evidence.solid %}<li>{{ x }}</li>{% endfor %}</ul></div>
+        <div><b>Still being checked</b><ul>{% for x in plain.evidence.exploratory %}<li>{{ x }}</li>{% endfor %}</ul></div>
+        <div><b>Not possible</b><ul>{% for x in plain.evidence.cannot %}<li>{{ x }}</li>{% endfor %}</ul></div>
+      </div>
+    </div>
+
+    <details class="more">
+      <summary>How each state is scored</summary>
+      <div class="table-scroll">
+      <table class="aff-table">
+        <tr><th>State</th><th>Your answers (questionnaire)</th><th>Your typing</th></tr>
+        {% for x in plain.states %}
+        <tr><td><b>{{ x.label }}</b></td>
+          <td>{{ x.source }}<br><span class="muted small">{{ x.formula }}{% if x.self %} = {{ x.self.score }} of 5{% endif %}</span></td>
+          <td>{{ x.typing_label }}{% if x.typing %}: {{ x.typing.pct }} of 100{% endif %}</td></tr>
+        {% endfor %}
+      </table>
+      </div>
+      <p class="muted small">Answers use a 1-5 scale (shortened from the published 7-, 9- or 21-point scales). Typing readings are equal-weight
+        averages of percentile ranks against a reference sample: mind-space load = mean(hesitation, self-correction, rhythm irregularity);
+        emotional-processing load = mean(hesitation, self-correction); typing flow = 100 − mean(time paused, rhythm irregularity, long pauses).</p>
+    </details>
+
+    {% if val %}
+    <details class="more">
+      <summary>Do typing readings change with mood? Public-data check ({{ val.n_sessions }} sessions)</summary>
+      {% if mine %}
+      <div class="mine-list">
+        {% for m in mine %}
+        <div class="mine-row"><div class="mine-top"><b>{{ m.label }}</b><span class="mine-val">{{ m.value }}</span></div>
+          <div class="b-bar" aria-hidden="true"><span style="width: {{ m.value }}%"></span></div>
+          <div class="muted small">{{ m.pos|capitalize }} of the {{ val.n_sessions }} sessions. Higher means {{ m.higher }}.</div></div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <p class="small">We tested the readings on <b>{{ val.n_sessions }} public typing sessions</b> from {{ val.n_participants }} people
+        (EmoSurv) typing after being put in a happy, sad, calm, angry or neutral mood. Each number is that mood's typical position
+        (median, 0 to 100).</p>
+      <div class="table-scroll">
+      <table class="aff-table">
+        <tr><th>Reading</th><th>Happy</th><th>Sad</th><th>Neutral</th><th>Angry</th><th>Calm</th><th>Moods differ? (p)</th></tr>
+        {% for k in val_order %}{% set i = val.indices[k] %}
+        <tr><td><b>{{ val_meta[k].label }}</b></td>
+          <td>{{ i.medians.Happy }}</td><td>{{ i.medians.Sad }}</td><td>{{ i.medians.Neutral }}</td>
+          <td>{{ i.medians.Angry }}</td><td>{{ i.medians.Calm }}</td>
+          <td>{{ i.kruskal_p }}{% if i.kruskal_p < 0.05 %} ✱{% endif %}</td></tr>
+        {% endfor %}
+      </table>
+      </div>
+      <p class="muted small">✱ the five moods differ by more than chance would explain. Typing changes with mood, but it does not tell
+        happy from sad, and calm typing is not the same as feeling calm.</p>
+    </details>
+    {% endif %}
+
+    <details class="more">
+      <summary>For researchers: experimental effort model</summary>
+      {% if estimate.available %}
+      <p>Experimental Model Estimate: <b>{{ estimate.predicted_effort }}/5</b> ({{ estimate.band }}), from the trained {{ estimate.model_name }}
+        model using {{ estimate.n_features }} typing features.
+        {% if contrib_view %}Most influenced by {{ contrib_view[0].name|lower }}{% if contrib_view|length > 1 %}, then {{ contrib_view[1].name|lower }}{% endif %}.{% endif %}</p>
+      <p class="caveat small">Trained on a small pilot sample; it does not outperform the simple average, so it is indicative only and is not a
+        measure of mental effort, stress or any psychological state.</p>
+      {% else %}<p class="muted">No experimental estimate: {{ estimate.reason }}</p>{% endif %}
+    </details>
+  </section>
+
+  <footer class="disclaimer report-foot">
+    <div><strong>{{ s.participant_code }}</strong> · Session {{ '%02d' % s.id }}
+       · Research prototype</div>
+    <div>Describes writing-process behaviour for research purposes only. It does <strong>not</strong> measure
+       mental effort, stress, intelligence, emotion, or any psychological state, and is not a diagnosis.</div>
+    <a href="{{ url_for('test') }}">← Write another passage</a>
+  </footer>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/chart.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script>
+(function(){
+  var p = {{ profile | tojson }};
+  var el = document.getElementById('c-profile');
+  if (el && window.Chart && p.labels.length){
+    new Chart(el,{type:'radar',
+      data:{labels:p.labels,datasets:[{label:'Percentile in study',data:p.values,
+        backgroundColor:'rgba(37,99,235,.14)',borderColor:'#2563eb',
+        pointBackgroundColor:'#2563eb',borderWidth:1.5}]},
+      options:{plugins:{legend:{display:false}},
+        scales:{r:{suggestedMin:0,suggestedMax:100,ticks:{display:false},
+          grid:{color:'#e6edfb'},angleLines:{color:'#e6edfb'},
+          pointLabels:{font:{family:'Space Grotesk',size:11}}}}}});
+  }
+})();
+</script>
+{% endblock %}

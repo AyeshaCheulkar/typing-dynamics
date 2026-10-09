@@ -7,13 +7,13 @@ Copy and paste this into your PythonAnywhere WSGI file:
 import os
 import sys
 
-# Paths: prototype folder + project root
+# Paths: prototype folder (it adds research/ itself)
 home = os.path.expanduser("~")
 project_root = os.path.join(home, "typing-dynamics")
 proto_dir = os.path.join(project_root, "prototype_platform")
 
 # Add prototype_platform first so that 'import app' finds prototype_platform/app.py
-for p in [proto_dir, project_root]:
+for p in [proto_dir]:
     if p not in sys.path:
         sys.path.insert(0, p)
 
