@@ -61,6 +61,20 @@ def test_tips_always_return_something():
     assert 1 <= len(an.tips(None, bars)) <= 3
 
 
+def test_effort_card_compares_model_and_answer():
+    est = {"available": True, "predicted_effort": 2.6, "contributions": [("Writing time", 0.2), ("Longest pause", -0.1)]}
+    near = an.effort_card({"tlx_effort": 3}, est)
+    far = an.effort_card({"tlx_effort": 5}, est)
+    assert "within" in near["verdict"] and "higher" in far["verdict"]
+    assert 0 <= near["lo"] <= near["pred_pos"] <= near["hi"] <= 100
+    assert an.effort_card({}, est)["actual"] is None and an.effort_card({}, {"available": False}) is None
+
+
+def test_pause_length_buckets_add_up_to_all_pauses():
+    a = writing_actions(_ev([("a", 100), ("b", 600), ("c", 1500), ("d", 3000), ("e", 7000)]))
+    assert sum(a["length_buckets"].values()) == 4 and a["length_buckets"]["5 s +"] == 1
+
+
 def test_report_renders_for_a_submitted_session():
     tmp = pathlib.Path(tempfile.mkdtemp()) / "t.db"
     shutil.copy(db.DB_PATH, tmp)

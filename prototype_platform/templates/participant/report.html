@@ -11,7 +11,6 @@
   <header class="report-head">
     <div class="report-head-row">
       <div>
-        <div class="eyebrow">Your writing report</div>
         <h1>How you wrote</h1>
         <p class="muted">Participant <strong>{{ s.participant_code }}</strong> ·
           {{ 'Happy moment' if s.emotion=='happy' else 'Sad moment' if s.emotion=='sad' else 'Everyday writing' }}
@@ -19,6 +18,9 @@
       </div>
       <button class="btn no-print" onclick="window.print()">⬇ Download PDF</button>
     </div>
+    <p class="report-intro">This report looks at <b>how</b> you wrote, not what you wrote: how fast you typed, where you stopped,
+      what you went back to change, and how all of that compares with other writers. The <b>Writing</b> tab covers your writing
+      process. The <b>Emotional</b> tab sets your own answers beside what your typing pattern points to.</p>
   </header>
 
   <div class="rtabs no-print" role="tablist">
@@ -37,6 +39,9 @@
         <div class="rmetric"><span class="rm-v">{{ m.value }}</span><span class="rm-l">{{ m.label }}</span></div>
         {% endfor %}
       </div>
+      <p class="explain"><b>What these are.</b> <i>Characters/sec</i> is your text length divided by your writing time, so it includes the
+        time you spent thinking. <i>Pauses</i> counts every stop of half a second or more. <i>Characters typed</i> counts every letter,
+        number and symbol you added, and <i>deletions</i> counts each time you pressed Backspace or Delete.</p>
     </section>
 
     <section class="card">
@@ -55,51 +60,73 @@
         <span><i class="sw tl-pause"></i> Long pause (2 s +)</span>
         <span><i class="sw tl-revision"></i> Revision</span>
       </div>
+      <p class="explain"><b>How to read this.</b> Your whole session runs left to right. Grey is steady typing, orange is a stop of two seconds
+        or longer, and blue is a stretch where you went back and deleted something. Hover over a block for its length.
+        {{ timeline.n_pause }} long pause{{ '' if timeline.n_pause == 1 else 's' }}, the longest {{ timeline.longest_pause_s }} seconds.</p>
       {% endif %}
       {% if over_time %}
       <h3 class="aff-h">Your pace through the session</h3>
       <div class="chart-box"><canvas id="c-pace"></canvas></div>
-      <p class="muted small">Characters typed per minute, across ten equal slices of your session.</p>
+      <p class="explain"><b>How to read this.</b> Your session is cut into ten equal slices; each point is how many characters you typed per
+        minute in that slice. High points are fluent stretches, dips are thinking or fixing time.</p>
+      {% for line in pace_story %}<p class="small">{{ line }}</p>{% endfor %}
       {% endif %}
     </section>
 
     <section class="card">
       <h2>Where you paused</h2>
       {% if pauses.total %}
-      <p class="muted small">Every stop of half a second or more, by where it fell.</p>
-      <div class="pbars">
-        {% for r in pauses.rows %}
-        <div class="pbar">
-          <div class="pbar-top"><b>{{ r.label|capitalize }}</b><span>{{ r.n }} pauses</span></div>
-          <div class="b-bar"><span style="width: {{ r.share }}%"></span></div>
-          <div class="muted small">{% if r.n %}typically {{ r.avg_s }} s, longest {{ r.longest_s }} s{% else %}none{% endif %}</div>
+      <div class="two-col">
+        <div>
+          <h3 class="aff-h">By place</h3>
+          <div class="pbars">
+            {% for r in pauses.rows %}
+            <div class="pbar">
+              <div class="pbar-top"><b>{{ r.label|capitalize }}</b><span>{{ r.n }} pauses</span></div>
+              <div class="b-bar"><span style="width: {{ r.share }}%"></span></div>
+              <div class="muted small">{% if r.n %}typically {{ r.avg_s }} s, longest {{ r.longest_s }} s{% else %}none{% endif %}</div>
+            </div>
+            {% endfor %}
+          </div>
         </div>
-        {% endfor %}
+        <div>
+          <h3 class="aff-h">By length</h3>
+          <div class="chart-box short"><canvas id="c-plen"></canvas></div>
+        </div>
       </div>
-      <p class="small">Pauses inside a word usually mean searching for a key or a spelling; pauses between words and between
-        sentences are more often about what to say next.</p>
+      <p class="explain"><b>How to read this.</b> A pause is any stop of half a second or more. <i>Inside words</i> usually means searching for a key or
+        a spelling. <i>Between words</i> and <i>between sentences</i> are more often about what to say next, and the longer the stop, the more
+        likely it was planning rather than typing. Most people have many short pauses and only a few long ones.</p>
       {% else %}<p class="muted">No pauses of half a second or more.</p>{% endif %}
     </section>
 
     <section class="card">
       <h2>How you compare</h2>
-      <div class="cmp">
-        {% for b in bars %}
-        <div class="cmp-row">
-          <div class="cmp-top"><b>{{ b.label }}</b><span class="muted small">{{ b.value }}</span></div>
-          <div class="b-bar"><span style="width: {{ b.fill }}%"></span></div>
-          <div class="small">You {% if b.label == 'Key-to-key speed' %}were {% endif %}{{ b.phrase }}.</div>
-          <div class="muted small">{{ b.group }}</div>
+      <div class="two-col">
+        <div class="cmp">
+          {% for b in bars %}
+          <div class="cmp-row">
+            <div class="cmp-top"><b>{{ b.label }}</b><span class="muted small">{{ b.value }}</span></div>
+            <div class="b-bar"><span style="width: {{ b.fill }}%"></span></div>
+            <div class="small">You {{ b.phrase }}.</div>
+            <div class="muted small">{{ b.group }}</div>
+          </div>
+          {% endfor %}
         </div>
-        {% endfor %}
+        <div>
+          <div class="chart-box tall"><canvas id="c-radar"></canvas></div>
+        </div>
       </div>
+      <p class="explain"><b>How to read this.</b> Each bar shows where you sit among other writers: a full bar means more of that behaviour than almost
+        everyone, an empty bar means less than almost everyone, and the middle is typical. Key speed is compared with writers using the same kind of keyboard,
+        because laptop and desktop typists differ. The web chart shows the same five readings at a glance.</p>
     </section>
 
     <section class="card">
       <h2>What shaped your pattern</h2>
       {% if eng %}
-      <p class="muted small">Each bar shows how much a behaviour pulled your typing pattern toward emotional writing or toward neutral
-        writing, based on {{ eng_n }} real writing sessions.</p>
+      <p>A model trained on {{ eng_n }} real writing sessions (people writing neutrally, or after an emotion was put to them) checks whether the mix of
+        behaviours in your session looks more like emotional or neutral writing. The bars show how much each behaviour pulled your pattern one way or the other.</p>
       <div class="drivers">
         {% for d in eng.drivers %}
         <div class="drv">
@@ -109,8 +136,43 @@
         </div>
         {% endfor %}
       </div>
+      <p class="explain"><b>How to read this.</b> Orange bars pulled toward emotional writing; blue bars pulled toward neutral writing; a longer bar means a stronger pull.
+        Your overall reading, {{ eng.pct }}%, is on the Emotional tab.</p>
       {% else %}<p class="muted">Too few keystrokes to analyse.</p>{% endif %}
-      <h3 class="aff-h">What you could try</h3>
+    </section>
+
+    {% if effort %}
+    <section class="card">
+      <h2>Effort: the model against you</h2>
+      <p>A second model, trained on 22 pilot writing sessions where people rated how much effort the writing took, estimates effort from your typing alone.</p>
+      <div class="eff-scale">
+        <div class="eff-track">
+          <span class="eff-range" style="left: {{ effort.lo }}%; width: {{ effort.hi - effort.lo }}%"></span>
+          <span class="eff-mark model" style="left: {{ effort.pred_pos }}%"><i>Model {{ '%.1f' % effort.pred }}</i></span>
+          {% if effort.actual %}<span class="eff-mark you" style="left: {{ effort.actual_pos }}%"><i>You {{ effort.actual }}</i></span>{% endif %}
+        </div>
+        <div class="eff-ticks"><span>1 · very little</span><span>2</span><span>3</span><span>4</span><span>5 · a great deal</span></div>
+      </div>
+      <p><b>{{ effort.verdict }}</b></p>
+      <p class="explain"><b>How to read this.</b> The shaded band is the model's estimate give or take its typical error of {{ effort.mae }} points on people it had not seen,
+        so read the estimate as a range, not a single number.
+        {% if effort.actual %}The dot labelled “You” is {{ effort.src }}.{% endif %}</p>
+      <h3 class="aff-h">What pushed the estimate</h3>
+      <div class="drivers">
+        {% for d in effort.drivers %}
+        <div class="drv">
+          <span class="drv-name">{{ d.name }}</span>
+          <span class="drv-track"><span class="drv-bar {{ 'emo' if d.up else 'neu' }}" style="width: {{ d.width }}%"></span></span>
+          <span class="drv-dir muted small">{{ 'raised the estimate' if d.up else 'lowered the estimate' }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <section class="card">
+      <h2>What you could try</h2>
+      <p class="muted small">Chosen from the behaviours that mattered most in your pattern, and tied to what you actually did.</p>
       <div class="insight-grid">
         {% for t in tips %}
         <div class="insight">
@@ -120,6 +182,18 @@
         {% endfor %}
       </div>
     </section>
+
+    <section class="card">
+      <h2>What the terms mean</h2>
+      <dl class="glossary">
+        <dt>Key-to-key speed</dt><dd>The typical gap between two keystrokes, in milliseconds. Smaller is faster. It depends a lot on how you type and on your keyboard.</dd>
+        <dt>Typing rhythm variability</dt><dd>How uneven your pace was. A low value means an even, steady beat; a high value means bursts of fast typing split by stops.</dd>
+        <dt>Time spent paused</dt><dd>The share of your session spent in stops of half a second or more.</dd>
+        <dt>Revising</dt><dd>How often you went back to change something. Each run of deletions in a row counts as one revision.</dd>
+        <dt>Deleting</dt><dd>The share of your keystrokes that were Backspace or Delete.</dd>
+        <dt>Engagement reading</dt><dd>How much your pattern resembles emotional rather than neutral writing in the public sessions the model learned from.</dd>
+      </dl>
+    </section>
   </div>
 
   <!-- ===================== TAB 2: EMOTIONAL ===================== -->
@@ -127,7 +201,8 @@
 
     <section class="card">
       <h2>Your answers and your typing</h2>
-      <p class="muted small">For each state, the bar on top is what you told us and the bar below is what your typing pattern points to.</p>
+      <p>After writing you answered short questions about your emotion, mental effort and flow. For each one, the top bar is what you told us and the
+        bottom bar is what your typing pattern points to.</p>
       <div class="state-grid">
         {% for x in plain.states %}
         <div class="state-card">
@@ -152,6 +227,9 @@
         </div>
         {% endfor %}
       </div>
+      <p class="explain"><b>How the typing side is read.</b> <i>Cognitive load</i> rises with more and longer pauses, more correcting and an uneven rhythm.
+        <i>Flow</i> rises with steady, continuous typing. <i>Emotional intensity</i> rises when pausing and deleting go together.
+        When your answer and your typing differ, neither is wrong: typing shows only the part of an experience that reaches your fingers.</p>
       {% for line in plain.insight %}<p class="small">{{ line }}</p>{% endfor %}
     </section>
 
@@ -162,9 +240,11 @@
         <div class="meter-track"><span class="meter-mark" style="left: {{ eng.pct }}%"></span></div>
         <div class="meter-ends"><span>Neutral writing</span><span>Emotional writing</span></div>
       </div>
-      <p><b>{{ eng.level }}.</b> About {{ eng.pct }}% of the way toward emotional writing, mainly shaped by
-        {{ eng.drivers[0].label|lower }}{% if eng.drivers|length > 1 %} and {{ eng.drivers[1].label|lower }}{% endif %}
-        (see “What shaped your pattern” on the Writing tab).</p>
+      <p><b>{{ eng.level }}.</b> Your pattern is about {{ eng.pct }}% of the way toward emotional writing, mainly shaped by
+        {{ eng.drivers[0].label|lower }}{% if eng.drivers|length > 1 %} and {{ eng.drivers[1].label|lower }}{% endif %}.</p>
+      <p class="explain"><b>How to read this.</b> The left end is how people typically type when writing about something neutral, the right end how they type after an
+        emotion has been put to them, both from public sessions the model learned from. 50% means no lean either way. Most people sit in the middle, because
+        typing shifts only a little with emotion. The behaviours behind your reading are on the Writing tab under “What shaped your pattern”.</p>
     </section>
     {% endif %}
 
@@ -181,6 +261,8 @@
       <p class="small">{{ tone_feel.verdict }}</p>
       {% endif %}
       {% if not plain.tone and not tone_feel %}<p class="muted">The passage was too short to read its tone.</p>{% endif %}
+      <p class="explain"><b>How to read this.</b> The tone is worked out from the emotional weight of the words you chose. The “You felt” bar is your own answer to how pleasant
+        or unpleasant you felt, so the two bars show whether your words and your feeling matched.</p>
     </section>
 
     {% if mine %}
@@ -197,6 +279,8 @@
         {% endfor %}
       </table>
       </div>
+      <p class="explain"><b>How to read this.</b> Each row is one reading of your typing on a 0 to 100 scale, set beside the middle score of people in that mood. Happy and sad
+        writers overlap a lot, so being closer to one column does not tell which mood you were in.</p>
     </section>
     {% endif %}
   </div>
@@ -221,16 +305,35 @@
   }
   tabs.forEach(function(t){ t.addEventListener('click', function(){ show(t.dataset.tab); }); });
   if (location.hash === '#emotional') show('emotional');
+  if (!window.Chart) return;
 
   var p = {{ over_time | tojson }};
   var el = document.getElementById('c-pace');
-  if (el && p && window.Chart){
+  if (el && p){
     new Chart(el, {type:'line',
       data:{labels:p.labels, datasets:[{data:p.values, borderColor:'#0a0a0a', backgroundColor:'rgba(10,10,10,.06)',
         fill:true, tension:.3, pointRadius:3}]},
       options:{plugins:{legend:{display:false}},
         scales:{y:{beginAtZero:true,title:{display:true,text:'characters per minute'}},
                 x:{title:{display:true,text:'time into session (min:sec)'}}}}});
+  }
+  var L = {{ pause_lengths | tojson }};
+  el = document.getElementById('c-plen');
+  if (el){
+    new Chart(el, {type:'bar',
+      data:{labels:L.labels, datasets:[{data:L.values, backgroundColor:'#c9772b', borderRadius:6}]},
+      options:{plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,ticks:{precision:0},title:{display:true,text:'number of pauses'}}}}});
+  }
+  var B = {{ bars | tojson }};
+  el = document.getElementById('c-radar');
+  if (el){
+    new Chart(el, {type:'radar',
+      data:{labels:B.map(function(b){return b.label;}),
+        datasets:[{data:B.map(function(b){return b.fill;}), backgroundColor:'rgba(56,128,115,.16)',
+          borderColor:'#388073', pointBackgroundColor:'#388073', borderWidth:1.5}]},
+      options:{plugins:{legend:{display:false}},
+        scales:{r:{suggestedMin:0,suggestedMax:100,ticks:{display:false},pointLabels:{font:{size:11}}}}}});
   }
 })();
 </script>

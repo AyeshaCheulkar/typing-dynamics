@@ -97,7 +97,6 @@
     {% endfor %}
   </div>
   <div class="interpretation">
-    <div class="eyebrow">Model interpretation</div>
     <p>The estimate was influenced most strongly by
        <strong>{{ estimate.contributions[0][0]|lower }}</strong>
        {% if estimate.contributions[1] %}and <strong>{{ estimate.contributions[1][0]|lower }}</strong>{% endif %}.</p>

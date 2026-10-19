@@ -149,7 +149,7 @@ The admin page already refuses to show a correlation below 8 sessions.
 |---|---|
 | One target: self-rated writing effort 1-5, trained on 22 sessions, never beat the mean | **Targets are the validated scores**: cognitive load (NASA-TLX), flow, emotional intensity |
 | Random Forest / Linear Regression as the headline | **Headline is the interpretable indices and their tested association with the labels.** A model is a secondary check |
-| Effort estimate shown to participants (unreliable) | Retired from the participant report. Kept in the researcher side as a documented negative pilot result |
+| Effort estimate shown to participants (unreliable) | Shown as a range (model error about 1.1 points) next to the person's own effort answer, with SHAP drivers; stored for every session so predicted vs actual can be re-checked as data arrives |
 
 If and when there are about 30 or more sessions: train a small, regularised model (ridge or random forest) to predict each state,
 compare with a predict-the-mean baseline and with the single-index baseline, using leave-one-participant-out validation.
@@ -161,7 +161,7 @@ Planned features to add (from the literature): between-word pause time, between-
 
 ## 8. Report design (DECIDED 2026-10-19; replaces the earlier proposal)
 
-Participant report: plain analysis only. No formulas, no disclaimer boilerplate, no numeric effort estimate.
+Participant report: plain analysis only. No formulas, no disclaimer boilerplate. (Revised 2026-10-19: the effort estimate returns as a card on the Writing tab, shown as a range with the person's own NASA-TLX effort answer beside it and a SHAP bar chart; the prediction is stored with every session.)
 Wording is confident and descriptive (what the typing shows), never a claim the data cannot carry.
 
 **Typing skill and keyboard:** shown on the report as context. Key speed is compared with typists on the same kind of

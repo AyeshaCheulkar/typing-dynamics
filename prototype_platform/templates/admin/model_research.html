@@ -3,7 +3,6 @@
 {% block main %}
 <div class="page-head">
   <div>
-    <div class="eyebrow">Model research</div>
     <h1>How every number in the report is made</h1>
     <p class="lede">Each typing measure with its formula, the paper it comes from, how it held up on public data, and
       the models that were tested, used or set aside. Participants never see this page.</p>
@@ -17,7 +16,7 @@
 
 <!-- 01 measures -->
 <section class="rd-sec" id="measures">
-  <div class="rd-sec-head"><span class="rd-n">01</span><h2>Typing measures</h2></div>
+  <div class="rd-sec-head"><h2>Typing measures</h2></div>
   <p class="rd-sub">Formula, reason, source and evidence for each measure. Source flags: <b>verified</b> means the abstract or page
     was opened; <b>search only</b> means the record was confirmed but the full text not read; <b>from memory</b> must be checked before submission.</p>
   {% for m in measures %}
@@ -38,7 +37,7 @@
 
 <!-- 02 models -->
 <section class="rd-sec" id="models">
-  <div class="rd-sec-head"><span class="rd-n">02</span><h2>Models</h2></div>
+  <div class="rd-sec-head"><h2>Models</h2></div>
   <h3>Used in the report: emotional-engagement model</h3>
   <p class="rd-sub">Logistic regression on {{ eng_card.n }} EmoSurv free-text sessions from {{ eng_card.people }} people, emotional vs neutral
     writing. The weights are plain numbers, so every reading is explained exactly: weight × (your value − average) ÷ spread, summed.
@@ -75,7 +74,7 @@
 
 <!-- 03 data -->
 <section class="rd-sec" id="data">
-  <div class="rd-sec-head"><span class="rd-n">03</span><h2>Data</h2></div>
+  <div class="rd-sec-head"><h2>Data</h2></div>
   <div class="rd-table-wrap"><table class="rd-table">
     <thead><tr><th>Dataset</th><th>Size</th><th>Labels</th><th>Used for</th><th>Source</th></tr></thead>
     <tbody>{% for r in datasets %}<tr>{% for c in r %}<td>{{ c }}</td>{% endfor %}</tr>{% endfor %}</tbody>
@@ -89,7 +88,7 @@
 
 <!-- 04 pilot -->
 <section class="rd-sec" id="pilot">
-  <div class="rd-sec-head"><span class="rd-n">04</span><h2>Pilot study (primary data)</h2></div>
+  <div class="rd-sec-head"><h2>Pilot study (primary data)</h2></div>
   <p class="rd-sub">{{ kpis.valid_sessions }} valid sessions from {{ kpis.participants }} participants, each with a self-rated writing effort (1–5).
     These data are frozen. They supply the "compared with other writers" ranges and the effort test below.</p>
   <div class="rd-grid c2">
@@ -126,7 +125,7 @@
 
 <!-- 05 skill & keyboard -->
 <section class="rd-sec" id="skill">
-  <div class="rd-sec-head"><span class="rd-n">05</span><h2>Typing skill and keyboard</h2></div>
+  <div class="rd-sec-head"><h2>Typing skill and keyboard</h2></div>
   <p class="rd-sub">Both are asked before writing and shown on the report, because they move the baseline of every timing measure.</p>
   <div class="rd-grid c2">
     <div class="rd-card"><h3>Evidence (Inputlog copy-task corpus, 491 typists)</h3>
@@ -147,7 +146,7 @@
 
 <!-- 06 hypotheses -->
 <section class="rd-sec" id="hyps">
-  <div class="rd-sec-head"><span class="rd-n">06</span><h2>Questionnaire hypotheses</h2></div>
+  <div class="rd-sec-head"><h2>Questionnaire hypotheses</h2></div>
   <p class="rd-sub">Participants write about a happy or sad moment, then answer short questionnaires. Each answer is correlated with its typing
     reading (Spearman, raw and adjusted). Nothing is shown below {{ live.min_n }} sessions.</p>
   <div class="rd-grid c3">
@@ -170,7 +169,7 @@
 
 <!-- 07 sources -->
 <section class="rd-sec" id="refs">
-  <div class="rd-sec-head"><span class="rd-n">07</span><h2>Sources</h2></div>
+  <div class="rd-sec-head"><h2>Sources</h2></div>
   <ol class="rd-refs">
     {% for c, st in sources %}<li>{{ c }} <i>[{{ st }}]</i></li>{% endfor %}
     <li>Full notes and the plan: <code>research/docs/LITERATURE.md</code> and <code>research/docs/RESEARCH_PLAN.md</code>.</li>

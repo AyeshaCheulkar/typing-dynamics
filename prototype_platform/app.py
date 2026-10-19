@@ -109,6 +109,8 @@ def submit():
     events = data["events"] or []
     features = predict.compute_features(events, final_text)
     features["word_count"] = len(final_text.split())
+    estimate = predict.estimate_and_explain(features)
+    predicted = estimate["predicted_effort"] if estimate["available"] else None
     emotion = TASKS_BY_ID[data["task_id"]]["level_id"]
     emotion = emotion if emotion in ("happy", "sad") else None
     affect_data = affect.analyse(features, final_text, emotion)
@@ -141,7 +143,7 @@ def submit():
         "self_rated_effort": (int(data["self_rated_effort"])
                               if data.get("self_rated_effort") else None),
     }
-    sid = db.insert_session(meta, events, features, None, affect_data)
+    sid = db.insert_session(meta, events, features, predicted, affect_data)
     return jsonify({"ok": True, "session_id": sid,
                     "report_url": url_for("report", session_id=sid)})
 
@@ -163,6 +165,7 @@ def report(session_id):
     eng = an.engagement(feats)
 
     pauses = an.pause_view(acts)
+    ot = an.over_time(events)
     metrics = [
         {"value": s["word_count"], "label": "Words"},
         {"value": _fmt_time(feats.get("active_time_s", 0)), "label": "Writing time"},
@@ -190,7 +193,8 @@ def report(session_id):
         metrics=metrics, bars=bars, pauses=pauses, eng=eng,
         eng_n=an.engagement_model()["n_sessions"],
         headlines=an.headlines(feats, acts, bars), tips=an.tips(eng, bars, s.get("typing_skill")),
-        over_time=an.over_time(events), timeline=predict.timeline_from_events(events),
+        over_time=ot, pace_story=an.pace_story(ot), pause_lengths=an.pause_lengths(acts),
+        effort=an.effort_card(s, predict.estimate_and_explain(feats)), timeline=predict.timeline_from_events(events),
         tone_feel=an.tone_vs_feeling(s, aff.get("text")),
         skill_word={"touch": "touch typist", "some": "mixed typing", "hunt": "looks at the keys"}.get(
             s.get("typing_skill"), "typing style not given"),
@@ -408,7 +412,7 @@ def export_csv():
 @login_required
 def export_live_csv():
     cols = ["id", "participant_code", "emotion", "typing_skill", "keyboard", "self_mood", "behavioural_valid",
-            "word_count", "created_at"]
+            "word_count", "predicted_effort", "tlx_effort", "self_rated_effort", "created_at"]
     feats = ["chars_per_sec", "median_iki_ms", "pause_time_ratio", "n_long_pause_per_100", "delete_rate",
              "revisions_per_100"]
     buf = io.StringIO()

@@ -160,7 +160,8 @@ def writing_actions(events):
     out = {"additions": sum(1 for e in keys if len(e["key_value"] or "") == 1),
            "deletions": sum(1 for e in keys if e["key_value"] in DELETE_KEYS),
            "pauses": {w: {"n": 0, "total_ms": 0, "longest_ms": 0}
-                      for w in ("within_word", "between_words", "between_sentences")}}
+                      for w in ("within_word", "between_words", "between_sentences")},
+           "length_buckets": {"0.5-1 s": 0, "1-2 s": 0, "2-5 s": 0, "5 s +": 0}}
     for i in range(1, len(keys)):
         gap = keys[i]["t_ms"] - keys[i - 1]["t_ms"]
         if gap < PAUSE_SHORT_MS:
@@ -173,6 +174,8 @@ def writing_actions(events):
             where = "between_words"
         else:
             where = "within_word"
+        out["length_buckets"]["0.5-1 s" if gap < 1000 else "1-2 s" if gap < 2000 else
+                               "2-5 s" if gap < 5000 else "5 s +"] += 1
         b = out["pauses"][where]
         b["n"] += 1
         b["total_ms"] += gap

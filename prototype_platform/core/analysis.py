@@ -62,7 +62,7 @@ def _pct(sorted_vals, v):
     return float(100 * (lo + hi) / 2 / len(sorted_vals))
 
 
-def _word(p, hi, lo, mid="about typical"):
+def _word(p, hi, lo, mid="were about typical"):
     return hi if p >= 66 else lo if p <= 33 else mid
 
 
@@ -84,7 +84,7 @@ def compare(feats, keyboard=None):
     where = {"laptop": "on a laptop keyboard", "external": "on a desktop or external keyboard"}.get(keyboard, "")
     bars.append({"label": "Key-to-key speed", "fill": round(faster),
                  "value": "%d ms between keys" % round(iki),
-                 "phrase": "faster than %d%% of writers%s" % (round(faster), " (allowing for typing " + where + ")" if where else ""),
+                 "phrase": "were faster than %d%% of writers%s" % (round(faster), " (allowing for typing " + where + ")" if where else ""),
                  "group": "%d writers, adjusted for keyboard type using 491 typists (Inputlog corpus)" % ref["n"]})
 
     cv = bh.rhythm_cv(feats)
@@ -102,7 +102,7 @@ def compare(feats, keyboard=None):
     for label, key, v, val, hi, lo in spec:
         p = _pct(ref["vals"][key], float(v))
         bars.append({"label": label, "fill": round(p), "value": val,
-                     "phrase": _word(p, hi, lo, "about typical for writers"),
+                     "phrase": _word(p, hi, lo, "were about typical for writers"),
                      "group": "%d writers (pilot + public free-text studies)" % ref["n"]})
     return bars
 
@@ -150,6 +150,12 @@ def pause_view(acts):
     return {"rows": rows, "total": total}
 
 
+def pause_lengths(acts):
+    """How long the pauses were: counts per length band."""
+    b = acts["length_buckets"]
+    return {"labels": list(b), "values": list(b.values())}
+
+
 def over_time(events, bins=10):
     """Characters typed per minute in equal slices of the session."""
     t = sorted(e["t"] for e in events if e.get("type") == "keydown" and len(e.get("key") or "") == 1)
@@ -163,6 +169,56 @@ def over_time(events, bins=10):
     label = lambda ms: "%d:%02d" % divmod(int(ms / 1000), 60)
     return {"labels": [label(width * (i + 0.5)) for i in range(bins)],
             "values": [round(c / (width / 60000.0)) for c in counts]}
+
+
+def pace_story(ot):
+    """Plain sentences about how the pace changed through the session."""
+    if not ot:
+        return None
+    v, n = ot["values"], len(ot["values"])
+    k = max(1, n // 3)
+    first, last = sum(v[:k]) / k, sum(v[-k:]) / k
+    change = 100 * (last - first) / first if first else 0
+    slow, fast = min(range(n), key=v.__getitem__), max(range(n), key=v.__getitem__)
+    trend = ("You sped up as you went, which often happens once the ideas are flowing." if change > 15 else
+             "You slowed toward the end, which is common as a passage nears its conclusion or attention tires."
+             if change < -15 else "Your pace stayed level from start to finish.")
+    return ["You began at about %d characters a minute and finished at about %d. %s" % (first, last, trend),
+            "Your fastest stretch was around %s (%d characters a minute) and your slowest around %s (%d)."
+            % (ot["labels"][fast], v[fast], ot["labels"][slow], v[slow])]
+
+
+# Leave-one-participant-out mean error of the pilot Random Forest (research/docs/ANALYSIS_PRIMARY.md).
+EFFORT_MAE = 1.1
+
+
+def effort_card(row, estimate):
+    """Model's effort estimate (as a range) next to the person's own answer, with what drove it."""
+    if not estimate or not estimate.get("available"):
+        return None
+    p = estimate["predicted_effort"]
+    lo, hi = max(1.0, p - EFFORT_MAE), min(5.0, p + EFFORT_MAE)
+    if row.get("tlx_effort"):
+        actual, src = row["tlx_effort"], "your effort answer"
+    elif row.get("self_rated_effort"):
+        actual, src = row["self_rated_effort"], "your effort rating"
+    else:
+        actual, src = None, None
+    scale = lambda x: round((x - 1) / 4 * 100, 1)
+    if actual is None:
+        verdict = "You did not rate your effort, so there is nothing to compare the estimate with."
+    elif abs(actual - p) <= EFFORT_MAE:
+        verdict = "%s (%d) is within the model's usual error of its estimate (%.1f), so your typing and your own sense of effort agree."
+        verdict = verdict % (src.capitalize(), actual, p)
+    else:
+        verdict = ("You rated the effort %s than the model expected (%d against %.1f). That gap is larger than the model's usual "
+                   "error, so how hard the writing felt was not visible in your typing." %
+                   ("higher" if actual > p else "lower", actual, p))
+    top = estimate["contributions"][:5]
+    big = max(abs(v) for _, v in top) or 1
+    return {"pred": p, "lo": scale(lo), "hi": scale(hi), "pred_pos": scale(p), "actual": actual, "src": src,
+            "actual_pos": scale(actual) if actual else None, "verdict": verdict, "mae": EFFORT_MAE,
+            "drivers": [{"name": n, "up": v > 0, "width": round(100 * abs(v) / big)} for n, v in top]}
 
 
 # ------------------------------------------------------------------ words

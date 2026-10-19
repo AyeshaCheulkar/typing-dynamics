@@ -1,0 +1,199 @@
+/* polish.css — final refinement layer for the participant report and the researcher dashboard.
+   Loaded last (base.html), uses only the shared palette tokens, so light, dark and mood themes still work.
+   It sets the reading typography, spacing rhythm, depth and bar styling. The landing, login and writing pages
+   are left as they were: every rule here is scoped to .report, .main (admin) or .sidebar. */
+
+:root {
+  --r-md: 12px;
+  --r-lg: 18px;
+  --depth: 0 1px 2px color-mix(in oklab, var(--ink) 6%, transparent),
+           0 14px 34px -18px color-mix(in oklab, var(--ink) 28%, transparent);
+  --depth-hover: 0 2px 4px color-mix(in oklab, var(--ink) 8%, transparent),
+                 0 20px 40px -18px color-mix(in oklab, var(--brand) 40%, transparent);
+  --fill: linear-gradient(90deg, var(--brand-3), var(--brand));
+  --ease: cubic-bezier(.22, 1, .36, 1);
+}
+
+/* ---------- browser surfaces ---------- */
+html { accent-color: var(--brand); scrollbar-width: thin; scrollbar-color: var(--brand-3) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--brand-3); border-radius: 999px; border: 2px solid var(--bg); }
+.rm-v, .rd-v, .pm-v, .s-v, .sm-v, .k-num, .snap .s-v, td, .num { font-variant-numeric: tabular-nums; }
+
+/* ---------- reading typography ---------- */
+.report, .main { font-size: 1rem; line-height: 1.65; }
+.report h1, .main h1 { text-transform: none; font-weight: 600; letter-spacing: -.025em; line-height: 1.12; text-wrap: balance; }
+.report h2, .main h2 { text-transform: none; font-weight: 600; letter-spacing: -.015em; line-height: 1.2; text-wrap: balance; }
+.report h3, .main h3 { text-transform: none; letter-spacing: -.005em; }
+.report p, .main p { max-width: 72ch; text-wrap: pretty; }
+.eyebrow { text-transform: none; letter-spacing: 0; font: 500 .86rem Inter, sans-serif; color: var(--muted); }
+
+/* ---------- participant report ---------- */
+.wrap.report { max-width: 980px; padding-top: 44px; }
+.report-head { margin-bottom: 8px; }
+.report-head h1 { font-size: clamp(2rem, 4.2vw, 2.7rem); margin: 4px 0 8px; }
+.report-head .muted { font-size: .98rem; }
+.report-intro { margin: 14px 0 0; font-size: 1.04rem; line-height: 1.7; color: var(--ink-2); max-width: 68ch; }
+.report-intro b { color: var(--ink); font-weight: 600; }
+
+.report .card { border-radius: var(--r-lg); padding: 34px 36px; margin: 22px 0; box-shadow: var(--depth); border-color: transparent; }
+.report .card > h2 { font-size: 1.4rem; margin: 0 0 14px; }
+.report .card > h2 + p, .report .card > h2 + .muted { margin-top: -4px; }
+.report .aff-h { font: 600 1.02rem "Space Grotesk", sans-serif; text-transform: none; letter-spacing: -.005em;
+  color: var(--ink); margin: 30px 0 12px; }
+
+/* tabs */
+.rtabs { display: flex; gap: 4px; padding: 5px; margin: 22px 0 8px; border: 0; border-radius: 999px;
+  background: var(--paper); box-shadow: inset 0 0 0 1px var(--line); overflow: visible; }
+.rtab { flex: 1; padding: 12px 18px; border-radius: 999px; font: 600 .9rem "Space Grotesk", sans-serif;
+  text-transform: none; letter-spacing: 0; color: var(--ink-2);
+  transition: background .25s var(--ease), color .25s, box-shadow .25s; }
+.rtab:hover:not(.on) { background: color-mix(in oklab, var(--card) 70%, transparent); color: var(--ink); }
+.rtab.on { background: var(--grad); color: #fff; box-shadow: 0 8px 20px -8px color-mix(in oklab, var(--brand) 60%, transparent); }
+
+/* headline sentences */
+.headlines { margin: 4px 0 24px; padding: 0; list-style: none; display: grid; gap: 12px; }
+.headlines li { position: relative; padding-left: 28px; font-size: 1.12rem; line-height: 1.6; color: var(--ink); max-width: 66ch; }
+.headlines li::before { content: ""; position: absolute; left: 4px; top: .62em; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--brand-3); box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand-3) 28%, transparent); }
+
+/* metric cards */
+.report-metrics { gap: 12px; border: 0; background: transparent; border-radius: 0; margin: 6px 0 4px;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); }
+.rmetric { background: var(--paper); border: 0; border-radius: var(--r-md); padding: 20px 12px 18px; }
+.rm-v { font-size: 2rem; letter-spacing: -.03em; color: var(--ink); }
+.rm-l { margin-top: 8px; font-size: .7rem; letter-spacing: .08em; color: var(--ink-2); }
+
+/* "how to read this" */
+.explain { margin: 22px 0 6px; padding: 14px 18px; border: 0; border-radius: var(--r-md);
+  background: color-mix(in oklab, var(--brand) 7%, var(--card)); font-size: .93rem; line-height: 1.65; color: var(--ink-2); max-width: none; }
+.explain b { color: var(--brand-dark); font-weight: 600; }
+.report .explain, .main .explain { max-width: none; }
+
+/* timeline, charts */
+.timeline { height: 42px; border-radius: var(--r-md); border: 0; box-shadow: inset 0 0 0 1px var(--line); background: var(--paper); }
+.tl-legend { margin-top: 14px; gap: 22px; font: 500 .82rem Inter, sans-serif; text-transform: none; letter-spacing: 0; color: var(--ink-2); }
+.chart-box { height: 260px; }
+.chart-box.short { height: 230px; }
+.chart-box.tall { height: 360px; }
+.two-col { gap: 40px; }
+
+/* bars */
+.report .b-bar, .report .s-bar, .report .drv-track { height: 11px; border-radius: 999px; background: var(--track); border: 0; }
+.report .b-bar span { background: var(--fill); border-radius: 999px; }
+.report .s-bar.self span { background: linear-gradient(90deg, color-mix(in oklab, var(--self) 55%, #fff), var(--self)); }
+.report .s-bar.typ span { background: linear-gradient(90deg, color-mix(in oklab, var(--exp) 55%, #fff), var(--exp)); }
+.pbars, .cmp { gap: 24px; }
+.pbar-top, .cmp-top { margin-bottom: 8px; align-items: baseline; }
+.pbar-top b, .cmp-top b { font-size: .98rem; font-weight: 600; }
+.cmp-row { padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+.cmp-row:last-child { border-bottom: 0; padding-bottom: 0; }
+.cmp-row .small { margin-top: 8px; font-size: .92rem; color: var(--ink); }
+
+/* what shaped your pattern */
+.drivers { gap: 12px; margin: 18px 0 6px; }
+.drv { grid-template-columns: minmax(170px, 1.1fr) 3fr minmax(130px, 1fr); gap: 16px; }
+.drv-name { font-weight: 600; font-size: .94rem; }
+.drv-bar.emo { background: linear-gradient(90deg, color-mix(in oklab, var(--exp) 55%, #fff), var(--exp)); }
+.drv-bar.neu { background: linear-gradient(90deg, color-mix(in oklab, var(--self) 55%, #fff), var(--self)); }
+
+/* effort card */
+.eff-scale { margin: 38px 0 22px; max-width: 680px; }
+.eff-track { height: 8px; background: var(--track); }
+.eff-range { top: -5px; height: 18px; background: color-mix(in oklab, var(--exp) 24%, transparent); }
+.eff-mark { width: 20px; height: 20px; border-color: var(--card); }
+.eff-ticks { margin-top: 40px; font: 500 .78rem Inter, sans-serif; }
+
+/* tips and insights: no coloured edge, a quiet tint and a lift on hover */
+.insight { border: 0; border-radius: var(--r-md); padding: 20px 22px; background: var(--paper); box-shadow: none; }
+.insight:hover { border-left-color: transparent; box-shadow: var(--depth); transform: translateY(-2px); }
+.ins-title { font: 600 1.02rem "Space Grotesk", sans-serif; margin-bottom: 8px; color: var(--ink); letter-spacing: -.005em; }
+.ins-strategy { font-size: .96rem; line-height: 1.65; color: var(--ink-2); }
+.insight-grid { gap: 16px; }
+
+/* emotional tab */
+.state-grid { gap: 18px; margin-top: 20px; }
+.state-card { border: 0; border-radius: var(--r-md); padding: 22px; background: var(--paper); }
+.pc-top b { font: 600 1.05rem "Space Grotesk", sans-serif; letter-spacing: -.005em; }
+.srow { grid-template-columns: 64px 1fr 92px; gap: 12px; margin: 14px 0; font-size: .88rem; }
+.s-k { color: var(--ink-2); font-weight: 500; }
+.s-v { font-weight: 600; text-align: right; }
+.s-line { margin: 16px 0 8px; font-size: .97rem; line-height: 1.6; font-weight: 500; color: var(--ink); }
+.s-drv { margin: 12px 0 0; padding-left: 18px; font-size: .88rem; color: var(--ink-2); line-height: 1.6; }
+.agree { font: 600 .72rem "Space Grotesk", sans-serif; text-transform: none; letter-spacing: .02em; padding: 4px 11px; background: var(--card); }
+.meter-track { height: 10px; }
+.meter-mark { width: 22px; height: 22px; border-color: var(--card); }
+.meter-ends { font: 500 .8rem Inter, sans-serif; text-transform: none; letter-spacing: 0; color: var(--ink-2); }
+.tf-row { grid-template-columns: 96px 1fr 140px; }
+.aff-table th { font: 600 .74rem "Space Grotesk", sans-serif; text-transform: none; letter-spacing: 0; color: var(--ink-2); }
+.aff-table th, .aff-table td { padding: 12px 12px; }
+
+/* glossary + footer */
+.glossary { gap: 14px 28px; grid-template-columns: minmax(170px, 1fr) 3fr; }
+.glossary dt { font-weight: 600; color: var(--ink); }
+.glossary dd { color: var(--ink-2); line-height: 1.6; }
+.report-foot { margin-top: 36px; padding-top: 22px; border-top: 1px solid var(--line); }
+
+/* ---------- researcher dashboard ---------- */
+.sidebar nav a { border-radius: 10px; margin: 2px 8px; padding: 10px 14px; transition: background .2s, color .2s; }
+.sidebar nav a:hover:not(.active) { background: rgba(255, 255, 255, .07); }
+.main { padding: 40px 52px 72px; }
+.main .page-head h1 { font-size: clamp(1.8rem, 3vw, 2.3rem); }
+.page-head .lede { font-size: 1.02rem; line-height: 1.65; max-width: 66ch; }
+.rd-sec { margin-top: 56px; }
+.rd-sec-head h2 { font-size: 1.5rem; }
+.rd-sec > .rd-sub { margin: 6px 0 22px; font-size: .98rem; line-height: 1.65; }
+
+.rd-card, .rd-tile, .rd-find, .rd-hyp, .rd-lead, .rd-step, .main .chart-card, .rd-table-wrap, .p-card {
+  border: 0; border-radius: var(--r-lg); box-shadow: var(--depth); }
+.rd-card, .rd-find, .rd-hyp { padding: 26px 28px; }
+.rd-tile { padding: 22px 24px; }
+.rd-tile .rd-k { font-size: .76rem; letter-spacing: .04em; text-transform: none; font-weight: 600; }
+.rd-tile .rd-v { font-size: 2.4rem; letter-spacing: -.03em; }
+.rd-tile .rd-d { font-size: .9rem; line-height: 1.5; }
+.rd-lead { background: color-mix(in oklab, var(--brand) 8%, var(--card)); }
+.p-card:hover, .main .chart-card:hover { box-shadow: var(--depth-hover); }
+.rd-find { gap: 28px; grid-template-columns: 132px 1fr; margin-bottom: 16px; }
+.rd-find h3 { font-size: 1.15rem; }
+.rd-find p { font-size: .98rem; line-height: 1.65; }
+.rd-find .rd-num { font-size: 1.35rem; }
+.rd-find .rd-num small { text-transform: none; letter-spacing: 0; font-size: .74rem; font-weight: 500; }
+.rd-status { text-transform: none; letter-spacing: .01em; font: 600 .74rem "Space Grotesk", sans-serif; padding: 4px 11px; border-width: 0; }
+.rd-status.supported { background: color-mix(in oklab, var(--valid) 14%, var(--card)); }
+.rd-status.not-supported { background: color-mix(in oklab, var(--exp) 14%, var(--card)); }
+.rd-status.mixed { background: color-mix(in oklab, var(--self) 14%, var(--card)); }
+.rd-subnav { padding: 12px 0; border-bottom: 0; box-shadow: 0 1px 0 var(--line); }
+.rd-subnav a { font-size: .86rem; padding: 8px 16px; border-color: transparent; background: var(--paper); }
+.rd-subnav a.on { background: var(--grad); }
+
+.rd-table th, table.clean th { text-transform: none; letter-spacing: 0; font: 600 .78rem "Space Grotesk", sans-serif; color: var(--ink-2); padding: 13px 16px; }
+.rd-table td, table.clean td { padding: 13px 16px; line-height: 1.55; }
+.rd-table tbody tr:nth-child(even) td { background: color-mix(in oklab, var(--paper) 55%, var(--card)); }
+.rd-table { font-size: .92rem; }
+.rd-cap { font-size: .88rem; line-height: 1.6; }
+.rd-note { border-radius: var(--r-md); border-width: 0; background: color-mix(in oklab, var(--exp) 10%, var(--card)); }
+.rd-note.info { background: color-mix(in oklab, var(--brand) 8%, var(--card)); }
+.rd-bar { grid-template-columns: 170px 1fr 60px; font-size: .92rem; }
+.rd-step::before { letter-spacing: 0; }
+
+/* ---------- small screens, motion, print ---------- */
+@media (max-width: 760px) {
+  .report .card { padding: 24px 20px; }
+  .main { padding: 24px 16px 56px; }
+  .rd-find { grid-template-columns: 1fr; gap: 10px; }
+  .drv { grid-template-columns: 1fr; gap: 6px; }
+  .srow { grid-template-columns: 56px 1fr 80px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rtab { transition: none; }
+  .insight:hover, .p-card:hover { transform: none; }
+}
+@media print {
+  .report .card { box-shadow: none; border: 1px solid var(--line); break-inside: avoid; }
+  .rtab, .rtabs { display: none; }
+}
+
+/* participant cards and tables: keep short labels and timestamps on one line */
+.p-foot { flex-wrap: wrap; gap: 6px 12px; }
+.p-foot .go { white-space: nowrap; }
+table.clean td.muted, table.clean td a { white-space: nowrap; }

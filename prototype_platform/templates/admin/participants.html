@@ -2,7 +2,7 @@
 {% block title %}Participants · Writing Analytics{% endblock %}
 {% block main %}
 <div class="page-head sticky">
-  <div><div class="eyebrow">Study cohorts</div><h1>Participants</h1>
+  <div><h1>Participants</h1>
     <p class="muted small">The frozen pilot study and the new emotion-writing sessions, kept apart because they carry different labels.</p></div>
   <div class="seg" id="tab-seg">
     <button data-t="pilot" class="on">Pilot study · {{ participants|length }}</button>
@@ -79,11 +79,12 @@
   <div class="chart-card">
     <div style="overflow-x:auto"><table class="clean">
       <thead><tr><th>ID</th><th>Participant</th><th>Mood</th><th>Skill</th><th>Keyboard</th>
-        <th>Load</th><th>Flow</th><th>Intensity</th><th>Valid</th><th>Submitted</th><th></th></tr></thead>
+        <th>Load</th><th>Flow</th><th>Intensity</th><th>Effort: model</th><th>Effort: answer</th><th>Valid</th><th>Submitted</th><th></th></tr></thead>
       <tbody>{% for s in sessions %}
         <tr><td>{{ s.id }}</td><td><strong>{{ s.participant_code }}</strong></td>
           <td>{{ s.emotion or '—' }}</td><td>{{ s.typing_skill or '—' }}</td><td>{{ s.keyboard or '—' }}</td>
           <td>{{ s.scores.load or '—' }}</td><td>{{ s.scores.flow or '—' }}</td><td>{{ s.scores.intensity or '—' }}</td>
+          <td>{{ s.predicted_effort if s.predicted_effort is not none else '—' }}</td><td>{{ s.tlx_effort or s.self_rated_effort or '—' }}</td>
           <td>{% if s.behavioural_valid %}<span class="badge valid-badge">valid</span>{% else %}<span class="badge invalid-badge">invalid</span>{% endif %}</td>
           <td class="muted small">{{ s.created_at }}</td>
           <td><a href="{{ url_for('report', session_id=s.id) }}">Report →</a></td></tr>

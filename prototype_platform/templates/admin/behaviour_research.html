@@ -6,7 +6,6 @@
 
 <div class="page-head">
   <div>
-    <div class="eyebrow">Emotion-writing extension</div>
     <h1>Emotion &amp; behavioural state</h1>
     <p class="lede">The evidence for reading emotional intensity, cognitive load and flow from typing: what we test, what our
       participants' answers show, and what public data and the literature add.</p>
@@ -20,7 +19,7 @@
 
 <!-- 01 What we test -->
 <section class="rd-sec" id="tests">
-  <div class="rd-sec-head"><span class="rd-n">01</span><h2>What we test</h2></div>
+  <div class="rd-sec-head"><h2>What we test</h2></div>
   <p class="rd-sub">Each state is measured twice, independently: once by a published questionnaire the participant answers, and once by a
     typing reading computed only from keystrokes. The hypothesis is that the two move together.</p>
   <div class="rd-table-wrap"><table class="rd-table">
@@ -40,7 +39,7 @@
 
 <!-- 02 Our participants -->
 <section class="rd-sec" id="live">
-  <div class="rd-sec-head"><span class="rd-n">02</span><h2>Our participants: answers against typing</h2></div>
+  <div class="rd-sec-head"><h2>Our participants: answers against typing</h2></div>
   <p class="rd-sub">{{ live.n }} emotion-writing session{{ '' if live.n == 1 else 's' }} so far. A correlation appears once a pair has at least
     {{ live.min_n }} sessions with varied answers, and an adjusted version removes the effect of typing style and keyboard.</p>
   <div class="rd-grid c3">
@@ -103,7 +102,7 @@
 
 <!-- 03 Public data -->
 <section class="rd-sec" id="emosurv">
-  <div class="rd-sec-head"><span class="rd-n">03</span><h2>Public data: does typing change with mood?</h2></div>
+  <div class="rd-sec-head"><h2>Public data: does typing change with mood?</h2></div>
   {% if ext %}
   <p class="rd-sub">{{ ext.dataset }}: {{ ext.n_sessions }} sessions from {{ ext.n_participants }} people (Happy {{ ext.emotion_counts.Happy }}, Sad {{ ext.emotion_counts.Sad }},
     Neutral {{ ext.emotion_counts.Neutral }}, Angry {{ ext.emotion_counts.Angry }}, Calm {{ ext.emotion_counts.Calm }}), run through the same feature extractor as our data.
@@ -130,7 +129,7 @@
 
 <!-- 04 Shift -->
 <section class="rd-sec" id="shift">
-  <div class="rd-sec-head"><span class="rd-n">04</span><h2>Emotional writing against the person's own baseline</h2></div>
+  <div class="rd-sec-head"><h2>Emotional writing against the person's own baseline</h2></div>
   <p class="rd-sub"><b>H1.</b> Rhythm variability (the spread of the gaps between keystrokes, divided by their average) is lower when someone writes about an
     emotional moment than in their own neutral passage. This is tested on public data.</p>
   {% if ext and ext.engagement_shift %}{% set e = ext.engagement_shift %}
@@ -159,7 +158,7 @@
 
 <!-- 05 Literature -->
 <section class="rd-sec" id="literature">
-  <div class="rd-sec-head"><span class="rd-n">05</span><h2>Measures taken from the literature</h2></div>
+  <div class="rd-sec-head"><h2>Measures taken from the literature</h2></div>
   {% if lit %}
   <p class="rd-sub">Each measure is defined as in its source paper and tested the same way, with Holm correction across {{ lit.meta.features|length }} measures.
     "Within person" is the emotional block minus the same person's neutral block.</p>
@@ -180,7 +179,7 @@
 
 <!-- 06 Cautions -->
 <section class="rd-sec" id="caution">
-  <div class="rd-sec-head"><span class="rd-n">06</span><h2>How to read this</h2></div>
+  <div class="rd-sec-head"><h2>How to read this</h2></div>
   <div class="rd-grid c2">
     <div class="rd-card"><h3>What the evidence allows</h3>
       <ul class="rd-list">
