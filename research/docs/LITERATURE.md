@@ -2,7 +2,7 @@
 
 Scope: which typing features the literature links to emotion, stress, cognitive load and
 attention, how each is defined, and whether it holds up on our external data (EmoSurv).
-Regenerate the numbers with `python prototype_platform/validate_literature_formulas.py`.
+Regenerate the numbers with `python research/scripts/validate_literature_formulas.py`.
 
 ## 1. Sources and verification status
 

@@ -114,19 +114,8 @@ MOMENTS = [
     },
 ]
 
-# Neutral BASELINE passage written first by every participant. It is length-matched
-# to the emotional passage so each person's emotional writing can be compared with
-# their OWN neutral typing (within-person design; see affect.rhythm_shift).
-BASELINE = {
-    "id": "baseline", "title": "Baseline passage", "difficulty": "Baseline",
-    "variations": [{"id": "baseline_room",
-                    "prompt": "Describe the room you are in right now: the furniture, "
-                              "the objects around you and how it is laid out. "
-                              "About 120–200 words."}],
-}
-
 TASKS_BY_ID = {}
-for _lvl in LEVELS + MOMENTS + [BASELINE]:
+for _lvl in LEVELS + MOMENTS:
     for _v in _lvl["variations"]:
         TASKS_BY_ID[_v["id"]] = {
             "prompt": _v["prompt"],

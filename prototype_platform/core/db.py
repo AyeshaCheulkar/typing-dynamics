@@ -1,6 +1,6 @@
 """
 db.py — the PROTOTYPE's own SQLite layer. Completely separate from the Stage-1
-research database: this writes only to prototype_platform/data/prototype.db and never
+research database: this writes only to data/databases/prototype.db and never
 opens ../data.db.
 
 Tables (prefixed pt_ to make the separation unmistakable):

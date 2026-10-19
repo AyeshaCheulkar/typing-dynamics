@@ -2,45 +2,114 @@
 {% block title %}Participants · Writing Analytics{% endblock %}
 {% block main %}
 <div class="page-head sticky">
-  <div><div class="eyebrow">Study cohort</div><h1>Participants</h1>
-    <p class="muted small">{{ participants|length }} participants · click a card to open the profile.</p></div>
-  <div class="seg" id="view-seg">
-    <button data-v="cards" class="on">Cards</button>
-    <button data-v="table">Table</button>
+  <div><div class="eyebrow">Study cohorts</div><h1>Participants</h1>
+    <p class="muted small">The frozen pilot study and the new emotion-writing sessions, kept apart because they carry different labels.</p></div>
+  <div class="seg" id="tab-seg">
+    <button data-t="pilot" class="on">Pilot study · {{ participants|length }}</button>
+    <button data-t="new">New sessions · {{ summary.sessions }}</button>
   </div>
 </div>
 
-<div id="view-cards" class="participant-grid">
-  {% for p in participants %}
-  <a class="p-card" href="{{ url_for('participant_profile', code=p.code) }}">
-    <div class="p-top"><span class="p-code">{{ p.code }}</span>
-      <span class="p-sessions">{{ p.sessions }} session{{ 's' if p.sessions != 1 }}</span></div>
-    <div class="p-metrics">
-      <div><span class="pm-v">{{ p.avg_effort }}</span><span class="pm-l">avg effort</span></div>
-      <div><span class="pm-v">{{ p.avg_speed }}</span><span class="pm-l">chars/s</span></div>
-      <div><span class="pm-v">{{ p.avg_pauses }}</span><span class="pm-l">pauses/100</span></div>
-    </div>
-    <div class="p-foot"><span class="muted small">Last: {{ p.last }}</span>
-      <span class="go">View profile →</span></div>
-  </a>
-  {% endfor %}
+<!-- ============ pilot ============ -->
+<div id="tab-pilot">
+  <div class="page-head" style="margin:6px 0 14px">
+    <p class="muted small">{{ participants|length }} pilot participants, each with a self-rated effort (1–5) · click a card to open the profile.</p>
+    <div class="seg" id="view-seg"><button data-v="cards" class="on">Cards</button><button data-v="table">Table</button></div>
+  </div>
+  <div id="view-cards" class="participant-grid">
+    {% for p in participants %}
+    <a class="p-card" href="{{ url_for('participant_profile', code=p.code) }}">
+      <div class="p-top"><span class="p-code">{{ p.code }}</span>
+        <span class="p-sessions">{{ p.sessions }} session{{ 's' if p.sessions != 1 }}</span></div>
+      <div class="p-metrics">
+        <div><span class="pm-v">{{ p.avg_effort }}</span><span class="pm-l">avg effort</span></div>
+        <div><span class="pm-v">{{ p.avg_speed }}</span><span class="pm-l">chars/s</span></div>
+        <div><span class="pm-v">{{ p.avg_pauses }}</span><span class="pm-l">pauses/100</span></div>
+      </div>
+      <div class="p-foot"><span class="muted small">Last: {{ p.last }}</span><span class="go">View profile →</span></div>
+    </a>
+    {% endfor %}
+  </div>
+  <div id="view-table" class="chart-card hidden" style="margin-top:0">
+    <div style="overflow-x:auto"><table class="clean">
+      <thead><tr><th>Participant</th><th>Sessions</th><th>Valid</th><th>Levels</th>
+        <th>Avg effort</th><th>Avg speed</th><th>Avg pauses</th><th>Avg time</th>
+        <th>Avg revisions</th><th>Last</th><th></th></tr></thead>
+      <tbody>{% for p in participants %}
+        <tr><td><strong>{{ p.code }}</strong></td><td>{{ p.sessions }}</td><td>{{ p.valid }}</td>
+          <td>{{ p.levels }}</td><td>{{ p.avg_effort }}</td><td>{{ p.avg_speed }}</td>
+          <td>{{ p.avg_pauses }}</td><td>{{ p.avg_time }}s</td><td>{{ p.avg_revisions }}</td>
+          <td class="muted small">{{ p.last }}</td>
+          <td><a href="{{ url_for('participant_profile', code=p.code) }}">Open →</a></td></tr>
+      {% endfor %}</tbody>
+    </table></div>
+  </div>
 </div>
 
-<div id="view-table" class="chart-card hidden" style="margin-top:0">
-  <div style="overflow-x:auto"><table class="clean">
-    <thead><tr><th>Participant</th><th>Sessions</th><th>Valid</th><th>Levels</th>
-      <th>Avg effort</th><th>Avg speed</th><th>Avg pauses</th><th>Avg time</th>
-      <th>Avg revisions</th><th>Last</th><th></th></tr></thead>
-    <tbody>{% for p in participants %}
-      <tr><td><strong>{{ p.code }}</strong></td><td>{{ p.sessions }}</td><td>{{ p.valid }}</td>
-        <td>{{ p.levels }}</td><td>{{ p.avg_effort }}</td><td>{{ p.avg_speed }}</td>
-        <td>{{ p.avg_pauses }}</td><td>{{ p.avg_time }}s</td><td>{{ p.avg_revisions }}</td>
-        <td class="muted small">{{ p.last }}</td>
-        <td><a href="{{ url_for('participant_profile', code=p.code) }}">Open →</a></td></tr>
-    {% endfor %}</tbody>
-  </table></div>
+<!-- ============ new sessions ============ -->
+<div id="tab-new" class="hidden">
+  <div class="page-head" style="margin:6px 0 14px">
+    <p class="muted small">{{ summary.sessions }} sessions from {{ summary.participants }} participants, submitted at <code>/test</code>.
+      Each has the mood chosen, typing style, keyboard and the three questionnaire scores (1–5).</p>
+    {% if sessions %}
+    <form method="post" action="{{ url_for('live_clear') }}"
+          onsubmit="return confirm('Clear ALL new sessions? This cannot be undone. The pilot data is not affected.');">
+      <button class="btn" type="submit">Clear all new sessions</button>
+    </form>
+    {% endif %}
+  </div>
+
+  {% if live_participants %}
+  <div class="participant-grid">
+    {% for p in live_participants %}
+    <a class="p-card" href="{{ url_for('live_profile', code=p.code) }}">
+      <div class="p-top"><span class="p-code">{{ p.code }}</span>
+        <span class="p-sessions">{{ p.sessions }} session{{ 's' if p.sessions != 1 }}</span></div>
+      <div class="p-metrics">
+        <div><span class="pm-v">{{ p.avg_load or '—' }}</span><span class="pm-l">avg load /5</span></div>
+        <div><span class="pm-v">{{ p.avg_speed }}</span><span class="pm-l">chars/s</span></div>
+        <div><span class="pm-v">{{ p.avg_pauses }}</span><span class="pm-l">pauses/100</span></div>
+      </div>
+      <div class="p-foot"><span class="muted small">Last: {{ p.last }}</span><span class="go">View profile →</span></div>
+    </a>
+    {% endfor %}
+  </div>
+
+  <section class="section-head"><h2>All new sessions</h2></section>
+  <div class="chart-card">
+    <div style="overflow-x:auto"><table class="clean">
+      <thead><tr><th>ID</th><th>Participant</th><th>Mood</th><th>Skill</th><th>Keyboard</th>
+        <th>Load</th><th>Flow</th><th>Intensity</th><th>Valid</th><th>Submitted</th><th></th></tr></thead>
+      <tbody>{% for s in sessions %}
+        <tr><td>{{ s.id }}</td><td><strong>{{ s.participant_code }}</strong></td>
+          <td>{{ s.emotion or '—' }}</td><td>{{ s.typing_skill or '—' }}</td><td>{{ s.keyboard or '—' }}</td>
+          <td>{{ s.scores.load or '—' }}</td><td>{{ s.scores.flow or '—' }}</td><td>{{ s.scores.intensity or '—' }}</td>
+          <td>{% if s.behavioural_valid %}<span class="badge valid-badge">valid</span>{% else %}<span class="badge invalid-badge">invalid</span>{% endif %}</td>
+          <td class="muted small">{{ s.created_at }}</td>
+          <td><a href="{{ url_for('report', session_id=s.id) }}">Report →</a></td></tr>
+      {% endfor %}</tbody>
+    </table></div>
+  </div>
+  {% else %}
+  <div class="empty"><div class="empty-mark">—</div>
+    <p><strong>No new sessions yet.</strong></p>
+    <p class="muted small">Sessions submitted through the <a href="{{ url_for('test') }}">writing test</a> appear here.</p></div>
+  {% endif %}
 </div>
 {% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script>
+(function(){
+  var seg = document.getElementById('tab-seg');
+  function show(t){
+    seg.querySelectorAll('button').forEach(function(b){ b.classList.toggle('on', b.dataset.t === t); });
+    document.getElementById('tab-pilot').classList.toggle('hidden', t !== 'pilot');
+    document.getElementById('tab-new').classList.toggle('hidden', t !== 'new');
+    history.replaceState(null, '', '#' + t);
+  }
+  seg.addEventListener('click', function(e){ var b = e.target.closest('button'); if (b) show(b.dataset.t); });
+  if (location.hash === '#new') show('new');
+})();
+</script>
 {% endblock %}

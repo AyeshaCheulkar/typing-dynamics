@@ -1,0 +1,59 @@
+{
+ "source": "EmoSurv free-text sessions (Maalej & Kallel), emotional vs neutral writing",
+ "n_sessions": 190,
+ "n_participants": 81,
+ "share_emotional": 0.584,
+ "features": [
+  "rhythm_cv",
+  "pause_time_ratio",
+  "n_long_pause_per_100",
+  "max_pause_ms",
+  "delete_rate",
+  "revisions_per_100",
+  "median_iki_ms"
+ ],
+ "labels": {
+  "rhythm_cv": "Typing rhythm variability",
+  "pause_time_ratio": "Share of time paused",
+  "n_long_pause_per_100": "Long thinking pauses",
+  "max_pause_ms": "Longest pause",
+  "delete_rate": "Deleting",
+  "revisions_per_100": "Revising",
+  "median_iki_ms": "Key-to-key speed"
+ },
+ "mean": [
+  1.6268892699074633,
+  0.48551578947368423,
+  2.086105263157895,
+  6830.373684210526,
+  0.10055789473684211,
+  3.2233684210526317,
+  213.03157894736842
+ ],
+ "scale": [
+  0.9959207519841629,
+  0.20312906776664227,
+  2.5704188865003235,
+  9401.237462911164,
+  0.1077956366453596,
+  2.1807724901372936,
+  78.47355607317718
+ ],
+ "coef": [
+  -0.6338506176912194,
+  0.1530471384169263,
+  0.1533729466907858,
+  -0.04031679232946515,
+  0.13822555906116826,
+  -0.20218420238079354,
+  -0.22684828466618245
+ ],
+ "intercept": 0.34359347386814987,
+ "cv": {
+  "folds": 10,
+  "auc": 0.598,
+  "balanced_accuracy": 0.563,
+  "permutation_p": 0.0498,
+  "permutations": 300
+ }
+}

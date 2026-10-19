@@ -5,6 +5,7 @@ __pycache__/
 
 # Local data & runtime artifacts — never commit collected data or logs
 data.db
+data/databases/
 *.log
 
 # Build/deploy artifacts
@@ -16,19 +17,13 @@ prototype_files.zip
 .env
 
 # --- Research participant data (identifiers + raw text/keystrokes) — never on a public repo ---
-features.csv
-server_export.csv
-server_keystrokes.csv
+data/study/
 
 # --- Third-party datasets (redistribute under their own licences, not here) + derived features ---
-Free Text Typing Dataset.csv
-keyrecs_freetext.csv
-keyrecs_demographics.csv
-external_features_emosurv.csv
-external_features_keyrecs.csv
+data/external/
 
 # --- Trained model artifact (derived from participant data; regenerate via train_model.py) ---
-effort_model.pkl
+data/derived/*.pkl
 
 # --- Local design tooling ---
 .impeccable/

@@ -1,0 +1,91 @@
+"""Checks for the report logic. Run from the repo root:  venv\\Scripts\\python prototype_platform\\tests\\test_analysis.py"""
+import os
+import pathlib
+import random
+import shutil
+import sys
+import tempfile
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.dirname(HERE))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(HERE)), "research"))
+
+from core import analysis as an        # noqa: E402
+from core import db, predict           # noqa: E402
+from features import writing_actions   # noqa: E402
+
+
+def _ev(keys_and_gaps):
+    t, out = 0, []
+    for k, gap in keys_and_gaps:
+        t += gap
+        out.append({"event_type": "keydown", "key_value": k, "t_ms": t})
+    return out
+
+
+def test_pauses_are_placed_where_they_fell():
+    ev = _ev([("a", 100), ("b", 900), (" ", 100), ("c", 900), (".", 100), (" ", 100), ("D", 900), ("Backspace", 100)])
+    a = writing_actions(ev)
+    assert a["pauses"]["within_word"]["n"] == 1        # a -> b
+    assert a["pauses"]["between_words"]["n"] == 1      # space -> c
+    assert a["pauses"]["between_sentences"]["n"] == 1  # ". " -> D
+    assert a["additions"] == 7 and a["deletions"] == 1
+
+
+def test_engagement_is_50_when_every_behaviour_is_average():
+    m = an.engagement_model()
+    feats = {"behavioural_valid": 1, "mean_iki_ms": 100.0}
+    for f, mu in zip(m["features"], m["mean"]):
+        if f == "rhythm_cv":
+            feats["std_iki_ms"] = mu * 100.0      # cv = std / mean
+        else:
+            feats[f] = mu
+    assert abs(an.engagement(feats)["pct"] - 50) <= 1
+
+
+def test_engagement_is_none_for_invalid_capture():
+    assert an.engagement({"behavioural_valid": 0}) is None
+
+
+def test_comparison_bars_stay_on_the_scale_and_keyboard_matters():
+    f = {"median_iki_ms": 200, "mean_iki_ms": 300, "std_iki_ms": 400, "pause_time_ratio": 0.4,
+         "revisions_per_100": 2, "delete_rate": 0.05}
+    for kb in ("laptop", "external", None):
+        assert all(0 <= b["fill"] <= 100 for b in an.compare(f, kb))
+    assert an.compare(f, "laptop")[0]["fill"] != an.compare(f, "external")[0]["fill"]
+
+
+def test_tips_always_return_something():
+    bars = an.compare({"median_iki_ms": 180, "mean_iki_ms": 300, "std_iki_ms": 300, "pause_time_ratio": 0.4,
+                       "revisions_per_100": 2, "delete_rate": 0.05}, "laptop")
+    assert 1 <= len(an.tips(None, bars)) <= 3
+
+
+def test_report_renders_for_a_submitted_session():
+    tmp = pathlib.Path(tempfile.mkdtemp()) / "t.db"
+    shutil.copy(db.DB_PATH, tmp)
+    real, db.DB_PATH = db.DB_PATH, tmp
+    try:
+        import app as flask_app
+        c = flask_app.app.test_client()
+        random.seed(2)
+        text, t, events = "I remember the day clearly. It was a good one. " * 4, 0, []
+        for i, ch in enumerate(text):
+            t += random.randint(90, 260) + (1500 if ch == "." else 0)
+            events.append({"type": "keydown", "key": ch, "t": t, "caret": i, "caretEnd": i})
+        r = c.post("/api/submit", json={"participant_code": "T1", "task_id": "happy_moment", "started_at": 0,
+                                        "ended_at": t, "final_text": text, "events": events,
+                                        "typing_skill": "touch", "keyboard": "laptop", "self_mood": 4})
+        assert r.status_code == 200
+        page = c.get("/report/%d" % r.get_json()["session_id"])
+        assert page.status_code == 200 and b"pane-emotional" in page.data
+    finally:
+        db.DB_PATH = real
+
+
+if __name__ == "__main__":
+    tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
+    for t in tests:
+        t()
+        print("ok  ", t.__name__)
+    print("%d passed" % len(tests))

@@ -34,7 +34,7 @@ import os
 _HERE = os.path.dirname(os.path.abspath(__file__))
 STUDY_DIR = os.path.join(os.path.dirname(_HERE), "data", "study")
 FEATURES_CSV = os.path.join(STUDY_DIR, "features.csv")
-MODEL_PKL = os.path.join(_HERE, "effort_model.pkl")
+MODEL_PKL = os.path.join(os.path.dirname(_HERE), "data", "derived", "effort_model.pkl")
 from scipy.stats import t as tdist
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import LinearRegression

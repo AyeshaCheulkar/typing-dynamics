@@ -1,198 +1,211 @@
 {% extends "admin/base.html" %}
-{% block title %}Behaviour &amp; emotion · Writing Analytics{% endblock %}
+{% block title %}Emotion &amp; state · Writing Analytics{% endblock %}
 {% block main %}
-<div class="page-head sticky">
-  <div><div class="eyebrow">Emotion-writing extension · measures, external validation, live check</div>
-    <h1>Behaviour &amp; emotion</h1></div>
+{% macro heat(v) %}<span class="rd-heat" style="--m: {{ (v/100)|round(2) }}">{{ v }}</span>{% endmacro %}
+{% macro rho(r) %}<span class="rd-rho {{ 'neg' if r < 0 }}" style="--m: {{ (r|abs)|round(2) }}">{{ '%+.2f'|format(r) }}</span>{% endmacro %}
+
+<div class="page-head">
+  <div>
+    <div class="eyebrow">Emotion-writing extension</div>
+    <h1>Emotion &amp; behavioural state</h1>
+    <p class="lede">The evidence for reading emotional intensity, cognitive load and flow from typing: what we test, what our
+      participants' answers show, and what public data and the literature add.</p>
+  </div>
 </div>
 
-<div class="paper">
-  <div class="paper-sec"><div class="paper-n">01</div><div>
-    <h2>Research question</h2>
-    <p class="lead-q">Does writing about a happy or a sad moment show up in typing behaviour,
-       focus and mind-space — and do simple typing measures track what people report?</p>
-    <p class="muted small">Participants write about a happy or a sad moment, then rate mood, focus,
-       stress and effort. The indices are relative proxies of typing behaviour, not clinical measures.</p>
-  </div></div>
+<nav class="rd-subnav" id="subnav">
+  <a href="#tests">What we test</a><a href="#live">Our participants</a><a href="#emosurv">Public data</a>
+  <a href="#shift">Rhythm shift</a><a href="#literature">Literature measures</a><a href="#caution">Cautions</a>
+</nav>
 
-  <div class="paper-sec"><div class="paper-n">02</div><div>
-    <h2>What we measure</h2>
-    <p class="muted small">Simple typing measures taken from the keystroke and writing-process literature. How each one is
-       defined, and the source for it, is in <code>LITERATURE.md</code>.</p>
-    <table class="aff-table">
-      <tr><th>Reading</th><th>What it describes</th></tr>
-      <tr><td><b>Pace</b></td><td>How fast the person types.</td></tr>
-      <tr><td><b>Stopping to think</b></td><td>How often and how long they pause (a 2-second pause counts as a thinking pause).</td></tr>
-      <tr><td><b>Steadiness</b></td><td>How even the timing is from one keystroke to the next.</td></tr>
-      <tr><td><b>Going back</b></td><td>How much they delete and reword.</td></tr>
-      <tr><td><b>Focus and mind-space readings</b></td><td>Plain-language summaries built from the measures above; still being checked against participants' own answers.</td></tr>
-    </table>
-  </div></div>
+<!-- 01 What we test -->
+<section class="rd-sec" id="tests">
+  <div class="rd-sec-head"><span class="rd-n">01</span><h2>What we test</h2></div>
+  <p class="rd-sub">Each state is measured twice, independently: once by a published questionnaire the participant answers, and once by a
+    typing reading computed only from keystrokes. The hypothesis is that the two move together.</p>
+  <div class="rd-table-wrap"><table class="rd-table">
+    <thead><tr><th>State</th><th>Participant's answer (ground truth)</th><th>Typing reading</th><th>Expected link</th></tr></thead>
+    <tbody>
+      <tr><td><b>Emotional intensity</b></td><td>Self-Assessment Manikin<small>mean(felt strongly, arousal)</small></td>
+        <td>Emotional-processing load<small>mean(hesitation, self-correction)</small></td><td>More deleting and pausing with stronger emotion (H4)</td></tr>
+      <tr><td><b>Cognitive load</b></td><td>Raw NASA-TLX<small>mean(mental demand, effort, frustration)</small></td>
+        <td>Mind-space load<small>mean(hesitation, self-correction, rhythm irregularity)</small></td><td>More strained typing with heavier load (H2)</td></tr>
+      <tr><td><b>Flow</b></td><td>Flow Short Scale<small>mean of fluent, concentrated, absorbed, lost track of time</small></td>
+        <td>Focus index<small>100 − mean(time paused, rhythm irregularity, long pauses)</small></td><td>More continuous, even typing with more flow (H3)</td></tr>
+    </tbody>
+  </table></div>
+  <p class="rd-cap">Typing readings are equal-weight averages of percentile ranks against a reference sample, so each reads 0–100 and no weights are fitted.
+    Questionnaires are shortened to five points. Full formulas: <code>research/docs/FORMULAS.md</code>.</p>
+</section>
 
-  <div class="paper-sec"><div class="paper-n">03</div><div>
-    <h2>External validation — EmoSurv</h2>
-    {% if ext %}
-    <p class="muted small">{{ ext.dataset }}: {{ ext.n_sessions }} valid sessions, {{ ext.n_participants }} participants
-       (Happy {{ ext.emotion_counts.Happy }}, Sad {{ ext.emotion_counts.Sad }}, Neutral {{ ext.emotion_counts.Neutral }},
-       Angry {{ ext.emotion_counts.Angry }}, Calm {{ ext.emotion_counts.Calm }}). Same feature extractor as our data;
-       indices computed against the EmoSurv distribution itself.</p>
-    <table class="aff-table">
-      <tr><th>Index</th><th>Happy</th><th>Sad</th><th>Neutral</th><th>Angry</th><th>Calm</th>
-          <th>Kruskal p (5 emotions)</th><th>Happy vs Sad (paired)</th></tr>
-      {% for k in order %}{% set i = ext.indices[k] %}
-      <tr><td><b>{{ meta[k].label }}</b></td>
-        <td>{{ i.medians.Happy }}</td><td>{{ i.medians.Sad }}</td><td>{{ i.medians.Neutral }}</td>
-        <td>{{ i.medians.Angry }}</td><td>{{ i.medians.Calm }}</td>
-        <td>{{ i.kruskal_p }}{% if i.kruskal_p < 0.05 %} ✱{% endif %}</td>
-        <td>{% if i.happy_vs_sad %}n={{ i.happy_vs_sad.n }}, p={{ i.happy_vs_sad.p }}{% else %}—{% endif %}</td></tr>
-      {% endfor %}
-    </table>
-    <p class="muted small">Medians of each 0–100 index by induced emotion. ✱ = the five emotions differ (p &lt; 0.05).
-       Note the direction: in EmoSurv, <em>sad</em> typing is slower and steadier (fewer pauses), so a
-       lower "mind-space load" there does not mean "less sad" — the indices describe typing, not feelings.
-       Happy vs Sad among the participants who typed both is not significant.</p>
-    <div class="caveat small">
-      Happy-like vs sad-like Random Forest (leave-one-participant-out, {{ ext.happy_sad_model.n_sessions }} sessions):
-      balanced accuracy <b>{{ ext.happy_sad_model.lopo_balanced_accuracy }}</b> vs baseline
-      {{ ext.happy_sad_model.baseline_balanced_accuracy }}; permutation p = {{ ext.happy_sad_model.permutation_p }}.
-      Above baseline but <b>not statistically distinguishable from chance</b> — shown to participants only as an
-      exploratory curiosity.
+<!-- 02 Our participants -->
+<section class="rd-sec" id="live">
+  <div class="rd-sec-head"><span class="rd-n">02</span><h2>Our participants: answers against typing</h2></div>
+  <p class="rd-sub">{{ live.n }} emotion-writing session{{ '' if live.n == 1 else 's' }} so far. A correlation appears once a pair has at least
+    {{ live.min_n }} sessions with varied answers, and an adjusted version removes the effect of typing style and keyboard.</p>
+  <div class="rd-grid c3">
+    {% for h in hyps %}
+    <div class="rd-hyp">
+      <div class="rd-top"><span class="rd-id">{{ h.id }}</span><span class="rd-status {{ h.status }}">{{ h.status_label }}</span></div>
+      <h3>{{ h.title }}</h3><p>{{ h.claim }}</p>
+      <div class="rd-prog"><span style="width: {{ h.progress }}%"></span></div>
+      <div class="rd-res">{{ h.text }}</div>
     </div>
-    {% else %}
-    <p class="muted">Run <code>python prototype_platform/build_emotion_validation.py</code> to generate the
-       external validation numbers.</p>
-    {% endif %}
-  </div></div>
+    {% endfor %}
+  </div>
 
-  <div class="paper-sec"><div class="paper-n">04</div><div>
-    <h2>Headline test — emotional writing vs the person's own baseline</h2>
-    <p class="lead-q">H1: rhythm variability (CV of the inter-key interval) is lower when writing about an
-       emotional moment than in the same person's neutral baseline passage.</p>
-    {% if live.replication.n_pairs == 0 %}<p class="caveat small">The current participant flow no longer asks for a baseline passage, so no
-       baseline-and-emotional pairs are being collected. This test runs only if a baseline is added back
-       (or on returning participants with two sessions).</p>{% endif %}
-    <p class="muted small">Why this test: a personal-baseline classifier did <em>not</em> improve happy-vs-sad
-       accuracy on EmoSurv, but a paired within-person comparison revealed one effect that survives length
-       matching. We derived H1 from EmoSurv and now test it prospectively on our own participants
-       (each writes a length-matched neutral baseline first).</p>
-    {% if ext and ext.engagement_shift %}{% set e = ext.engagement_shift %}
-    <table class="aff-table">
-      <tr><th>EmoSurv (external, derivation)</th><th>n</th><th>Median Δ CV</th><th>Share lower</th><th>Wilcoxon p</th></tr>
-      <tr><td>All emotion-vs-neutral pairs</td><td>{{ e.all_pairs.n }}</td><td>{{ e.all_pairs.median_delta_cv }}</td><td>{{ (e.all_pairs.share_lower*100)|round|int }}%</td><td>{{ e.all_pairs.p if e.all_pairs.p > 0 else '< 0.0001' }}</td></tr>
-      <tr><td>Length-matched pairs (0.6–1.67×)</td><td>{{ e.length_matched.n }}</td><td>{{ e.length_matched.median_delta_cv }}</td><td>{{ (e.length_matched.share_lower*100)|round|int }}%</td><td>{{ e.length_matched.p }}</td></tr>
-      <tr><td>One averaged pair per participant</td><td>{{ e.per_participant.n }}</td><td>{{ e.per_participant.median_delta_cv }}</td><td>{{ (e.per_participant.share_lower*100)|round|int }}%</td><td>{{ e.per_participant.p }}</td></tr>
-    </table>
-    <p class="muted small">{{ e.note }} (Neutral blocks were ~{{ (1/e.median_length_ratio)|round(1) }}× longer than emotional ones.)</p>
-    {% endif %}
-    {% if ext and ext.engagement_rule %}{% set er = ext.engagement_rule %}
-    <h3 class="aff-h">The algorithm: engagement-shift rule</h3>
-    <p><b>Rule:</b> {{ er.rule }}. No fitted weights, one threshold-free comparison, one feature.</p>
-    <table class="aff-table">
-      <tr><th>EmoSurv, paired test</th><th>n</th><th>Accuracy</th><th>95% CI</th><th>Binomial p vs 50%</th></tr>
-      {% for x in er.rows %}<tr><td>{{ x.label }}</td><td>{{ x.n }}</td><td>{{ (x.accuracy*100)|round|int }}%</td>
-        <td>{{ (x.ci95[0]*100)|round|int }}–{{ (x.ci95[1]*100)|round|int }}%</td><td>{{ x.binom_p }}</td></tr>{% endfor %}
-    </table>
-    <p class="muted small">A multi-feature logistic model (leave-one-participant-out) reached {{ (er.multi_feature_accuracy*100)|round|int }}% —
-       <b>no better than the single rule</b>, so the simple, explainable rule is used. If a passage must be flagged on its own,
-       a ≥10% CV drop below baseline catches {{ (er.sensitivity_at_drop_pct['10']*100)|round|int }}% of emotional passages,
-       ≥20% catches {{ (er.sensitivity_at_drop_pct['20']*100)|round|int }}%.
-       <em>{{ er.limitation }}</em></p>
-    {% endif %}
-    {% set rp = live.replication %}
-    <table class="aff-table">
-      <tr><th>Our data (replication)</th><th>n pairs</th><th>Median Δ CV</th><th>Share lower</th><th>Wilcoxon p</th></tr>
-      {% for label, r in [('All pairs', rp.all), ('Length-matched pairs', rp.matched)] %}
-      <tr><td>{{ label }}</td><td>{{ r.n }}</td>
-        {% if r.ready %}<td>{{ r.median }}</td><td>{{ (r.share_lower*100)|round|int }}%</td><td>{{ r.p if r.p is not none else '—' }}</td>
-        {% else %}<td colspan="3" class="muted">need ≥ {{ live.min_n }} pairs (baseline + emotional) — {{ r.n }} so far</td>{% endif %}</tr>
-      {% endfor %}
-    </table>
-    <p class="muted small">A negative median Δ with a small p would replicate the external finding. A null result
-       is reported as such. Sessions where the participant said they were interrupted are excluded
-       ({{ rp.n_interrupted }} so far).</p>
-    {% if rp.by_skill %}
-    <h3 class="aff-h">Does typing skill change the shift? (median Δ CV, descriptive)</h3>
-    <table class="aff-table">
-      <tr><th>Typing style</th><th>n pairs</th><th>Median Δ CV</th></tr>
-      {% for x in rp.by_skill %}<tr><td>{{ x.label }}</td><td>{{ x.n }}</td><td>{{ x.median }}</td></tr>{% endfor %}
-    </table>
-    {% endif %}
-    <p class="muted small">Manipulation check: people who relived the moment more vividly should show a larger drop in CV.
-       {% if rp.relive %}Spearman ρ (relived vividly ↔ Δ CV) = {{ '%+.2f'|format(rp.relive.rho) }}, p = {{ rp.relive.p }}, n = {{ rp.relive.n }} (a negative ρ is the expected direction).
-       {% else %}Needs ≥ {{ live.min_n }} research-mode sessions ({{ rp.n_relive }} so far).{% endif %}</p>
-  </div></div>
+  {% if live.pairs %}
+  <h3 style="margin:28px 0 10px">All tested pairs</h3>
+  <div class="rd-table-wrap"><table class="rd-table">
+    <thead><tr><th>Answer ↔ typing reading</th><th class="num">n</th><th class="num">Expected</th><th class="num">Spearman rho</th><th class="num">p</th>
+      <th class="num">Adjusted rho</th><th class="num">p adj.</th></tr></thead>
+    <tbody>
+      {% for p in live.pairs %}<tr>
+        <td>{{ p.label }}{% if p.hypothesis %} <span class="rd-id" style="font:700 .7rem 'Space Grotesk';color:var(--brand)">· main test</span>{% endif %}</td>
+        <td class="num">{{ p.n }}</td>
+        <td class="num">{{ '+' if p.expected and p.expected > 0 else '−' if p.expected else '—' }}</td>
+        {% if p.result %}<td class="num">{{ rho(p.result.rho) }}</td><td class="num {{ 'rd-sig' if p.result.p < 0.05 }}">{{ p.result.p }}</td>
+        {% else %}<td class="num dim" colspan="2">needs ≥ {{ live.min_n }}</td>{% endif %}
+        {% if p.adjusted %}<td class="num">{{ rho(p.adjusted.rho) }}</td><td class="num">{{ p.adjusted.p }}</td>
+        {% else %}<td class="num dim" colspan="2">needs both style questions</td>{% endif %}
+      </tr>{% endfor %}
+    </tbody>
+  </table></div>
+  <p class="rd-cap">p in green is below 0.05. The adjusted columns use residuals after removing typing style and keyboard; if ρ falls a lot, the raw
+    link was partly a typing-skill effect. Adjusted p-values are approximate.</p>
 
-  <div class="paper-sec"><div class="paper-n">05</div><div>
-    <h2>Live check — own answers vs typing measures ({{ live.n }} emotion-writing sessions so far)</h2>
-    {% if live.n == 0 %}
-    <p class="muted">No emotion-writing sessions have been submitted yet. Once participants complete the happy/sad
-       task, this section reports how their questionnaire scores (emotional intensity, cognitive load, flow) relate to the indices.</p>
-    {% else %}
-    <table class="aff-table">
-      <tr><th>Pair</th><th>n</th><th>Spearman ρ</th><th>p</th><th>ρ adjusted for typing style and keyboard</th><th>p (approx.)</th></tr>
-      {% for p in live.pairs %}<tr><td>{{ p.label }}</td><td>{{ p.n }}</td>
-        {% if p.result %}<td>{{ '%+.2f'|format(p.result.rho) }}</td><td>{{ p.result.p }}</td>
-        {% else %}<td colspan="2" class="muted">need ≥ {{ live.min_n }} sessions with varied ratings</td>{% endif %}
-        {% if p.adjusted %}<td>{{ '%+.2f'|format(p.adjusted.rho) }}</td><td>{{ p.adjusted.p }}</td>
-        {% else %}<td colspan="2" class="muted">needs both typing questions answered and more than one style</td>{% endif %}</tr>{% endfor %}
-    </table>
-    <p class="muted small">Adjusted = typing style and keyboard are regressed out of both the index and the rating first, so a
-       correlation that only reflects who types faster or on which keyboard does not count. Compare the two columns: if ρ
-       drops a lot after adjusting, the raw correlation was partly a typing-skill effect.</p>
-    {% if live.composition %}
-    <p class="muted small"><b>Who is in the sample.</b>
-      Typing style: {% for x in live.composition.skill %}{{ x.label }} {{ x.n }}{{ ', ' if not loop.last }}{% endfor %}.
-      Keyboard: {% for x in live.composition.keyboard %}{{ x.label }} {{ x.n }}{{ ', ' if not loop.last }}{% endfor %}.
-      A very lopsided sample limits what the adjustment can do.</p>
-    {% endif %}
-    <h3 class="aff-h">By chosen moment (medians)</h3>
-    <table class="aff-table">
-      <tr><th>Moment</th><th>n</th><th>Valence</th><th>Intensity (SAM)</th><th>Load (TLX)</th><th>Flow</th><th>Focus idx</th><th>Mind-space idx</th><th>Text sentiment</th></tr>
-      {% for e in live.by_emotion %}<tr><td>{{ e.emotion }}</td><td>{{ e.n }}</td><td>{{ e.mood }}</td><td>{{ e.intensity_self }}</td>
-        <td>{{ e.load_self }}</td><td>{{ e.flow_self }}</td><td>{{ e.focus_idx }}</td><td>{{ e.mind_idx }}</td><td>{{ e.sentiment }}</td></tr>{% endfor %}
-    </table>
-    {% if live.text %}<p class="muted small">Text-sentiment sign matched the chosen moment in {{ live.text.hits }}/{{ live.text.n }}
-       sessions ({{ (live.text.accuracy*100)|round|int }}%) — a manipulation check.</p>{% endif %}
-    {% if live.external %}<p class="muted small">EmoSurv-trained model matched the chosen moment in {{ live.external.hits }}/{{ live.external.n }}
-       sessions ({{ (live.external.accuracy*100)|round|int }}%); chance is about 50%.</p>{% endif %}
-    {% endif %}
-  </div></div>
+  {% if live.composition %}
+  <p class="rd-cap"><b>Who is in the sample.</b>
+    Typing style: {% for x in live.composition.skill %}{{ x.label }} {{ x.n }}{{ ', ' if not loop.last }}{% endfor %}.
+    Keyboard: {% for x in live.composition.keyboard %}{{ x.label }} {{ x.n }}{{ ', ' if not loop.last }}{% endfor %}.
+    A lopsided sample limits what the adjustment can do.</p>
+  {% endif %}
 
-  <div class="paper-sec"><div class="paper-n">06</div><div>
-    <h2>Literature &amp; caution</h2>
-    <ul class="muted small">
-      <li>Epp, Lippold &amp; Mandryk (2011) — emotional states from keystroke dynamics.</li>
-      <li>Vizer, Zhou &amp; Sears (2009) — stress detection from keystroke and linguistic features.</li>
-      <li>BiAffect studies (e.g. JMIR 2024) — typing variability, speed and accuracy linked to mood.</li>
-      <li>Maalej &amp; Kallel — EmoSurv keystroke-emotion dataset (IEEE DataPort).</li>
-      <li>Hutto &amp; Gilbert (2014) — VADER; Rude, Gortner &amp; Pennebaker (2004) — first-person pronouns in emotional writing.</li>
-    </ul>
-    <p class="caveat small">Small sample, self-selected recall, no diagnostic claim. Differences between emotions in
-       external data are group-level; they do not let us label an individual's feelings.</p>
-  </div></div>
+  <h3 style="margin:24px 0 10px">By chosen moment (medians)</h3>
+  <div class="rd-table-wrap"><table class="rd-table">
+    <thead><tr><th>Moment</th><th class="num">n</th><th class="num">Valence</th><th class="num">Intensity</th><th class="num">Load</th><th class="num">Flow</th>
+      <th class="num">Focus index</th><th class="num">Mind-space</th><th class="num">Text sentiment</th></tr></thead>
+    <tbody>{% for e in live.by_emotion %}<tr><td><b>{{ e.emotion }}</b></td><td class="num">{{ e.n }}</td><td class="num">{{ e.mood }}</td>
+      <td class="num">{{ e.intensity_self }}</td><td class="num">{{ e.load_self }}</td><td class="num">{{ e.flow_self }}</td>
+      <td class="num">{{ e.focus_idx }}</td><td class="num">{{ e.mind_idx }}</td><td class="num">{{ e.sentiment }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <p class="rd-cap">Questionnaire columns are on the 1–5 scale; typing indices are 0–100; sentiment runs from −1 to +1.</p>
+  {% if live.text or live.external %}
+  <p class="rd-cap"><b>Manipulation checks.</b>
+    {% if live.text %}Text sentiment matched the chosen moment in {{ live.text.hits }} of {{ live.text.n }} sessions ({{ (live.text.accuracy*100)|round|int }}%).{% endif %}
+    {% if live.external %}The EmoSurv-trained model matched it in {{ live.external.hits }} of {{ live.external.n }} ({{ (live.external.accuracy*100)|round|int }}%); chance is about 50%.{% endif %}</p>
+  {% endif %}
+  {% else %}
+  <div class="rd-note info">No emotion-writing sessions with answers yet. Once participants finish the writing task and the questions,
+    their correlations appear here.</div>
+  {% endif %}
+</section>
 
-  <div class="paper-sec"><div class="paper-n">07</div><div>
-    <h2>Literature measures tested on EmoSurv</h2>
-    {% if lit %}
-    <p class="muted small">Each feature is defined as in its cited paper and tested the same way, with Holm correction across
-       {{ lit.meta.features|length }} features. Within person = emotional block minus the same person's neutral block.
-       Full source list and verification status: <code>LITERATURE.md</code>.</p>
-    <table class="aff-table">
-      <tr><th>Feature</th><th>Source</th><th>Per person: median Δ</th><th>Holm p</th><th>Length-matched Holm p</th><th>Happy vs sad Holm p</th><th>Verdict</th></tr>
-      {% for r in lit.paired_per_person %}{% set m = lit.meta.features[r.feature] %}
-      {% set lm = lit.paired_matched[loop.index0] %}{% set hs = lit.happy_vs_sad[loop.index0] %}
-      <tr><td><b>{{ m.label }}</b></td><td class="small">{{ m.source }}</td>
-        <td>{{ '%+.3f'|format(r.median_delta) }}</td><td>{{ '%.3f'|format(r.p_holm) }}</td>
-        <td>{{ '%.2f'|format(lm.p_holm) }}</td><td>{{ '%.2f'|format(hs.p_holm) }}</td>
-        <td>{% if r.p_holm < 0.05 %}<span class="badge self-badge">supported</span>{% else %}<span class="badge exp-badge">not supported</span>{% endif %}</td></tr>
-      {% endfor %}
-    </table>
-    <p class="muted small">"Supported" means the within-person difference survives multiple-testing correction. No feature separates
-       happy from sad after correction, and none has been tested against focus or stress labels yet. Features that look
-       significant before length-matching are mostly a passage-length effect.</p>
-    {% else %}
-    <p class="muted">Run <code>python prototype_platform/validate_literature_formulas.py</code> to generate this table.</p>
-    {% endif %}
-  </div></div>
-</div>
+<!-- 03 Public data -->
+<section class="rd-sec" id="emosurv">
+  <div class="rd-sec-head"><span class="rd-n">03</span><h2>Public data: does typing change with mood?</h2></div>
+  {% if ext %}
+  <p class="rd-sub">{{ ext.dataset }}: {{ ext.n_sessions }} sessions from {{ ext.n_participants }} people (Happy {{ ext.emotion_counts.Happy }}, Sad {{ ext.emotion_counts.Sad }},
+    Neutral {{ ext.emotion_counts.Neutral }}, Angry {{ ext.emotion_counts.Angry }}, Calm {{ ext.emotion_counts.Calm }}), run through the same feature extractor as our data.
+    Each cell is the median 0–100 reading for that mood.</p>
+  <div class="rd-table-wrap"><table class="rd-table">
+    <thead><tr><th>Typing reading</th><th class="num">Happy</th><th class="num">Sad</th><th class="num">Neutral</th><th class="num">Angry</th><th class="num">Calm</th>
+      <th class="num">Moods differ? (p)</th><th class="num">Happy vs sad</th></tr></thead>
+    <tbody>{% for k in order %}{% set i = ext.indices[k] %}<tr>
+      <td><b>{{ meta[k].label }}</b></td>
+      <td class="num">{{ heat(i.medians.Happy) }}</td><td class="num">{{ heat(i.medians.Sad) }}</td><td class="num">{{ heat(i.medians.Neutral) }}</td>
+      <td class="num">{{ heat(i.medians.Angry) }}</td><td class="num">{{ heat(i.medians.Calm) }}</td>
+      <td class="num {{ 'rd-sig' if i.kruskal_p < 0.05 }}">{{ i.kruskal_p }}</td>
+      <td class="num">{% if i.happy_vs_sad %}n={{ i.happy_vs_sad.n }}, p={{ i.happy_vs_sad.p }}{% else %}—{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <p class="rd-cap">Green p means the five moods differ by more than chance. Sad typing was slower and steadier, so a lower mind-space load there does
+    <b>not</b> mean those people were less sad: the readings describe typing, not feelings. Happy and sad did not differ among the {{ ext.indices.focus.happy_vs_sad.n if ext.indices.focus.happy_vs_sad else 9 }} people who typed both.</p>
+  <div class="rd-note">A happy-like versus sad-like Random Forest ({{ ext.happy_sad_model.n_sessions }} sessions, leave-one-participant-out) reached
+    {{ ext.happy_sad_model.lopo_balanced_accuracy }} balanced accuracy against a {{ ext.happy_sad_model.baseline_balanced_accuracy }} baseline, with permutation
+    p = {{ ext.happy_sad_model.permutation_p }}. That is not distinguishable from chance, so it is shown to participants only as an exploratory curiosity.</div>
+  {% else %}
+  <div class="rd-note">Run <code>python research/scripts/build_emotion_validation.py</code> to generate the public-data results.</div>
+  {% endif %}
+</section>
+
+<!-- 04 Shift -->
+<section class="rd-sec" id="shift">
+  <div class="rd-sec-head"><span class="rd-n">04</span><h2>Emotional writing against the person's own baseline</h2></div>
+  <p class="rd-sub"><b>H1.</b> Rhythm variability (the spread of the gaps between keystrokes, divided by their average) is lower when someone writes about an
+    emotional moment than in their own neutral passage. This is tested on public data.</p>
+  {% if ext and ext.engagement_shift %}{% set e = ext.engagement_shift %}
+  <div class="rd-table-wrap"><table class="rd-table">
+    <thead><tr><th>EmoSurv (where H1 was found)</th><th class="num">Pairs</th><th class="num">Median change</th><th class="num">Share lower</th><th class="num">Wilcoxon p</th></tr></thead>
+    <tbody>
+      <tr><td>All emotion-versus-neutral pairs</td><td class="num">{{ e.all_pairs.n }}</td><td class="num">{{ e.all_pairs.median_delta_cv }}</td><td class="num">{{ (e.all_pairs.share_lower*100)|round|int }}%</td><td class="num rd-sig">{{ e.all_pairs.p if e.all_pairs.p > 0 else '&lt; 0.0001'|safe }}</td></tr>
+      <tr><td>Length-matched pairs (0.6–1.67×)</td><td class="num">{{ e.length_matched.n }}</td><td class="num">{{ e.length_matched.median_delta_cv }}</td><td class="num">{{ (e.length_matched.share_lower*100)|round|int }}%</td><td class="num rd-sig">{{ e.length_matched.p }}</td></tr>
+      <tr><td>One averaged pair per person</td><td class="num">{{ e.per_participant.n }}</td><td class="num">{{ e.per_participant.median_delta_cv }}</td><td class="num">{{ (e.per_participant.share_lower*100)|round|int }}%</td><td class="num rd-sig">{{ e.per_participant.p }}</td></tr>
+    </tbody>
+  </table></div>
+  <p class="rd-cap">{{ e.note }} Neutral passages were about {{ (1/e.median_length_ratio)|round(1) }}× longer than the emotional ones, which is why the length-matched row matters.
+    Our own participant flow has no baseline passage, so this result is tested on public data only.</p>
+  {% if ext.engagement_rule %}{% set er = ext.engagement_rule %}
+  <h3 style="margin:24px 0 6px">As a rule: pick the passage with the steadier rhythm</h3>
+  <p class="muted small" style="max-width:74ch">{{ er.rule }}. One feature, no fitted weights.</p>
+  <div class="rd-table-wrap"><table class="rd-table">
+    <thead><tr><th>EmoSurv, two-passage test</th><th class="num">Pairs</th><th class="num">Accuracy</th><th class="num">95% CI</th><th class="num">p vs 50%</th></tr></thead>
+    <tbody>{% for x in er.rows %}<tr><td>{{ x.label }}</td><td class="num">{{ x.n }}</td><td class="num">{{ (x.accuracy*100)|round|int }}%</td>
+      <td class="num">{{ (x.ci95[0]*100)|round|int }}–{{ (x.ci95[1]*100)|round|int }}%</td><td class="num">{{ x.binom_p }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <p class="rd-cap">A multi-feature logistic model reached {{ (er.multi_feature_accuracy*100)|round|int }}%, no better than the single rule. {{ er.limitation }}</p>
+  {% endif %}
+  {% endif %}
+</section>
+
+<!-- 05 Literature -->
+<section class="rd-sec" id="literature">
+  <div class="rd-sec-head"><span class="rd-n">05</span><h2>Measures taken from the literature</h2></div>
+  {% if lit %}
+  <p class="rd-sub">Each measure is defined as in its source paper and tested the same way, with Holm correction across {{ lit.meta.features|length }} measures.
+    "Within person" is the emotional block minus the same person's neutral block.</p>
+  <div class="rd-table-wrap"><table class="rd-table">
+    <thead><tr><th>Measure</th><th>Source</th><th class="num">Median change</th><th class="num">Holm p</th><th class="num">Length-matched</th><th class="num">Happy vs sad</th><th>Verdict</th></tr></thead>
+    <tbody>{% for r in lit.paired_per_person %}{% set m = lit.meta.features[r.feature] %}{% set lm = lit.paired_matched[loop.index0] %}{% set hs = lit.happy_vs_sad[loop.index0] %}
+      <tr><td><b>{{ m.label }}</b><small>{{ m.definition }}</small></td><td class="src">{{ m.source }}</td>
+        <td class="num">{{ '%+.3f'|format(r.median_delta) }}</td><td class="num {{ 'rd-sig' if r.p_holm < 0.05 }}">{{ '%.3f'|format(r.p_holm) }}</td>
+        <td class="num">{{ '%.2f'|format(lm.p_holm) }}</td><td class="num">{{ '%.2f'|format(hs.p_holm) }}</td>
+        <td>{% if r.p_holm < 0.05 %}<span class="rd-status supported">Supported</span>{% else %}<span class="rd-status pending">Not supported</span>{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <p class="rd-cap">Supported means the within-person difference survives multiple-testing correction. None separates happy from sad, and none has yet been tested against
+    cognitive-load or flow answers. Measures that look significant before length-matching are mostly a passage-length effect. Sources: <code>research/docs/LITERATURE.md</code>.</p>
+  {% else %}
+  <div class="rd-note">Run <code>python research/scripts/validate_literature_formulas.py</code> to generate this table.</div>
+  {% endif %}
+</section>
+
+<!-- 06 Cautions -->
+<section class="rd-sec" id="caution">
+  <div class="rd-sec-head"><span class="rd-n">06</span><h2>How to read this</h2></div>
+  <div class="rd-grid c2">
+    <div class="rd-card"><h3>What the evidence allows</h3>
+      <ul class="rd-list">
+        <li>Typing differs on average between moods and between emotional and neutral writing.</li>
+        <li>Rhythm steadiness is the most consistent signal.</li>
+        <li>These are group-level patterns from public data, with our own confirmation still to come.</li>
+      </ul></div>
+    <div class="rd-card"><h3>What it does not allow</h3>
+      <ul class="rd-list">
+        <li>Telling a happy memory from a sad one by typing alone.</li>
+        <li>Saying how any one person feels, or diagnosing anything.</li>
+        <li>Treating the typing readings as validated measures of load, flow or intensity before H2–H4 are supported.</li>
+      </ul></div>
+  </div>
+  <p class="rd-cap">Prior work: Epp, Lippold &amp; Mandryk (2011); Vizer, Zhou &amp; Sears (2009); BiAffect studies of typing and mood; the EmoSurv dataset (Maalej &amp; Kallel);
+    VADER (Hutto &amp; Gilbert, 2014); first-person pronouns in emotional writing (Rude, Gortner &amp; Pennebaker, 2004).</p>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  var links=[].slice.call(document.querySelectorAll('#subnav a')), secs=links.map(function(a){return document.querySelector(a.getAttribute('href'));});
+  function on(){var y=window.scrollY+140,cur=0;secs.forEach(function(s,i){if(s&&s.offsetTop<=y)cur=i;});
+    links.forEach(function(a,i){a.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',on,{passive:true});on();
+})();
+</script>
 {% endblock %}

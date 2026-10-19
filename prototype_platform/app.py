@@ -2,8 +2,8 @@
 app.py — the PROTOTYPE Writing Analytics Platform (Flask).
 
 Separate from the Stage-1 data-collection app: own port, own database
-(data/prototype.db), and it reuses research/features.py, research/explain.py,
-research/effort_model.pkl and the study CSVs in data/study/ READ-ONLY. It never imports or writes the Stage-1 app.
+(data/databases/prototype.db), and it reuses research/features.py, research/explain.py,
+data/derived/effort_model.pkl and the study CSVs in data/study/ READ-ONLY. It never imports or writes the Stage-1 app.
 
 Two experiences:
   • Participant  — landing (/), writing test (/test), live report (/report/<id>)
@@ -26,7 +26,11 @@ from flask import (Flask, render_template, request, jsonify, abort, Response,
                    url_for, redirect, session)
 
 from core import affect, db, predict
+from core import analysis as an
+from core import measures as ms
+from core import questionnaire as qn
 from core import behaviour as bh
+from core import findings as fd
 from core import plain_report as pr
 from core import recommendations as recs
 from core import research_data as rd
@@ -105,15 +109,8 @@ def submit():
     events = data["events"] or []
     features = predict.compute_features(events, final_text)
     features["word_count"] = len(final_text.split())
-    estimate = predict.estimate_and_explain(features)
-    predicted = estimate["predicted_effort"] if estimate["available"] else None
     emotion = TASKS_BY_ID[data["task_id"]]["level_id"]
-    emotion = {"happy": "happy", "sad": "sad", "baseline": "neutral"}.get(emotion)
-    baseline_id = None
-    if emotion in ("happy", "sad") and data.get("baseline_id"):
-        b = db.get_session(int(data["baseline_id"]))
-        if b and b["participant_code"] == code and b.get("emotion") == "neutral":
-            baseline_id = b["id"]
+    emotion = emotion if emotion in ("happy", "sad") else None
     affect_data = affect.analyse(features, final_text, emotion)
 
     def _likert(key):
@@ -126,7 +123,7 @@ def submit():
     meta = {
         "participant_code": code, "task_id": data["task_id"],
         "difficulty": TASKS_BY_ID[data["task_id"]]["difficulty"],
-        "emotion": emotion, "baseline_id": baseline_id, "self_mood": _likert("self_mood"),
+        "emotion": emotion, "self_mood": _likert("self_mood"),
         "self_focus": _likert("self_focus"), "self_stress": _likert("self_stress"),
         "self_relive": _likert("self_relive"), "self_arousal": _likert("self_arousal"),
         "self_wander": _likert("self_wander"),
@@ -144,67 +141,14 @@ def submit():
         "self_rated_effort": (int(data["self_rated_effort"])
                               if data.get("self_rated_effort") else None),
     }
-    sid = db.insert_session(meta, events, features, predicted, affect_data)
+    sid = db.insert_session(meta, events, features, None, affect_data)
     return jsonify({"ok": True, "session_id": sid,
                     "report_url": url_for("report", session_id=sid)})
 
 
-_PROFILE_MAP = {"chars_per_sec": "Speed", "pause_time_ratio": "Pausing",
-                "active_time_s": "Writing time", "revisions_per_100": "Revisions",
-                "delete_rate": "Deletions"}
 def _fmt_time(sec):
     sec = int(round(sec))
     return "%dm %02ds" % (sec // 60, sec % 60) if sec >= 60 else "%ds" % sec
-
-
-def _hjoin(items):
-    if not items:
-        return ""
-    if len(items) == 1:
-        return items[0]
-    return ", ".join(items[:-1]) + " and " + items[-1]
-
-
-# Phrasing for the radar interpretation box (percentile vs the study sample).
-_PROFILE_PHRASE = {
-    "Speed":        ("faster typing", "slower typing", "typing speed"),
-    "Pausing":      ("more pausing", "less pausing", "pausing"),
-    "Writing time": ("longer writing time", "shorter writing time", "writing time"),
-    "Revisions":    ("more frequent revisions", "little revision", "revision activity"),
-    "Deletions":    ("more deletion activity", "little deletion activity", "deletion activity"),
-}
-
-
-def _profile_interpretation(profile):
-    """Plain-language summary of the radar (percentiles vs the study sample)."""
-    above, below, avg = [], [], []
-    for label, pct in zip(profile["labels"], profile["values"]):
-        hi, lo, noun = _PROFILE_PHRASE.get(label, (label, label, label))
-        if pct >= 66:
-            above.append(hi)
-        elif pct <= 33:
-            below.append(lo)
-        else:
-            avg.append(noun)
-    verb = "was" if len(avg) == 1 else "were"
-    text = "Compared with other study sessions, "
-    if above and below:
-        body = "your writing involved " + _hjoin(above) + ", with " + _hjoin(below) + ". "
-    elif above:
-        body = "your writing involved " + _hjoin(above) + ". "
-    elif below:
-        body = "your writing involved " + _hjoin(below) + ". "
-    else:
-        body = ""
-    if body:
-        text += body
-        if avg:
-            text += "Your " + _hjoin(avg) + " " + verb + " closer to the study average."
-    elif avg:
-        text += "your " + _hjoin(avg) + " " + verb + " closer to the study average."
-    else:
-        text += "your writing pattern was broadly in line with the study sample."
-    return text.strip()
 
 
 @app.route("/report/<int:session_id>")
@@ -212,64 +156,46 @@ def report(session_id):
     s = db.get_session(session_id)
     if s is None:
         abort(404)
-    feats = s["features"]
-    estimate = predict.estimate_and_explain(feats)
-    context = recs.context_labels(feats)
-    recommendations = recs.recommend(feats)
+    feats, emotion = s["features"], s.get("emotion")
+    events = db.get_keystrokes(session_id)
+    acts = predict.actions(events)
+    bars = an.compare(feats, s.get("keyboard"))
+    eng = an.engagement(feats)
 
+    pauses = an.pause_view(acts)
     metrics = [
         {"value": s["word_count"], "label": "Words"},
         {"value": _fmt_time(feats.get("active_time_s", 0)), "label": "Writing time"},
         {"value": "%.1f" % feats.get("chars_per_sec", 0), "label": "Characters/sec"},
-        {"value": int(feats.get("n_keydown", 0)), "label": "Keystrokes"},
-        {"value": "%d%%" % round(feats.get("pause_time_ratio", 0) * 100), "label": "Time paused"},
+        {"value": pauses["total"], "label": "Pauses"},
+        {"value": acts["additions"], "label": "Characters typed"},
+        {"value": acts["deletions"], "label": "Deletions"},
     ]
-    profile = {"labels": [], "values": []}
-    for c in context:
-        if c["feature"] in _PROFILE_MAP:
-            profile["labels"].append(_PROFILE_MAP[c["feature"]])
-            profile["values"].append(c["percentile"])
 
-    contrib_view = None
-    if estimate["available"] and estimate["contributions"]:
-        top = estimate["contributions"][:5]
-        maxabs = max(abs(v) for _, v in top) or 1
-        contrib_view = [{"name": n, "val": v, "dir": "up" if v > 0 else "down",
-                         "pct": round(abs(v) / maxabs * 100)} for n, v in top]
-
-    timeline = predict.timeline_from_events(db.get_keystrokes(session_id))
-    has_rec = recommendations and recommendations[0]["behaviour"] != "none"
-
-    # emotion-writing extension (computed on the fly for sessions saved before it)
-    aff = s.get("affect") or affect.analyse(feats, s["final_text"], s.get("emotion"))
-    _idx = bh.compute_indices(feats)          # fresh, so older sessions also get every index
-    sts = pr.states(s, _idx)
-    plain = {
-        "overview": pr.overview(feats, context, _idx),
-        "states": sts,
-        "insight": pr.insight(sts, s.get("emotion")),
-        "uses": pr.USES,
-        "tone": pr.tone(aff.get("text"), s.get("emotion")),
-        "evidence": pr.EVIDENCE,
-    }
-    _v = affect.load_validation_json()
-    # The participant's own readings on the SAME scale as the EmoSurv table (their typing is
-    # positioned among the EmoSurv sessions), so the row can sit next to the moods' medians.
-    _mine = bh.compute_indices(feats, bh.load_reference("emosurv"))
+    # emotional tab (older sessions get their text analysis computed on the fly)
+    aff = s.get("affect") or affect.analyse(feats, s["final_text"], emotion)
+    idx = bh.compute_indices(feats)
+    sts = pr.states(s, idx)
+    plain = {"states": sts, "insight": pr.insight(sts, emotion), "tone": pr.tone(aff.get("text"), emotion)}
+    val = affect.load_validation_json()
     mine = None
-    if _mine:
-        def _pos(v):
-            return "lower than most" if v < 34 else "higher than most" if v > 66 else "about typical"
-        mine = [{"key": k, "label": bh.INDEX_META[k]["label"], "value": round(_mine[k]),
-                 "pos": _pos(_mine[k]), "higher": bh.INDEX_META[k]["higher"]} for k in bh.INDEX_ORDER]
+    _mine = bh.compute_indices(feats, bh.load_reference("emosurv"))
+    if _mine and val:
+        pos = lambda v: "lower than most" if v < 34 else "higher than most" if v > 66 else "about typical"
+        mine = [{"key": k, "label": bh.INDEX_META[k]["label"], "value": round(_mine[k]), "pos": pos(_mine[k])}
+                for k in bh.INDEX_ORDER]
+
     return render_template(
-        "participant/report.html", s=s, plain=plain, mine=mine,
-        val=_v, val_order=bh.INDEX_ORDER, val_meta=bh.INDEX_META,
-        estimate=estimate, context=context,
-        recommendations=recommendations, has_rec=has_rec,
-        task=TASKS_BY_ID.get(s["task_id"], {}), metrics=metrics, profile=profile,
-        profile_interpretation=_profile_interpretation(profile),
-        contrib_view=contrib_view, timeline=timeline)
+        "participant/report.html", s=s, plain=plain, mine=mine, val=val,
+        metrics=metrics, bars=bars, pauses=pauses, eng=eng,
+        eng_n=an.engagement_model()["n_sessions"],
+        headlines=an.headlines(feats, acts, bars), tips=an.tips(eng, bars, s.get("typing_skill")),
+        over_time=an.over_time(events), timeline=predict.timeline_from_events(events),
+        tone_feel=an.tone_vs_feeling(s, aff.get("text")),
+        skill_word={"touch": "touch typist", "some": "mixed typing", "hunt": "looks at the keys"}.get(
+            s.get("typing_skill"), "typing style not given"),
+        keyboard_word={"laptop": "laptop keyboard", "external": "external keyboard"}.get(
+            s.get("keyboard"), "keyboard not given"))
 
 
 # ===================== Researcher auth =====================
@@ -293,22 +219,37 @@ def logout():
 
 
 # ===================== Researcher analytics (study data) =====================
+def _research_context():
+    """Everything the researcher pages need: study KPIs, external validation, live data, findings."""
+    kpis, signals = rd.study_kpis(), rd.research_signals()
+    ext, lit = affect.load_validation_json(), affect.load_literature_validation()
+    live = affect.live_validation(db.list_sessions())
+    found, hyps = fd.build(kpis, signals, MODEL_RESULTS, ext, lit, live)
+    return dict(kpis=kpis, signals=signals, model=MODEL_RESULTS, ext=ext, lit=lit, live=live,
+                findings=found, hyps=hyps, meta=bh.INDEX_META, order=bh.INDEX_ORDER,
+                status_label=fd.STATUS_LABEL)
+
+
 @app.route("/admin")
 @login_required
 def admin():
     return render_template(
-        "admin/overview.html", active="overview",
-        kpis=rd.study_kpis(), signals=rd.research_signals(),
-        model=MODEL_RESULTS, live_count=len(db.list_sessions()),
+        "admin/overview.html", active="overview", live_count=len(db.list_sessions()),
         charts={"effort_dist": rd.effort_distribution(),
-                "feature_vs_effort": rd.feature_vs_effort()})
+                "feature_vs_effort": rd.feature_vs_effort()},
+        **_research_context())
 
 
 @app.route("/admin/participants")
 @login_required
 def participants_page():
+    sessions = db.list_sessions()
+    for x in sessions:
+        x["scores"] = {k: qn.score(x, k) for k in qn.STATE_ORDER}
+    summary = {"sessions": len(sessions), "participants": len({x["participant_code"] for x in sessions})}
     return render_template("admin/participants.html", active="participants",
-                           participants=rd.participants())
+                           participants=rd.participants(), sessions=sessions, summary=summary,
+                           live_participants=_live_participants(sessions))
 
 
 @app.route("/admin/participants/<code>")
@@ -367,7 +308,7 @@ def _live_participants(sessions):
         rows.append({
             "code": code, "sessions": len(g),
             "valid": sum(1 for x in g if x["behavioural_valid"]),
-            "avg_effort": round(_avg([x["self_rated_effort"] for x in g]), 1),
+            "avg_load": round(_avg([qn.score(x, "load") for x in g]), 1),
             "avg_speed": round(_avg([x["features"].get("chars_per_sec") for x in g]), 2),
             "avg_pauses": round(_avg([x["features"].get("n_long_pause_per_100") for x in g]), 1),
             "last": max((x["created_at"] or "") for x in g)[:16],
@@ -386,7 +327,7 @@ def _live_profile(code):
         "sessions": len(g),
         "valid": sum(1 for x in g if x["behavioural_valid"]),
         "levels": len({x["difficulty"] for x in g}),
-        "avg_effort": round(_avg([x["self_rated_effort"] for x in g]), 1),
+        "avg_load": round(_avg([qn.score(x, "load") for x in g]), 1),
         "avg_speed": round(_avg(col("chars_per_sec")), 2),
         "avg_time": round(_avg(col("active_time_s"))),
         "avg_pause_ratio": round(_avg(col("pause_time_ratio")) * 100),
@@ -396,7 +337,7 @@ def _live_profile(code):
         "id": x["id"],
         "level_title": TASKS_BY_ID.get(x["task_id"], {}).get("level_title", x["difficulty"]),
         "difficulty": x["difficulty"],
-        "effort": x["self_rated_effort"] or 0,
+        "load": qn.score(x, "load") or 0,
         "speed": round(x["features"].get("chars_per_sec", 0), 2),
         "pauses": int(round(x["features"].get("n_long_pause_per_100", 0))),
         "revisions": int(x["features"].get("n_revision_bursts", 0)),
@@ -405,7 +346,7 @@ def _live_profile(code):
     } for x in g]
     trend = {
         "labels": ["S%d" % (i + 1) for i in range(len(g))],
-        "effort": [x["self_rated_effort"] for x in g],
+        "effort": [qn.score(x, "load") for x in g], "effort_label": "Cognitive load",
         "speed": [round(x["features"].get("chars_per_sec", 0), 2) for x in g],
         "pauses": [round(x["features"].get("n_long_pause_per_100", 0), 1) for x in g],
         "revisions": [round(x["features"].get("revisions_per_100", 0), 1) for x in g],
@@ -414,73 +355,42 @@ def _live_profile(code):
             "trend": trend, "enough_trend": len(g) >= 3}
 
 
-@app.route("/admin/live")
-@login_required
-def live_page():
-    sessions = db.list_sessions()
-    summary = {
-        "sessions": len(sessions),
-        "participants": len({x["participant_code"] for x in sessions}),
-        "mean_self_rated": round(_avg([x["self_rated_effort"] for x in sessions]), 2),
-        "mean_predicted": round(_avg([x["predicted_effort"] for x in sessions]), 2),
-    }
-    return render_template("admin/live.html", active="live", sessions=sessions,
-                           summary=summary,
-                           participants=_live_participants(sessions))
-
-
 @app.route("/admin/live/participants/<code>")
 @login_required
 def live_profile(code):
     prof = _live_profile(code)
     if prof is None:
         abort(404)
-    return render_template("admin/live_profile.html", active="live", p=prof)
+    return render_template("admin/live_profile.html", active="participants", p=prof)
 
 
 @app.route("/admin/live/clear", methods=["POST"])
 @login_required
 def live_clear():
     db.clear_all()
-    return redirect(url_for("live_page"))
+    return redirect(url_for("participants_page") + "#new")
 
 
 @app.route("/admin/behaviour")
 @login_required
 def behaviour_page():
+    return render_template("admin/behaviour_research.html", active="behaviour",
+                           **_research_context())
+
+
+@app.route("/admin/model-research")
+@login_required
+def model_research_page():
+    ctx = _research_context()
     return render_template(
-        "admin/behaviour_research.html", active="behaviour",
-        ext=affect.load_validation_json(), lit=affect.load_literature_validation(),
-        meta=bh.INDEX_META, order=bh.INDEX_ORDER,
-        live=affect.live_validation(db.list_sessions()))
-
-
-@app.route("/admin/methodology")
-@login_required
-def methodology_page():
-    return render_template("admin/methodology.html", active="methodology",
-                           kpis=rd.study_kpis())
-
-
-@app.route("/admin/model-card")
-@login_required
-def model_card_page():
-    return render_template("admin/model_card.html", active="modelcard",
-                           kpis=rd.study_kpis(), model=MODEL_RESULTS)
-
-
-@app.route("/admin/research")
-@login_required
-def research_page():
-    return render_template("admin/research.html", active="research",
-                           kpis=rd.study_kpis(), signals=rd.research_signals(),
-                           model=MODEL_RESULTS)
+        "admin/model_research.html", active="model", measures=ms.measure_cards(ctx["lit"]),
+        eng_card=ms.engagement_card(), norms=an.norms(), set_aside=ms.SET_ASIDE, datasets=ms.DATASETS,
+        rejected=ms.REJECTED, questionnaires=ms.QUESTIONNAIRES, sources=list(ms.SOURCES.values()), **ctx)
 
 
 @app.route("/admin/export.csv")
 @login_required
 def export_csv():
-    v = rd.valid().to_dict("records") if hasattr(rd.valid(), "to_dict") else []
     buf = io.StringIO()
     w = csv.writer(buf)
     cols = ["session_id", "participant_id", "task_id", "difficulty", "effort_rating",
@@ -492,6 +402,23 @@ def export_csv():
         w.writerow([r.get(c) for c in cols])
     return Response(buf.getvalue(), mimetype="text/csv",
                     headers={"Content-Disposition": "attachment; filename=study_sessions.csv"})
+
+
+@app.route("/admin/export-live.csv")
+@login_required
+def export_live_csv():
+    cols = ["id", "participant_code", "emotion", "typing_skill", "keyboard", "self_mood", "behavioural_valid",
+            "word_count", "created_at"]
+    feats = ["chars_per_sec", "median_iki_ms", "pause_time_ratio", "n_long_pause_per_100", "delete_rate",
+             "revisions_per_100"]
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(cols + ["score_" + k for k in qn.STATE_ORDER] + feats)
+    for x in db.list_sessions():
+        w.writerow([x.get(c) for c in cols] + [qn.score(x, k) for k in qn.STATE_ORDER]
+                   + [x["features"].get(f) for f in feats])
+    return Response(buf.getvalue(), mimetype="text/csv",
+                    headers={"Content-Disposition": "attachment; filename=live_sessions.csv"})
 
 
 if __name__ == "__main__":

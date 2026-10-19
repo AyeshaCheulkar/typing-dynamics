@@ -5,7 +5,7 @@ echo   Starting Writing Analytics Prototype Platform
 echo ============================================================
 echo.
 
-cd /d "%~dp0"
+cd /d "%~dp0..\.."
 
 echo [1/2] Starting Flask backend on http://127.0.0.1:5001 ...
 start "Prototype Flask Server" /min .\venv\Scripts\python prototype_platform\app.py

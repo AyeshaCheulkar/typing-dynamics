@@ -1,93 +1,98 @@
 {% extends "admin/base.html" %}
 {% block title %}Overview · Writing Analytics{% endblock %}
 {% block main %}
-<div class="page-head sticky">
+<div class="page-head">
   <div>
-    <div class="eyebrow">Pilot study · Typing dynamics &amp; self-perceived writing effort</div>
-    <h1>Writing Analytics</h1>
+    <div class="eyebrow">Research dashboard</div>
+    <h1>Overview</h1>
+    <p class="lede">Can the way someone types tell us how they wrote and how they felt while writing? This page
+      shows where the evidence stands across the three data sources: our pilot study, public typing data and
+      our live emotion-writing study.</p>
   </div>
-  <div class="status-chip">
-    <span class="dot valid"></span> Data collection: Active
-    <span class="divider"></span> Model: <span class="exp-badge badge">Experimental</span>
+  <div class="status-chip"><span class="dot valid"></span> Live collection on</div>
+</div>
+
+<!-- data sources -->
+<section class="rd-sec" style="margin-top:28px">
+  <div class="rd-grid c4">
+    <div class="rd-tile t-self"><span class="rd-k">Pilot study</span>
+      <span class="rd-v">{{ kpis.valid_sessions }} <small>sessions</small></span>
+      <div class="rd-d">{{ kpis.participants }} participants wrote and rated their own effort (1–5).</div></div>
+    <div class="rd-tile t-exp"><span class="rd-k">Public data (EmoSurv)</span>
+      <span class="rd-v">{{ ext.n_sessions if ext else '—' }} <small>sessions</small></span>
+      <div class="rd-d">{% if ext %}{{ ext.n_participants }} people typed after a happy, sad, calm, angry or neutral mood is induced.{% else %}Not built yet.{% endif %}</div></div>
+    <div class="rd-tile t-valid"><span class="rd-k">Live emotion-writing</span>
+      <span class="rd-v">{{ live.n }} <small>sessions</small></span>
+      <div class="rd-d">Happy or sad moment, then SAM, NASA-TLX and flow questions.
+        <a href="{{ url_for('participants_page') ~ '#new' }}">Open submissions →</a></div></div>
+    <div class="rd-tile"><span class="rd-k">Literature measures</span>
+      <span class="rd-v">{{ lit.paired_per_person|length if lit else '—' }} <small>tested</small></span>
+      <div class="rd-d">{% if lit %}{{ lit.paired_per_person|selectattr('p_holm', 'lt', 0.05)|list|length }} separate emotional from neutral writing after correction.{% else %}Not built yet.{% endif %}</div></div>
   </div>
-</div>
-
-<div class="source-banner">
-  <span><span class="pill">Pilot study</span> Fixed dissertation dataset —
-     {{ kpis.valid_sessions }} valid sessions · {{ kpis.participants }} participants.</span>
-  <a class="btn" href="{{ url_for('live_page') }}">Live submissions: {{ live_count }} →</a>
-</div>
-
-<section class="section-head"><h2>Pilot Study — {{ kpis.valid_sessions }} valid sessions</h2></section>
-<div class="highlights">
-  <div class="hl"><div class="hl-v">{{ kpis.participants }}</div><div class="hl-l">Participants</div></div>
-  <div class="hl accent-self"><div class="hl-v">{{ kpis.mean_effort }}<i>/5</i></div><div class="hl-l">Average self-rated effort</div></div>
-  <div class="hl"><div class="hl-v">7 / 9</div><div class="hl-l">Behavioural relationships followed the predicted direction</div></div>
-  <div class="hl"><div class="hl-v">3</div><div class="hl-l">Main behavioural patterns observed: Pausing, Rhythm, Keystroke timing</div></div>
-</div>
-
-<section class="kpis six">
-  <div class="kpi"><div class="k-num" data-count="{{ kpis.participants }}">0</div><div class="k-label">Participants</div></div>
-  <div class="kpi accent-valid"><div class="k-num" data-count="{{ kpis.valid_sessions }}">0</div><div class="k-label">Valid sessions</div></div>
-  <div class="kpi accent-self"><div class="k-num" data-count="{{ kpis.mean_effort }}" data-dec="2">0</div><div class="k-label">Mean self-rated effort <span class="unit">/ 5</span></div></div>
-  <div class="kpi"><div class="k-num" data-count="{{ kpis.mean_writing_time }}">0</div><div class="k-label">Mean writing time <span class="unit">s</span></div></div>
-  <div class="kpi"><div class="k-num" data-count="{{ kpis.mean_speed }}" data-dec="2">0</div><div class="k-label">Mean typing speed <span class="unit">chars/s</span></div></div>
-  <div class="kpi"><div class="k-num" data-count="{{ kpis.mean_pause_ratio }}">0</div><div class="k-label">Mean pause ratio <span class="unit">%</span></div></div>
 </section>
 
-<section class="section-head"><h2>Effort &amp; writing behaviour</h2>
-  <p class="muted small">Self-rated effort against a chosen typing behaviour, across all valid sessions.</p></section>
-<div class="split-2-1">
-  <div class="chart-card">
-    <div class="chart-head">
-      <h3>Self-rated effort ↔ behaviour</h3>
-      <div class="seg" id="feat-seg">
-        <button data-k="speed" class="on">Typing speed</button>
-        <button data-k="pauses">Pauses</button>
-        <button data-k="revisions">Revisions</button>
-        <button data-k="time">Writing time</button>
-      </div>
+<!-- findings -->
+<section class="rd-sec">
+  <div class="rd-sec-head"><h2>Where the evidence stands</h2></div>
+  <p class="rd-sub">Each finding states what we tested, the key number and whether the data support it.
+    <a href="{{ url_for('model_research_page') }}">Read the full evidence →</a></p>
+  <div class="rd-grid c2">
+    {% for f in findings %}
+    <div class="rd-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px">
+        <span class="rd-status {{ f.status }}">{{ f.status_label }}</span>
+        <span class="muted small">{{ f.study }}</span></div>
+      <h3 style="font-size:1rem;line-height:1.35">{{ f.title }}</h3>
+      <div style="font:700 1.6rem 'Space Grotesk',sans-serif;margin-top:8px">{{ f.number }}</div>
     </div>
-    <canvas id="c-primary"></canvas>
-    <p class="muted small">Each point is one session. Relationships are weak and not
-       statistically significant at this sample size — exploratory only.</p>
+    {% endfor %}
   </div>
-  <div class="chart-card">
-    <h3>Effort distribution</h3>
-    <canvas id="c-effort"></canvas>
-    <p class="muted small">Self-rated effort (1–5), valid sessions.</p>
-  </div>
-</div>
+</section>
 
-<section class="section-head"><h2>Research signals</h2>
-  <p class="muted small">Pilot associations between typing behaviour and self-rated
-     effort (Spearman ρ). <strong>Associations, not causal findings.</strong></p></section>
-<div class="signal-grid">
-  {% for s in signals %}
-  <div class="signal-card">
-    <div class="sig-top"><span class="sig-name">{{ s.name }}</span>
-      <span class="trend {{ s.direction }}">{{ '↑' if s.direction=='up' else '↓' }}</span></div>
-    <div class="sig-rho">ρ = {{ '%+.2f' % s.rho }}</div>
-    <div class="sig-meta muted small">{{ s.strength }} {{ s.tendency }}</div>
-    <div class="sig-bar"><span class="{{ s.direction }}" style="width: {{ (s.rho|abs*100)|round|int }}%"></span></div>
+<!-- hypotheses -->
+<section class="rd-sec">
+  <div class="rd-sec-head"><h2>Do participants' answers match their typing?</h2></div>
+  <p class="rd-sub">Three hypotheses linking the questionnaires to the typing readings. A correlation is shown only once
+    {{ live.min_n }} sessions with answers exist, so nothing is claimed early.</p>
+  <div class="rd-grid c3">
+    {% for h in hyps %}
+    <div class="rd-hyp">
+      <div class="rd-top"><span class="rd-id">{{ h.id }}</span><span class="rd-status {{ h.status }}">{{ h.status_label }}</span></div>
+      <h3>{{ h.title }}</h3>
+      <p>{{ h.claim }}</p>
+      <div class="rd-prog" title="{{ h.n }} of {{ live.min_n }} sessions"><span style="width: {{ h.progress }}%"></span></div>
+      <div class="rd-res">{{ h.text }}</div>
+    </div>
+    {% endfor %}
   </div>
-  {% endfor %}
-</div>
-<p class="muted small" style="margin-top:8px">All 95% confidence intervals span zero
-   (n={{ kpis.valid_sessions }}). See <a href="{{ url_for('research_page') }}">Research results</a>
-   for the full statistical picture.</p>
+</section>
 
-<section class="section-head"><h2>Prediction performance</h2></section>
-<div class="chart-card">
-  <table class="clean">
-    <thead><tr><th>Model</th><th>MAE [95% CI]</th><th>RMSE</th><th>R²</th></tr></thead>
-    <tbody>{% for name, mae, rmse, r2 in model.rows %}
-      <tr><td>{{ name }}</td><td>{{ mae }}</td><td>{{ rmse }}</td><td>{{ r2 }}</td></tr>{% endfor %}</tbody>
-  </table>
-  <p class="muted small">The experimental estimate does not currently outperform a
-     mean baseline — reported honestly. Full detail on the
-     <a href="{{ url_for('research_page') }}">Research results</a> page.</p>
-</div>
+<!-- pilot charts -->
+<section class="rd-sec">
+  <div class="rd-sec-head"><h2>Pilot study: effort and typing</h2></div>
+  <p class="rd-sub">Each point is one session. The relationships are weak and not significant at this sample size, so treat
+    them as exploratory.</p>
+  <div class="split-2-1">
+    <div class="chart-card">
+      <div class="chart-head">
+        <h3>Self-rated effort against a typing behaviour</h3>
+        <div class="seg" id="feat-seg">
+          <button data-k="speed" class="on">Typing speed</button>
+          <button data-k="pauses">Pauses</button>
+          <button data-k="revisions">Revisions</button>
+          <button data-k="time">Writing time</button>
+        </div>
+      </div>
+      <canvas id="c-primary"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>How people rated their effort</h3>
+      <canvas id="c-effort"></canvas>
+      <p class="muted small">Self-rated effort (1–5), valid sessions. Most ratings sit at 2–3, mean {{ kpis.mean_effort }}.</p>
+    </div>
+  </div>
+</section>
+
 {% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', filename='vendor/chart.min.js') }}"></script>

@@ -2,7 +2,7 @@
 predict.py — orchestration that REUSES the shared research code, read-only:
   - research/features.py     -> extract_features()  (the exact study feature pipeline)
   - research/explain.py      -> load_artifact(), explain_session()  (SHAP)
-  - research/effort_model.pkl (loaded by explain.load_artifact; NEVER retrained here)
+  - data/derived/effort_model.pkl (loaded by explain.load_artifact; NEVER retrained here)
 
 Nothing in this file trains or modifies the model. It only:
   1. turns captured keystroke events into behavioural features, and
@@ -18,7 +18,7 @@ from core import paths
 if paths.RESEARCH not in sys.path:
     sys.path.insert(0, paths.RESEARCH)
 
-from features import extract_features            # shared, read-only
+from features import extract_features, writing_actions   # shared, read-only
 import explain as _explain                       # shared, read-only
 from explain import load_artifact, explain_session
 
@@ -34,16 +34,24 @@ def artifact():
     return _ARTIFACT
 
 
-def compute_features(events, final_text):
-    """Captured events (type/key/t/caret/caretEnd) -> behavioural feature dict."""
-    conv = [{
+def _convert(events):
+    return [{
         "event_type": e.get("type"),
         "key_value": e.get("key"),
         "t_ms": e.get("t"),
         "caret_pos": e.get("caret"),
         "selection_end": e.get("caretEnd"),
     } for e in events]
-    return extract_features(conv, len(final_text or ""))
+
+
+def compute_features(events, final_text):
+    """Captured events (type/key/t/caret/caretEnd) -> behavioural feature dict."""
+    return extract_features(_convert(events), len(final_text or ""))
+
+
+def actions(events):
+    """Additions, deletions and where the pauses fell (see research/features.py)."""
+    return writing_actions(_convert(events))
 
 
 _PAUSE_MS = 2000

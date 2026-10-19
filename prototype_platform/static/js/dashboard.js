@@ -91,7 +91,7 @@
     var pr = window.PROFILE;
     if (el("c-effort")) new Chart(el("c-effort"), {
       type: "line",
-      data: { labels: pr.labels, datasets: [{ label: "Self-rated effort", data: pr.effort,
+      data: { labels: pr.labels, datasets: [{ label: pr.effort_label || "Self-rated effort", data: pr.effort,
         borderColor: SELF, backgroundColor: SELF, tension: .3, pointRadius: 5 }] },
       options: { plugins: { legend: { display: false } }, scales: { y: { min: 0.5, max: 5.5 } } }
     });

@@ -106,91 +106,6 @@ def dumps(d):
     return json.dumps(d)
 
 
-def rhythm_shift(feats, base_feats):
-    """Compare this emotional passage with the SAME person's neutral baseline.
-    Primary measure: rhythm variability (CV of the inter-key interval) — the one
-    within-person effect that survived length-matching on EmoSurv. Pause/speed values
-    are returned as descriptive context only (they are sensitive to passage length)."""
-    if not feats.get("behavioural_valid", 1) or not base_feats.get("behavioural_valid", 1):
-        return None
-    cv, bcv = bh.rhythm_cv(feats), bh.rhythm_cv(base_feats)
-    if bcv <= 0:
-        return None
-    n, bn = feats.get("n_keydown") or 0, base_feats.get("n_keydown") or 0
-    ratio = n / bn if bn else None
-    delta_pct = 100 * (cv - bcv) / bcv
-    if delta_pct <= -10:
-        reading = "more even than your baseline"
-    elif delta_pct >= 10:
-        reading = "less even than your baseline"
-    else:
-        reading = "about the same as your baseline"
-    ratio_cv = cv / bcv
-    if ratio_cv <= 0.90:
-        state = "Engagement-like shift: steadier rhythm than your baseline"
-    elif ratio_cv >= 1.10:
-        state = "Less steady than your baseline"
-    else:
-        state = "No clear shift from your baseline"
-    return {
-        "cv": round(cv, 2), "base_cv": round(bcv, 2), "delta_pct": round(delta_pct),
-        "reading": reading, "state": state, "length_ratio": round(ratio, 2) if ratio else None,
-        "length_matched": bool(ratio and 0.6 < ratio < 1.67),
-        "context": [
-            {"label": "Typing speed (chars/s)", "now": feats.get("chars_per_sec"), "base": base_feats.get("chars_per_sec")},
-            {"label": "Long pauses per 100 keys", "now": feats.get("n_long_pause_per_100"), "base": base_feats.get("n_long_pause_per_100")},
-            {"label": "Time paused", "now": round(100 * (feats.get("pause_time_ratio") or 0)), "base": round(100 * (base_feats.get("pause_time_ratio") or 0)), "unit": "%"},
-        ],
-    }
-
-
-def replication_test(sessions):
-    """H1 on OUR data: is CV lower in emotional writing than in each person's own
-    baseline? Wilcoxon signed-rank on (emotional CV - baseline CV), reported on all pairs
-    and on length-matched pairs. Hypothesis was derived from EmoSurv, so this is a
-    prospective replication."""
-    from scipy import stats
-    by_id = {s["id"]: s for s in sessions}
-    deltas, matched, relive, skill = [], [], [], {}
-    n_interrupted = 0
-    for s in sessions:
-        b = by_id.get(s.get("baseline_id"))
-        if not b or s.get("emotion") not in ("happy", "sad"):
-            continue
-        if s.get("interrupted") == 1:          # quality control: drop interrupted sessions
-            n_interrupted += 1
-            continue
-        sh = rhythm_shift(s["features"], b["features"])
-        if not sh:
-            continue
-        d = sh["cv"] - sh["base_cv"]
-        deltas.append(d)
-        if s.get("self_relive"):
-            relive.append((s["self_relive"], d))
-        if s.get("typing_skill"):
-            skill.setdefault(s["typing_skill"], []).append(d)
-        if sh["length_matched"]:
-            matched.append(d)
-
-    def summ(ds):
-        if len(ds) < MIN_N:
-            return {"n": len(ds), "ready": False}
-        nz = [x for x in ds if x != 0]
-        p = stats.wilcoxon(ds).pvalue if len(nz) >= 5 else None
-        ds_sorted = sorted(ds)
-        return {"n": len(ds), "ready": True, "median": round(ds_sorted[len(ds) // 2], 3),
-                "share_lower": round(sum(x < 0 for x in ds) / len(ds), 2),
-                "p": round(float(p), 4) if p is not None else None}
-    names = {"touch": "Touch typist", "some": "Some looking at keys", "hunt": "Hunt-and-peck"}
-    by_skill = [{"label": names[k], "n": len(v), "median": round(sorted(v)[len(v) // 2], 3)}
-                for k, v in skill.items() if k in names]
-    return {"all": summ(deltas), "matched": summ(matched), "n_pairs": len(deltas),
-            "n_interrupted": n_interrupted, "by_skill": by_skill,
-            "relive": _spearman([a for a, _ in relive], [b for _, b in relive])
-                      if relive else None,
-            "n_relive": len(relive)}
-
-
 # ------------------------------------------------- live validation (admin page)
 MIN_N = 8       # fewest sessions before a correlation is shown at all
 
@@ -242,7 +157,7 @@ def live_validation(sessions):
             if s.get("affect") and s["affect"].get("indices")
             and s.get("emotion") in ("happy", "sad")]
     out = {"n": len(rows), "min_n": MIN_N, "pairs": [], "by_emotion": [],
-           "external": None, "text": None, "replication": replication_test(sessions)}
+           "external": None, "text": None}
     if not rows:
         return out
     # questionnaire scores (1-5) and fresh typing indices for every row (older sessions lack "processing")
@@ -250,21 +165,23 @@ def live_validation(sessions):
         for k in qn.STATE_ORDER:
             s["q_" + k] = qn.score(s, k)
         s["_idx"] = bh.compute_indices(s["features"]) or s["affect"]["indices"]
-    pair_defs = [("q_load", "mind_space", "Cognitive load (NASA-TLX) ↔ Mind-space load"),
-                 ("q_load", "hesitation", "Cognitive load (NASA-TLX) ↔ Hesitation"),
-                 ("q_flow", "focus", "Flow (Flow Short Scale) ↔ Focus index (expect positive)"),
-                 ("q_flow", "irregularity", "Flow (Flow Short Scale) ↔ Rhythm irregularity (expect negative)"),
-                 ("q_intensity", "processing", "Emotional intensity (SAM) ↔ Emotional-processing load"),
-                 ("q_intensity", "correction", "Emotional intensity (SAM) ↔ Self-correction"),
-                 ("self_mood", "focus", "Valence (SAM) ↔ Focus index"),
-                 ("tlx_frustration", "mind_space", "Frustration (NASA-TLX) ↔ Mind-space load")]
-    for col, idx, label in pair_defs:
+    # (questionnaire score, typing index, label, expected sign, hypothesis key)
+    pair_defs = [("q_load", "mind_space", "Cognitive load (NASA-TLX) ↔ Mind-space load", +1, "load"),
+                 ("q_flow", "focus", "Flow (Flow Short Scale) ↔ Focus index", +1, "flow"),
+                 ("q_intensity", "processing", "Emotional intensity (SAM) ↔ Emotional-processing load", +1, "intensity"),
+                 ("q_load", "hesitation", "Cognitive load (NASA-TLX) ↔ Hesitation", +1, None),
+                 ("q_flow", "irregularity", "Flow (Flow Short Scale) ↔ Rhythm irregularity", -1, None),
+                 ("q_intensity", "correction", "Emotional intensity (SAM) ↔ Self-correction", +1, None),
+                 ("self_mood", "focus", "Valence (SAM) ↔ Focus index", None, None),
+                 ("tlx_frustration", "mind_space", "Frustration (NASA-TLX) ↔ Mind-space load", +1, None)]
+    for col, idx, label, expected, hyp in pair_defs:
         pts = [(s[col], s["_idx"][idx]) for s in rows if s.get(col)]
         res = _spearman([a for a, _ in pts], [b for _, b in pts])
         adj = _adjusted_spearman([(s[col], s["_idx"][idx],
                                    s.get("typing_skill"), s.get("keyboard"))
                                   for s in rows if s.get(col)])
-        out["pairs"].append({"label": label, "n": len(pts), "result": res, "adjusted": adj})
+        out["pairs"].append({"label": label, "n": len(pts), "result": res, "adjusted": adj,
+                             "expected": expected, "hypothesis": hyp})
     skill_names = {"touch": "Touch typist", "some": "Mixed", "hunt": "Hunt-and-peck"}
     kb_names = {"laptop": "Laptop", "external": "External"}
     out["composition"] = {

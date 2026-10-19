@@ -1,0 +1,189 @@
+{% extends "admin/base.html" %}
+{% block title %}Model research · Writing Analytics{% endblock %}
+{% block main %}
+<div class="page-head">
+  <div>
+    <div class="eyebrow">Model research</div>
+    <h1>How every number in the report is made</h1>
+    <p class="lede">Each typing measure with its formula, the paper it comes from, how it held up on public data, and
+      the models that were tested, used or set aside. Participants never see this page.</p>
+  </div>
+</div>
+
+<nav class="rd-subnav" id="subnav">
+  <a href="#measures">Measures</a><a href="#models">Models</a><a href="#data">Data</a><a href="#pilot">Pilot study</a>
+  <a href="#skill">Skill &amp; keyboard</a><a href="#hyps">Hypotheses</a><a href="#refs">Sources</a>
+</nav>
+
+<!-- 01 measures -->
+<section class="rd-sec" id="measures">
+  <div class="rd-sec-head"><span class="rd-n">01</span><h2>Typing measures</h2></div>
+  <p class="rd-sub">Formula, reason, source and evidence for each measure. Source flags: <b>verified</b> means the abstract or page
+    was opened; <b>search only</b> means the record was confirmed but the full text not read; <b>from memory</b> must be checked before submission.</p>
+  {% for m in measures %}
+  <article class="rd-find">
+    <div class="rd-num" style="font-size:1rem;min-width:120px">{{ m.verdict }}<small>{{ m.key }}</small></div>
+    <div>
+      <h3>{{ m.name }} <span class="rd-status {{ m.cls }}">{{ m.verdict }}</span></h3>
+      <p><b>Formula:</b> {{ m.formula }}.</p>
+      <p><b>Why:</b> {{ m.why }}</p>
+      {% if m.emosurv %}<p><b>EmoSurv test:</b> {{ m.emosurv }}</p>{% endif %}
+      {% if m.extra %}<p><b>Other evidence:</b> {{ m.extra }}</p>{% endif %}
+      <p class="muted small"><b>Source:</b>
+        {% for c, st in m.cites %}{{ c }} <i>[{{ st }}]</i>{% if not loop.last %}; {% endif %}{% endfor %}</p>
+    </div>
+  </article>
+  {% endfor %}
+</section>
+
+<!-- 02 models -->
+<section class="rd-sec" id="models">
+  <div class="rd-sec-head"><span class="rd-n">02</span><h2>Models</h2></div>
+  <h3>Used in the report: emotional-engagement model</h3>
+  <p class="rd-sub">Logistic regression on {{ eng_card.n }} EmoSurv free-text sessions from {{ eng_card.people }} people, emotional vs neutral
+    writing. The weights are plain numbers, so every reading is explained exactly: weight × (your value − average) ÷ spread, summed.
+    Reading = 100 ÷ (1 + e<sup>−sum</sup>), so 50 means no evidence either way.</p>
+  <div class="rd-grid c2">
+    <div class="rd-card"><h3>Weights</h3>
+      <div class="rd-table-wrap" style="border:0"><table class="rd-table">
+        <thead><tr><th>Behaviour</th><th class="num">Weight</th></tr></thead>
+        <tbody>{% for name, w in eng_card.weights %}<tr><td>{{ name }}</td><td class="num">{{ '%+.3f' % w }}</td></tr>{% endfor %}</tbody>
+      </table></div>
+      <p class="rd-cap">Positive pushes toward emotional writing, negative toward neutral. Values are capped at ±3 spreads.</p></div>
+    <div class="rd-card"><h3>Test result</h3>
+      <ul class="rd-list">
+        <li>{{ eng_card.cv.folds }}-fold cross-validation, whole participants held out.</li>
+        <li>AUC <b>{{ eng_card.cv.auc }}</b> (0.5 is chance), balanced accuracy {{ eng_card.cv.balanced_accuracy }}.</li>
+        <li>Permutation test ({{ eng_card.cv.permutations }} shuffles within each person): p = <b>{{ eng_card.cv.permutation_p }}</b>.</li>
+        <li>Rhythm variability carries the most weight, in line with the within-person result in section 1.</li>
+      </ul>
+      <p class="rd-cap">This is a weak but real signal. It is used as a resemblance reading, not as a classification.</p></div>
+  </div>
+
+  <h3 style="margin-top:24px">Used in the report: skill-matched key speed</h3>
+  <p class="rd-sub">Median key interval from {{ norms.n_sessions }} copy-task sessions, split by laptop ({{ norms.counts.laptop }}) and
+    desktop ({{ norms.counts.desktop }}). Used only for the laptop-vs-desktop shift; the writer is then ranked against free-text writers.</p>
+
+  <h3 style="margin-top:24px">Tested and set aside</h3>
+  <div class="rd-table-wrap"><table class="rd-table">
+    <thead><tr><th>Model</th><th>Test</th><th>Result</th><th>Why it is not in the report</th></tr></thead>
+    <tbody>{% for a, b, c, d in set_aside %}<tr><td>{{ a }}</td><td>{{ b }}</td><td>{{ c }}</td><td>{{ d }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <p class="rd-cap">Public data with a real state label ends up giving only weak signal from typing, which agrees with the published work
+    (Lee 2015; Kolakowska &amp; Landowska 2021). The report therefore reads typing as a description plus a resemblance, not a diagnosis.</p>
+</section>
+
+<!-- 03 data -->
+<section class="rd-sec" id="data">
+  <div class="rd-sec-head"><span class="rd-n">03</span><h2>Data</h2></div>
+  <div class="rd-table-wrap"><table class="rd-table">
+    <thead><tr><th>Dataset</th><th>Size</th><th>Labels</th><th>Used for</th><th>Source</th></tr></thead>
+    <tbody>{% for r in datasets %}<tr>{% for c in r %}<td>{{ c }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+  </table></div>
+  <h3 style="margin-top:20px">Looked at and not used</h3>
+  <div class="rd-table-wrap"><table class="rd-table">
+    <thead><tr><th>Dataset</th><th>Reason</th></tr></thead>
+    <tbody>{% for a, b in rejected %}<tr><td>{{ a }}</td><td>{{ b }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+
+<!-- 04 pilot -->
+<section class="rd-sec" id="pilot">
+  <div class="rd-sec-head"><span class="rd-n">04</span><h2>Pilot study (primary data)</h2></div>
+  <p class="rd-sub">{{ kpis.valid_sessions }} valid sessions from {{ kpis.participants }} participants, each with a self-rated writing effort (1–5).
+    These data are frozen. They supply the "compared with other writers" ranges and the effort test below.</p>
+  <div class="rd-grid c2">
+    <div class="rd-card">
+      <h3>How each typing measure relates to effort</h3>
+      <p class="muted small">Spearman ρ. Orange: more of the measure goes with higher effort; blue: less.</p>
+      <div class="rd-bars">
+        {% for s in signals %}
+        <div class="rd-bar"><span>{{ s.name }}</span>
+          <div class="rd-track"><span class="{{ 'down' if s.direction == 'down' else '' }}" style="width:{{ (s.rho|abs*100)|round|int }}%"></span></div>
+          <b>{{ '%+.2f' % s.rho }}</b></div>
+        {% endfor %}
+      </div>
+      <p class="rd-cap">None is significant (smallest p = {{ signals|map(attribute='p')|min }}); every 95% interval spans zero.</p>
+    </div>
+    <div class="rd-card">
+      <h3>Effort models, tested on unseen people</h3>
+      <div class="rd-table-wrap" style="border:0"><table class="rd-table">
+        <thead><tr><th>Model</th><th class="num">MAE [95% CI]</th><th class="num">R²</th></tr></thead>
+        <tbody>{% for name, mae, rmse, r2 in model.rows %}
+          <tr><td>{{ name }}</td><td class="num">{{ mae }}</td><td class="num">{{ r2 }}</td></tr>{% endfor %}</tbody></table></div>
+      <ul class="rd-list">{% for n in model.notes %}<li>{{ n }}</li>{% endfor %}</ul>
+    </div>
+  </div>
+  <div class="rd-grid c2" style="margin-top:16px">
+    <figure class="rd-fig rd-card"><img src="{{ url_for('static', filename='img/analysis_primary.png') }}" alt="Correlations and model error with 95% intervals">
+      <figcaption>Correlations and model error, with 95% intervals.</figcaption></figure>
+    <figure class="rd-fig rd-card"><img src="{{ url_for('static', filename='img/shap_summary.png') }}" alt="SHAP global importance of the effort model">
+      <figcaption>SHAP importance in the effort model. It describes the model, not causes.</figcaption></figure>
+  </div>
+  <div class="rd-note info"><b>Task difficulty:</b> moderate tasks were rated about 0.9 points higher in effort than easy ones
+    (+0.89, p = 0.063, participant-clustered). It is the strongest pilot result and a check that the effort rating means something.</div>
+</section>
+
+<!-- 05 skill & keyboard -->
+<section class="rd-sec" id="skill">
+  <div class="rd-sec-head"><span class="rd-n">05</span><h2>Typing skill and keyboard</h2></div>
+  <p class="rd-sub">Both are asked before writing and shown on the report, because they move the baseline of every timing measure.</p>
+  <div class="rd-grid c2">
+    <div class="rd-card"><h3>Evidence (Inputlog copy-task corpus, 491 typists)</h3>
+      <ul class="rd-list">
+        <li>Median key interval: 188 ms for the slowest third, 148 ms for the middle, 124 ms for the fastest third.</li>
+        <li>Laptop typists (242) had shorter intervals than desktop typists (238): 142 vs 164 ms mean, p &lt; 0.001. This is confounded with who uses which device, so it justifies adjusting for device, not a causal claim.</li>
+        <li>Faster typists have slightly steadier rhythm (ρ = −0.12, p = 0.007).</li>
+      </ul></div>
+    <div class="rd-card"><h3>How it is used</h3>
+      <ul class="rd-list">
+        <li>Key speed is compared with writers after a laptop vs desktop adjustment taken from the corpus.</li>
+        <li>The skill answer words the report (a person who looks at the keys is told the pauses partly reflect key search).</li>
+        <li>On the Emotion &amp; state page, the questionnaire-vs-typing correlations are also shown adjusted for skill and keyboard.</li>
+        <li>The readings themselves are not rescaled: the pilot and EmoSurv data have no skill or device labels to base that on.</li>
+      </ul></div>
+  </div>
+</section>
+
+<!-- 06 hypotheses -->
+<section class="rd-sec" id="hyps">
+  <div class="rd-sec-head"><span class="rd-n">06</span><h2>Questionnaire hypotheses</h2></div>
+  <p class="rd-sub">Participants write about a happy or sad moment, then answer short questionnaires. Each answer is correlated with its typing
+    reading (Spearman, raw and adjusted). Nothing is shown below {{ live.min_n }} sessions.</p>
+  <div class="rd-grid c3">
+    {% for h in hyps %}
+    <div class="rd-hyp">
+      <div class="rd-top"><span class="rd-id">{{ h.id }}</span><span class="rd-status {{ h.status }}">{{ h.status_label }}</span></div>
+      <h3>{{ h.title }}</h3><p>{{ h.claim }}</p>
+      <div class="rd-prog"><span style="width: {{ h.progress }}%"></span></div>
+      <div class="rd-res">{{ h.text }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="rd-cap"><a href="{{ url_for('behaviour_page') }}">Full tables and live correlations →</a></p>
+  <h3 style="margin-top:20px">Questionnaires (ground-truth labels, shortened to 5 points)</h3>
+  <div class="rd-table-wrap"><table class="rd-table">
+    <thead><tr><th>Instrument</th><th>Source</th><th>Items used</th><th>Source check</th></tr></thead>
+    <tbody>{% for a, b, c, d in questionnaires %}<tr><td>{{ a }}</td><td>{{ b }}</td><td>{{ c }}</td><td>{{ d }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+
+<!-- 07 sources -->
+<section class="rd-sec" id="refs">
+  <div class="rd-sec-head"><span class="rd-n">07</span><h2>Sources</h2></div>
+  <ol class="rd-refs">
+    {% for c, st in sources %}<li>{{ c }} <i>[{{ st }}]</i></li>{% endfor %}
+    <li>Full notes and the plan: <code>research/docs/LITERATURE.md</code> and <code>research/docs/RESEARCH_PLAN.md</code>.</li>
+  </ol>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  var links=[].slice.call(document.querySelectorAll('#subnav a')), secs=links.map(function(a){return document.querySelector(a.getAttribute('href'));});
+  function on(){var y=window.scrollY+140,cur=0;secs.forEach(function(s,i){if(s&&s.offsetTop<=y)cur=i;});
+    links.forEach(function(a,i){a.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',on,{passive:true});on();
+})();
+</script>
+{% endblock %}

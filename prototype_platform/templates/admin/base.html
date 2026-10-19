@@ -1,28 +1,25 @@
 {% extends "base.html" %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">{% endblock %}
 {% block body %}
 <div class="admin">
   <aside class="sidebar">
     <div class="brand">Writing<br>Analytics</div>
     <nav>
-      <div class="nav-group">Pilot study</div>
       <a href="{{ url_for('admin') }}" class="{{ 'active' if active=='overview' }}">Overview</a>
       <a href="{{ url_for('participants_page') }}" class="{{ 'active' if active=='participants' }}">Participants</a>
-      <a href="{{ url_for('research_page') }}" class="{{ 'active' if active=='research' }}">Research results</a>
-      <a href="{{ url_for('behaviour_page') }}" class="{{ 'active' if active=='behaviour' }}">Behaviour &amp; emotion</a>
-      <a href="{{ url_for('methodology_page') }}" class="{{ 'active' if active=='methodology' }}">Methodology</a>
-      <a href="{{ url_for('model_card_page') }}" class="{{ 'active' if active=='modelcard' }}">Model card</a>
-      <div class="nav-group">Live platform</div>
-      <a href="{{ url_for('live_page') }}" class="{{ 'active' if active=='live' }}">Live submissions</a>
+      <a href="{{ url_for('behaviour_page') }}" class="{{ 'active' if active=='behaviour' }}">Behaviour research</a>
+      <a href="{{ url_for('model_research_page') }}" class="{{ 'active' if active=='model' }}">Model research</a>
       <div class="sep"></div>
-      <a href="{{ url_for('export_csv') }}">Export study CSV</a>
-      <a href="{{ url_for('home') }}">↗ Home (participant site)</a>
-      <a href="{{ url_for('logout') }}">Logout</a>
+      <a href="{{ url_for('export_csv') }}">Export pilot CSV</a>
+      <a href="{{ url_for('export_live_csv') }}">Export new sessions CSV</a>
+      <a href="{{ url_for('home') }}">↗ Participant site</a>
+      <a href="{{ url_for('logout') }}">Log out</a>
     </nav>
     <div class="legend side-legend">
       <div class="legend-title">Colour key</div>
-      <div class="legend-item"><span class="legend-dot dot-measured"></span> Measured behaviour</div>
-      <div class="legend-item"><span class="legend-dot dot-self"></span> Self-rated effort</div>
-      <div class="legend-item"><span class="legend-dot dot-exp"></span> Experimental estimate</div>
+      <div class="legend-item"><span class="legend-dot dot-measured"></span> Measured from typing</div>
+      <div class="legend-item"><span class="legend-dot dot-self"></span> Reported by participant</div>
+      <div class="legend-item"><span class="legend-dot dot-exp"></span> Model estimate</div>
     </div>
     <div class="foot">Research prototype · study data<br>read-only · separate from Stage-1</div>
   </aside>

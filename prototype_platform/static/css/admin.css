@@ -1,0 +1,139 @@
+/* admin.css — researcher dashboard. Loaded after style / premium / soothe, only on admin pages.
+   Uses the shared colour tokens, so light and dark themes both work. Component names start with rd-. */
+
+/* ---------- shell ---------- */
+.main { background: var(--bg); padding: 32px 44px 64px; }
+.main > * { max-width: 1180px; }
+.page-head { border-bottom: 0; padding-bottom: 6px; }
+.page-head.sticky { background: var(--bg); }
+.main .page-head h1 { font-size: 1.9rem; text-transform: none; letter-spacing: -.02em; }
+.page-head .lede { margin: 6px 0 0; max-width: 62ch; color: var(--ink-2); font-size: .98rem; line-height: 1.5; }
+.sidebar nav .nav-group { margin: 18px 14px 6px; font: 600 .66rem "Space Grotesk", sans-serif; letter-spacing: .14em;
+  text-transform: uppercase; color: #7f9a96; }
+.sidebar nav a { text-transform: none; letter-spacing: 0; font: 500 .92rem Inter, sans-serif; padding: 10px 14px; }
+.sidebar nav a.active { font-weight: 600; }
+
+/* ---------- sections ---------- */
+.rd-sec { margin: 44px 0 0; scroll-margin-top: 90px; }
+.rd-sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 4px; flex-wrap: wrap; }
+.rd-sec-head h2 { margin: 0; font-size: 1.3rem; letter-spacing: -.01em; }
+.rd-sec-head .rd-n { font: 700 .8rem "Space Grotesk", sans-serif; color: var(--brand); letter-spacing: .1em; }
+.rd-sec > .rd-sub { margin: 4px 0 18px; max-width: 70ch; color: var(--ink-2); line-height: 1.55; }
+
+/* ---------- cards & tiles ---------- */
+.rd-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 22px 24px; }
+.rd-card h3 { margin: 0 0 6px; font-size: 1.02rem; }
+.rd-card p { line-height: 1.55; }
+.rd-grid { display: grid; gap: 16px; }
+.rd-grid.c2 { grid-template-columns: repeat(2, 1fr); }
+.rd-grid.c3 { grid-template-columns: repeat(3, 1fr); }
+.rd-grid.c4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 1050px) { .rd-grid.c4 { grid-template-columns: repeat(2, 1fr); } .rd-grid.c3 { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 720px) { .rd-grid.c2, .rd-grid.c3, .rd-grid.c4 { grid-template-columns: 1fr; } .main { padding: 22px 16px 48px; } }
+
+.rd-tile { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; position: relative; overflow: hidden; }
+.rd-tile { --dot: var(--brand); }
+.rd-tile.t-self { --dot: var(--self); }
+.rd-tile.t-exp { --dot: var(--exp); }
+.rd-tile.t-valid { --dot: var(--valid); }
+.rd-tile .rd-k::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: var(--dot); }
+.rd-tile .rd-k { font: 600 .68rem "Space Grotesk", sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.rd-tile .rd-v { display: block; margin: 6px 0 2px; font: 700 2.1rem/1.1 "Space Grotesk", sans-serif; letter-spacing: -.02em; color: var(--ink); }
+.rd-tile .rd-v small { font-size: .9rem; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+.rd-tile .rd-d { font-size: .84rem; color: var(--ink-2); line-height: 1.4; }
+
+/* ---------- status pills ---------- */
+.rd-status { display: inline-flex; align-items: center; gap: 6px; font: 700 .64rem "Space Grotesk", sans-serif; letter-spacing: .08em;
+  text-transform: uppercase; padding: 4px 10px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.rd-status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.rd-status.supported { color: var(--valid); background: var(--valid-bg); }
+.rd-status.not-supported { color: var(--exp); background: var(--exp-bg); }
+.rd-status.mixed { color: var(--self); background: var(--self-bg); }
+.rd-status.pending { color: var(--muted); background: var(--paper); }
+
+/* ---------- findings ---------- */
+.rd-lead { background: color-mix(in oklab, var(--brand) 7%, var(--card)); border: 1px solid color-mix(in oklab, var(--brand) 28%, var(--line)); border-radius: 12px; padding: 24px 28px; }
+.rd-lead .rd-q { font: 600 1.35rem/1.4 "Space Grotesk", sans-serif; margin: 6px 0 12px; max-width: 46ch; letter-spacing: -.01em; }
+.rd-lead p { margin: 0 0 10px; max-width: 74ch; line-height: 1.6; color: var(--ink-2); }
+.rd-find { display: grid; grid-template-columns: 112px 1fr; gap: 20px; background: var(--card); border: 1px solid var(--line);
+  border-radius: 12px; padding: 20px 24px; margin-bottom: 12px; }
+.rd-find .rd-num { font: 700 1.55rem/1.1 "Space Grotesk", sans-serif; letter-spacing: -.02em; color: var(--ink); }
+.rd-find .rd-num small { display: block; margin-top: 6px; font: 600 .62rem "Space Grotesk", sans-serif; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted); }
+.rd-find h3 { margin: 0 0 6px; font-size: 1.05rem; line-height: 1.35; }
+.rd-find p { margin: 0 0 10px; color: var(--ink-2); line-height: 1.55; }
+.rd-find .rd-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: .8rem; color: var(--muted); }
+.rd-find .rd-meta a { color: var(--brand-dark); font-weight: 600; text-decoration: none; }
+.rd-find .rd-meta a:hover { text-decoration: underline; }
+@media (max-width: 720px) { .rd-find { grid-template-columns: 1fr; gap: 8px; } }
+
+/* ---------- hypotheses ---------- */
+.rd-hyp { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; }
+.rd-hyp .rd-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.rd-hyp .rd-id { font: 700 .8rem "Space Grotesk", sans-serif; color: var(--brand); letter-spacing: .1em; }
+.rd-hyp h3 { margin: 0; font-size: 1.1rem; }
+.rd-hyp p { margin: 0; color: var(--ink-2); font-size: .9rem; line-height: 1.5; }
+.rd-hyp .rd-res { font: 600 .84rem Inter, sans-serif; color: var(--ink); margin-top: auto; }
+.rd-prog { height: 8px; background: var(--track); border-radius: 999px; overflow: hidden; }
+.rd-prog span { display: block; height: 100%; background: var(--grad-soft); border-radius: 999px; }
+
+/* ---------- tables ---------- */
+.rd-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.rd-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.rd-table th { text-align: left; padding: 11px 14px; font: 600 .66rem "Space Grotesk", sans-serif; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--muted); background: var(--paper); border-bottom: 1px solid var(--line); white-space: nowrap; }
+.rd-table td { padding: 11px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.rd-table tr:last-child td { border-bottom: 0; }
+.rd-table tbody tr:hover td { background: color-mix(in oklab, var(--brand) 5%, var(--card)); }
+.rd-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rd-table th.num { text-align: right; }
+.rd-table td.src { color: var(--muted); font-size: .8rem; }
+.rd-table td.dim { color: var(--muted); font-style: italic; }
+.rd-table td small { display: block; color: var(--muted); margin-top: 2px; }
+.rd-cap { margin: 10px 2px 0; font-size: .82rem; color: var(--muted); line-height: 1.5; max-width: 80ch; }
+
+/* heat chips for correlations and medians */
+.rd-rho { display: inline-block; min-width: 54px; text-align: center; padding: 3px 8px; border-radius: 6px; font: 700 .82rem "Space Grotesk", sans-serif;
+  background: color-mix(in oklab, var(--brand) calc(var(--m, 0) * 70%), var(--card)); color: var(--ink); }
+.rd-rho.neg { background: color-mix(in oklab, var(--exp) calc(var(--m, 0) * 70%), var(--card)); }
+.rd-heat { display: inline-block; min-width: 46px; text-align: center; padding: 3px 8px; border-radius: 6px; font-weight: 600;
+  background: color-mix(in oklab, var(--brand) calc(var(--m, 0) * 55%), var(--card)); }
+.rd-sig { color: var(--valid); font-weight: 700; }
+
+/* ---------- sub-nav ---------- */
+.rd-subnav { position: sticky; top: 0; z-index: 14; display: flex; gap: 6px; flex-wrap: wrap; margin: 14px 0 0; padding: 10px 0;
+  background: var(--bg); border-bottom: 1px solid var(--line); }
+.rd-subnav a { padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink-2);
+  font: 600 .78rem Inter, sans-serif; text-decoration: none; }
+.rd-subnav a:hover { border-color: var(--brand); color: var(--ink); }
+.rd-subnav a.on { background: var(--brand); border-color: var(--brand); color: #fff; }
+
+/* ---------- instruments, callouts, bars ---------- */
+.rd-note { border: 1px solid color-mix(in oklab, var(--exp) 35%, var(--line)); background: var(--exp-bg); border-radius: 10px; padding: 14px 18px; font-size: .9rem;
+  line-height: 1.55; color: var(--ink); max-width: 80ch; margin-top: 14px; }
+.rd-note.info { border-color: color-mix(in oklab, var(--brand) 30%, var(--line)); background: color-mix(in oklab, var(--brand) 9%, var(--card)); }
+.rd-bars { display: grid; gap: 10px; }
+.rd-bar { display: grid; grid-template-columns: 150px 1fr 56px; gap: 12px; align-items: center; font-size: .86rem; }
+.rd-bar .rd-track { height: 10px; border-radius: 999px; background: var(--track); overflow: hidden; }
+.rd-bar .rd-track span { display: block; height: 100%; border-radius: 999px; background: var(--exp); }
+.rd-bar .rd-track span.down { background: var(--self); }
+.rd-bar b { text-align: right; font: 700 .86rem "Space Grotesk", sans-serif; }
+.rd-fig { margin: 0; }
+.rd-fig img { max-width: 100%; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.rd-fig figcaption { margin-top: 8px; font-size: .82rem; color: var(--muted); }
+.rd-list { margin: 8px 0 0; padding-left: 18px; color: var(--ink-2); line-height: 1.6; }
+.rd-list li { margin: 4px 0; }
+.rd-refs { font-size: .86rem; color: var(--ink-2); line-height: 1.7; padding-left: 18px; }
+.rd-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; counter-reset: step; }
+.rd-step { counter-increment: step; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+.rd-step::before { content: counter(step, decimal-leading-zero); font: 700 .78rem "Space Grotesk", sans-serif; color: var(--brand); letter-spacing: .1em; }
+.rd-step b { display: block; margin: 4px 0; }
+.rd-step p { margin: 0; font-size: .86rem; color: var(--ink-2); line-height: 1.5; }
+
+@media print { .rd-subnav, .sidebar { display: none; } .main { padding: 0; } }
+
+/* sentence-case headings read better at length than the global uppercase style */
+.rd-sec-head h2, .rd-card h3, .rd-find h3, .rd-hyp h3, .rd-sec h3, .chart-card h3, .rd-lead .rd-q {
+  text-transform: none; letter-spacing: -.005em; }
+.rd-sec-head h2 { font-size: 1.4rem; }
+.rd-hyp h3 { font-size: 1.15rem; }

@@ -1,25 +1,11 @@
 """
 plain_report.py — turns measurements and questionnaire answers into the plain-language text of
-the participant report: the one-line overview, tone of the words, behavioural state (what the
-participant reported next to what their typing suggests), practical insight and use cases.
+the participant report: tone of the words, behavioural state (what the
+participant reported next to what their typing suggests)and practical insight.
 No formulas or raw scores in the main text; the scoring lives in questionnaire.py / behaviour.py.
 """
 
 from core import questionnaire as qn
-
-
-def overview(feats, context, indices):
-    """One-line headline, consistent with the Focus reading (same index, same cut-offs)."""
-    if not indices:
-        return "There were too few keystrokes to describe your typing pattern."
-    f = indices["focus"]
-    if f >= 60:
-        line = "Overall, your writing flowed steadily with few long stops."
-    elif f <= 40:
-        line = "Overall, your writing had a stop-and-start feel, with several long pauses."
-    else:
-        line = "Overall, your writing had some steady stretches and some stops, which is typical."
-    return line + " This describes how you typed in this one session."
 
 
 def tone(text_aff, emotion):
@@ -44,16 +30,6 @@ def tone(text_aff, emotion):
                 % ("mixed" if t != "Positive" else "positive"))
     return {"headline": read + " (about %s%% of your words were positive and %s%% negative)." % (pos, neg),
             "fits": fits, "pos": pos, "neg": neg}
-
-
-EVIDENCE = {
-    "solid": ["The counts in section 1 come straight from your keystrokes, so they are exact.",
-              "Your answers come from short versions of published questionnaires (SAM, NASA-TLX, Flow Short Scale)."],
-    "exploratory": ["Reading cognitive load, flow and emotional intensity from typing is being checked in our study "
-                    "by correlating typing with these answers. Treat the typing side as a hint, not a measurement."],
-    "cannot": ["Typing alone cannot tell a happy memory from a sad one.",
-               "None of this is a diagnosis or a measure of mental health."],
-}
 
 
 _LVL_WORD = {"low": "Low", "mid": "Moderate", "high": "High"}
@@ -142,16 +118,3 @@ def insight(sts, emotion):
     if flow["self"] and flow["self"]["lv"] == "high":
         lines.append("You reported a strong sense of flow while writing.")
     return lines
-
-
-USES = [
-    {"title": "Emotional reflection",
-     "text": "Writing about emotional events is a long-used therapeutic technique (Pennebaker & Beall, 1986). "
-             "Typing hesitation and self-correction could one day show how someone is working through a memory, "
-             "without asking them to rate it."},
-    {"title": "Fatigue and strain monitoring",
-     "text": "Typing rhythm, pauses and corrections change when people are tired or under strain (Epp et al., 2011; "
-             "Vizer et al., 2009). Short reflective writing at work or in study could flag hidden fatigue early."},
-    {"title": "Writing support",
-     "text": "The same measures show when a writer is stuck or fluent, so tools can offer help at the right time."},
-]

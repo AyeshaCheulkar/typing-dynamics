@@ -143,6 +143,43 @@ def extract_features(events, char_count):
     }
 
 
+MODIFIER_KEYS = {"Shift", "CapsLock", "Control", "Alt", "Meta"}
+SENTENCE_END = {".", "!", "?"}
+
+
+def writing_actions(events):
+    """What the writer did, for the report (separate from extract_features so the study
+    feature table keeps its columns).
+
+    additions / deletions : printable characters typed / backspace+delete presses
+    pauses                : gaps >= PAUSE_SHORT_MS, split by where they fell:
+                            within a word, between words, between sentences (after . ! ? or Enter)
+    """
+    keys = sorted((e for e in events if e["event_type"] == "keydown"
+                   and e["key_value"] not in MODIFIER_KEYS), key=lambda e: e["t_ms"])
+    out = {"additions": sum(1 for e in keys if len(e["key_value"] or "") == 1),
+           "deletions": sum(1 for e in keys if e["key_value"] in DELETE_KEYS),
+           "pauses": {w: {"n": 0, "total_ms": 0, "longest_ms": 0}
+                      for w in ("within_word", "between_words", "between_sentences")}}
+    for i in range(1, len(keys)):
+        gap = keys[i]["t_ms"] - keys[i - 1]["t_ms"]
+        if gap < PAUSE_SHORT_MS:
+            continue
+        prev = keys[i - 1]["key_value"]
+        before = keys[i - 2]["key_value"] if i >= 2 else None
+        if prev == "Enter" or prev in SENTENCE_END or (prev == " " and before in SENTENCE_END):
+            where = "between_sentences"
+        elif prev == " ":
+            where = "between_words"
+        else:
+            where = "within_word"
+        b = out["pauses"][where]
+        b["n"] += 1
+        b["total_ms"] += gap
+        b["longest_ms"] = max(b["longest_ms"], gap)
+    return out
+
+
 def load_events_by_session(keystrokes_csv):
     """Group raw keystroke rows by session_id -> list of event dicts."""
     by_sess = {}
