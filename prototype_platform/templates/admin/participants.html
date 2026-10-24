@@ -5,13 +5,13 @@
   <div><h1>Participants</h1>
     <p class="muted small">The frozen pilot study and the new emotion-writing sessions, kept apart because they carry different labels.</p></div>
   <div class="seg" id="tab-seg">
-    <button data-t="pilot" class="on">Pilot study · {{ participants|length }}</button>
-    <button data-t="new">New sessions · {{ summary.sessions }}</button>
+    <button data-t="pilot" class="{{ '' if summary.sessions else 'on' }}">Pilot study · {{ participants|length }}</button>
+    <button data-t="new" class="{{ 'on' if summary.sessions }}">New sessions · {{ summary.sessions }}</button>
   </div>
 </div>
 
 <!-- ============ pilot ============ -->
-<div id="tab-pilot">
+<div id="tab-pilot" class="{{ 'hidden' if summary.sessions }}">
   <div class="page-head" style="margin:6px 0 14px">
     <p class="muted small">{{ participants|length }} pilot participants, each with a self-rated effort (1–5) · click a card to open the profile.</p>
     <div class="seg" id="view-seg"><button data-v="cards" class="on">Cards</button><button data-v="table">Table</button></div>
@@ -47,7 +47,7 @@
 </div>
 
 <!-- ============ new sessions ============ -->
-<div id="tab-new" class="hidden">
+<div id="tab-new" class="{{ '' if summary.sessions else 'hidden' }}">
   <div class="page-head" style="margin:6px 0 14px">
     <p class="muted small">{{ summary.sessions }} sessions from {{ summary.participants }} participants, submitted at <code>/test</code>.
       Each has the mood chosen, typing style, keyboard and the three questionnaire scores (1–5).</p>
@@ -110,7 +110,8 @@
     history.replaceState(null, '', '#' + t);
   }
   seg.addEventListener('click', function(e){ var b = e.target.closest('button'); if (b) show(b.dataset.t); });
-  if (location.hash === '#new') show('new');
+  if (location.hash === '#pilot') show('pilot');
+  else if (location.hash === '#new' || {{ 'true' if summary.sessions else 'false' }}) show('new');
 })();
 </script>
 {% endblock %}
