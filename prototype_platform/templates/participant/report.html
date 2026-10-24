@@ -45,6 +45,16 @@
     </section>
 
     <section class="card">
+      <h2>Quick readings</h2>
+      <div class="report-metrics">
+        {% for q in quick %}
+        <div class="rmetric"><span class="rm-v">{{ q.value }}</span><span class="rm-l">{{ q.label }}</span></div>
+        {% endfor %}
+      </div>
+      <ul class="headlines">{% for q in quick %}<li>{{ q.text }} <span class="muted small">Rule: {{ q.rule }}.</span></li>{% endfor %}</ul>
+    </section>
+
+    <section class="card">
       <h2>Your writing, moment by moment</h2>
       {% if timeline.insufficient %}
       <p class="muted">Not enough keystrokes to draw a timeline.</p>
@@ -194,6 +204,16 @@
         <dt>Engagement reading</dt><dd>How much your pattern resembles emotional rather than neutral writing in the public sessions the model learned from.</dd>
       </dl>
     </section>
+  
+    <section class="card">
+      <h2>Suggestions</h2>
+      <p class="muted small">Next steps tied to what you did in this session.</p>
+      <div class="insight-grid">
+        {% for t in w_sugg %}
+        <div class="insight"><div class="ins-title">{{ t.observed }}</div><div class="ins-strategy">{{ t.tip }}</div></div>
+        {% endfor %}
+      </div>
+    </section>
   </div>
 
   <!-- ===================== TAB 2: EMOTIONAL ===================== -->
@@ -203,6 +223,7 @@
       <h2>Your answers and your typing</h2>
       <p>After writing you answered short questions about your emotion, mental effort and flow. For each one, the top bar is what you told us and the
         bottom bar is what your typing pattern points to.</p>
+      {% if agree %}<p><b>{{ agree.text }}</b></p>{% endif %}
       <div class="state-grid">
         {% for x in plain.states %}
         <div class="state-card">
@@ -260,6 +281,22 @@
       </div>
       <p class="small">{{ tone_feel.verdict }}</p>
       {% endif %}
+      {% if words %}
+      <h3>Words that carry feeling</h3>
+      <p class="passage">{% for g in words.segments %}{% if g.c %}<mark class="w-{{ g.c }}">{{ g.t }}</mark>{% else %}{{ g.t }}{% endif %}{% endfor %}</p>
+      <p><b>{{ words.verdict }}</b></p>
+      {% if words.pos %}<p class="small">Positive: {% for w, n in words.pos %}<mark class="w-pos">{{ w }}</mark>{% if n > 1 %} ×{{ n }}{% endif %} {% endfor %}</p>{% endif %}
+      {% if words.neg %}<p class="small">Negative: {% for w, n in words.neg %}<mark class="w-neg">{{ w }}</mark>{% if n > 1 %} ×{{ n }}{% endif %} {% endfor %}</p>{% endif %}
+      <p class="muted small">Found with the VADER word list. A feeling word after not, never or n't is counted the other way round. A word list cannot read sarcasm or context.</p>
+      {% endif %}
+      {% if nrc %}
+      <h3>Which feelings the words point to</h3>
+      <p><b>{{ nrc.text }}</b></p>
+      {% for r in nrc.rows %}
+      <div class="tf-row"><span class="s-k">{{ r.emotion|capitalize }}</span><div class="s-bar self"><span style="width: {{ r.width }}%"></span></div><span class="s-v">{{ r.n }} · {{ r.words|join(', ') }}</span></div>
+      {% endfor %}
+      <p class="muted small">Words are matched to the NRC Emotion Lexicon (Mohammad &amp; Turney, 2013), which links words to eight emotions. One word can count for more than one emotion. It does not understand negation or context.</p>
+      {% endif %}
       {% if not plain.tone and not tone_feel %}<p class="muted">The passage was too short to read its tone.</p>{% endif %}
       <p class="explain"><b>How to read this.</b> The tone is worked out from the emotional weight of the words you chose. The “You felt” bar is your own answer to how pleasant
         or unpleasant you felt, so the two bars show whether your words and your feeling matched.</p>
@@ -283,6 +320,16 @@
         writers overlap a lot, so being closer to one column does not tell which mood you were in.</p>
     </section>
     {% endif %}
+  
+    <section class="card">
+      <h2>Suggestions</h2>
+      <p class="muted small">Next steps tied to what you did in this session.</p>
+      <div class="insight-grid">
+        {% for t in e_sugg %}
+        <div class="insight"><div class="ins-title">{{ t.observed }}</div><div class="ins-strategy">{{ t.tip }}</div></div>
+        {% endfor %}
+      </div>
+    </section>
   </div>
 
   <footer class="disclaimer report-foot">

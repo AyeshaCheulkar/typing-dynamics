@@ -196,6 +196,13 @@ def report(session_id):
         over_time=ot, pace_story=an.pace_story(ot), pause_lengths=an.pause_lengths(acts),
         effort=an.effort_card(s, predict.estimate_and_explain(feats)), timeline=predict.timeline_from_events(events),
         tone_feel=an.tone_vs_feeling(s, aff.get("text")),
+        words=affect.emotion_words(s["final_text"], emotion),
+        quick=an.quick_readings(feats, acts, bars, predict.timeline_from_events(events)),
+        agree=an.agreement(sts),
+        nrc=affect.nrc_emotions(s["final_text"]),
+        w_sugg=an.writing_suggestions(feats, acts, bars, predict.timeline_from_events(events)),
+        e_sugg=an.emotional_suggestions(sts, an.agreement(sts), affect.emotion_words(s["final_text"], emotion),
+                                        affect.nrc_emotions(s["final_text"]), emotion),
         skill_word={"touch": "touch typist", "some": "mixed typing", "hunt": "looks at the keys"}.get(
             s.get("typing_skill"), "typing style not given"),
         keyboard_word={"laptop": "laptop keyboard", "external": "external keyboard"}.get(

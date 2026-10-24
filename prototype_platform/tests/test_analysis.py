@@ -93,8 +93,26 @@ def test_report_renders_for_a_submitted_session():
         assert r.status_code == 200
         page = c.get("/report/%d" % r.get_json()["session_id"])
         assert page.status_code == 200 and b"pane-emotional" in page.data
+        assert page.data.count(b"<h2>Suggestions</h2>") == 2
     finally:
         db.DB_PATH = real
+
+
+def test_emotion_words_flip_after_negation():
+    from core import affect
+    r = affect.emotion_words("I was happy and loved the day, but the end was awful and I was not happy about it.", "happy")
+    assert r["n_pos"] >= 2 and r["n_neg"] >= 2
+    assert "".join(g["t"] for g in r["segments"]).startswith("I was happy")
+    assert affect.emotion_words("too short") is None
+
+
+def test_nrc_finds_feeling_words_and_suggestions_never_empty():
+    from core import affect
+    r = affect.nrc_emotions("I felt joy and love, but the funeral brought tears and grief for everyone there.")
+    assert r is not None and {x["emotion"] for x in r["rows"]} >= {"joy", "sadness"}
+    assert affect.nrc_emotions("short") is None
+    sug = an.emotional_suggestions([], None, None, None, "happy")
+    assert sug and all(x["observed"] and x["tip"] for x in sug)
 
 
 if __name__ == "__main__":

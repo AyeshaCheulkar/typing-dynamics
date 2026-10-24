@@ -314,3 +314,109 @@ def tone_vs_feeling(row, text_aff):
                % (_FEEL[tone5 - 1], _FEEL[mood - 1]))
     return {"felt": _FEEL[mood - 1], "felt_pos": (mood - 1) * 25, "words": _FEEL[tone5 - 1],
             "words_pos": (tone5 - 1) * 25, "verdict": verdict}
+
+
+# ------------------------------------------------------------------ quick readings
+def _clock(sec):
+    return "%d:%02d" % (int(sec) // 60, int(sec) % 60)
+
+
+def quick_readings(feats, acts, bars, timeline):
+    """Short rule-based readings for the Writing tab. Each rule is stated in the report."""
+    out = []
+    pct = round(100 * feats.get("pause_time_ratio", 0))
+    out.append({"label": "Thinking time", "value": "%d%%" % pct,
+                "text": "You spent %d%% of the session paused (stops of half a second or more)." % pct,
+                "rule": "paused time ÷ total time"})
+    adds, dels = acts["additions"], acts["deletions"]
+    out.append({"label": "Edit ratio", "value": "1 in %d" % round(adds / dels) if dels else "none",
+                "text": ("You deleted 1 key for every %d you typed." % round(adds / dels)) if dels
+                        else "You did not delete anything.",
+                "rule": "characters typed ÷ deletions"})
+    fill = bars[0]["fill"]
+    band = "fast" if fill >= 67 else "slow" if fill <= 33 else "typical"
+    out.append({"label": "Speed band", "value": band.capitalize(),
+                "text": "Your key-to-key speed is %s for your keyboard type." % band,
+                "rule": "faster than 67% of writers = fast, slower than 67% = slow, else typical"})
+    segs = [s for s in (timeline.get("segments") or []) if s["cls"] == "pause"]
+    if segs:
+        s = max(segs, key=lambda x: x["t1"] - x["t0"])
+        out.append({"label": "Longest pause", "value": "%.1f s" % s["dur_s"],
+                    "text": "Your longest pause began %s into the session." % _clock(s["t0"] / 1000),
+                    "rule": "the longest stop of 2 seconds or more"})
+    n = int(feats.get("n_keydown") or 0)
+    ok = n >= 150
+    out.append({"label": "Reliability", "value": "Good" if ok else "Take care",
+                "text": ("The passage is long enough (%d keystrokes) for a steady reading." % n) if ok
+                        else "The passage is short (%d keystrokes), so read these numbers with care." % n,
+                "rule": "150 keystrokes or more = good"})
+    return out
+
+
+def agreement(states):
+    """How many of the three answers match their typing reading."""
+    done = [x for x in states if x.get("agree")]
+    if not done:
+        return None
+    m = sum(x["agree"]["cls"] == "match" for x in done)
+    return {"match": m, "n": len(done), "text": "%d of %d of your answers match your typing." % (m, len(done))}
+
+
+# ------------------------------------------------------------------ end-of-tab suggestions
+def writing_suggestions(feats, acts, bars, timeline):
+    """Up to four next steps for the Writing tab, each tied to something the person did."""
+    out = []
+    adds, dels = acts["additions"], acts["deletions"]
+    if adds and dels / adds > 0.15:
+        out.append(("You deleted about 1 key in every %d." % round(adds / dels),
+                    "Try a first draft with no deleting. Fix mistakes only after the last sentence."))
+    segs = [s for s in (timeline.get("segments") or []) if s["cls"] == "pause"]
+    if segs:
+        s = max(segs, key=lambda x: x["t1"] - x["t0"])
+        if s["dur_s"] >= 10:
+            out.append(("Your longest pause was %.0f seconds, at %s." % (s["dur_s"], _clock(s["t0"] / 1000)),
+                        "Before a long stop, type a few words of the next idea. It is easier to restart from a note."))
+    if feats.get("pause_time_ratio", 0) >= 0.4:
+        out.append(("You were paused for %d%% of the session." % round(100 * feats["pause_time_ratio"]),
+                    "Plan three points before you type. A plan lowers stops while you write."))
+    if bars[0]["fill"] <= 33:
+        out.append(("Your key-to-key speed is slower than most.",
+                    "Speed is not the goal here. If you want it, five minutes of daily touch-typing practice helps."))
+    if int(feats.get("n_keydown") or 0) < 150:
+        out.append(("The passage was short.",
+                    "Write 150 keystrokes or more next time. Longer passages give steadier readings."))
+    out.append(("Every session is one sample.",
+                "Write again at another time of day. Compare the two reports to see what changes."))
+    return [{"observed": o, "tip": t} for o, t in out[:4]]
+
+
+def emotional_suggestions(states, agree, words, nrc, emotion):
+    """Up to four next steps for the Emotional tab, from the answers, the typing and the words."""
+    out = []
+    if agree and agree["n"]:
+        if agree["match"] == agree["n"]:
+            out.append(("Your answers and your typing agree on every state.",
+                        "This is a good sign that the typing reading fits you. Repeat the task to see if it holds."))
+        elif agree["match"] == 0:
+            out.append(("None of your answers matched your typing.",
+                        "This is normal: typing shows only the part of a feeling that reaches the fingers. Write one line about what you felt, next to this report."))
+    by = {x["key"]: x for x in states}
+    load = by.get("load")
+    if load and load.get("typing") and load["typing"]["lv"] == "high":
+        out.append(("Your typing showed a heavy mental load.",
+                    "Take a short break after writing about a hard moment. Walk or drink water before the next task."))
+    flow = by.get("flow")
+    if flow and flow.get("typing") and flow["typing"]["lv"] == "low":
+        out.append(("Your typing was stop-and-start.",
+                    "Close other tabs and set a 10-minute timer. Fewer interruptions help steady writing."))
+    want = {"happy": "pos", "sad": "neg"}.get(emotion)
+    if words and want and words["lean"] in ("pos", "neg", "mixed") and words["lean"] != want:
+        out.append(("Your words lean %s, but you chose a %s moment." % (
+                        {"pos": "positive", "neg": "negative", "mixed": "mixed"}[words["lean"]], emotion),
+                    "Add one concrete detail about how the moment felt. Specific feeling words make the reading clearer."))
+    if (words and words["lean"] == "few") or (nrc and nrc["lead"] is None):
+        out.append(("Few feeling words were found.",
+                    "Name the feeling directly, for example proud, nervous or relieved. The word analysis can then read it."))
+    out.append(("This is a reading, not a diagnosis.",
+                "Use it to notice patterns in how you write. Do not use it to judge your health."))
+    return [{"observed": o, "tip": t} for o, t in out[:4]]

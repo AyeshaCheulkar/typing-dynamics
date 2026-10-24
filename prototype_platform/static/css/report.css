@@ -266,3 +266,7 @@ details.more[open] summary{margin-bottom:6px}
 .eff-mark.model i{top:-26px;color:var(--exp,#c9772b)}
 .eff-mark.you i{top:20px;color:var(--self,#3b6fb5)}
 .eff-ticks{display:flex;justify-content:space-between;margin-top:36px;font:600 .7rem "Space Grotesk";color:var(--muted)}
+
+.passage{white-space:pre-wrap;line-height:1.7}
+mark.w-pos{background:#d8f0dc;color:inherit;border-radius:3px;padding:0 2px}
+mark.w-neg{background:#f8dcd6;color:inherit;border-radius:3px;padding:0 2px}

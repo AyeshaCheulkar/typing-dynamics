@@ -65,6 +65,110 @@ def text_emotion(text):
     }
 
 
+_NEGATORS = {"not", "no", "never", "hardly", "without", "cannot"}
+_MIN_EMO_WORDS = 3
+
+
+def emotion_words(text, emotion=None):
+    """The words that carry feeling, found with the VADER word list (|score| >= 1.5).
+    A feeling word with not/never/n't in the three words before it is counted the other way round.
+    Returns the passage cut into segments (for highlighting), the top words and a verdict."""
+    if _VADER is None or not text or len(text.split()) < 8:
+        return None
+    segs, counts, pos_n, neg_n, last, recent = [], {"pos": {}, "neg": {}}, 0, 0, 0, []
+    for m in _WORD_RE.finditer(text):
+        if m.start() > last:
+            segs.append({"t": text[last:m.start()], "c": ""})
+        last = m.end()
+        w = m.group().lower()
+        v = _VADER.lexicon.get(w, 0)
+        cls = ""
+        if abs(v) >= 1.5:
+            if any(r in _NEGATORS or r.endswith("n't") for r in recent[-3:]):
+                v = -v
+            cls = "pos" if v > 0 else "neg"
+            counts[cls][w] = counts[cls].get(w, 0) + 1
+            pos_n, neg_n = pos_n + (cls == "pos"), neg_n + (cls == "neg")
+        segs.append({"t": m.group(), "c": cls})
+        recent.append(w)
+    if last < len(text):
+        segs.append({"t": text[last:], "c": ""})
+    top = lambda d: sorted(d.items(), key=lambda kv: -kv[1])[:5]
+    total = pos_n + neg_n
+    if total < _MIN_EMO_WORDS:
+        lean, verdict = "few", "Only %d feeling word%s found, too few to say what the words show." % (total, "" if total == 1 else "s")
+    else:
+        share = pos_n / total
+        lean = "pos" if share >= 0.65 else "neg" if share <= 0.35 else "mixed"
+        verdict = {"pos": "Most of your feeling words are positive (%d of %d)." % (pos_n, total),
+                   "neg": "Most of your feeling words are negative (%d of %d)." % (neg_n, total),
+                   "mixed": "Your feeling words are mixed: %d positive and %d negative." % (pos_n, neg_n)}[lean]
+        want = {"happy": "pos", "sad": "neg"}.get(emotion)
+        if want:
+            verdict += (" This supports the %s moment you chose." % emotion if lean == want else
+                        " This does not clearly match the %s moment you chose." % emotion)
+    return {"segments": segs, "pos": top(counts["pos"]), "neg": top(counts["neg"]),
+            "n_pos": pos_n, "n_neg": neg_n, "lean": lean, "verdict": verdict}
+
+
+_NRC = None
+_NRC_TRIED = False
+_NRC_EMOTIONS = ["joy", "trust", "anticipation", "surprise", "sadness", "fear", "anger", "disgust"]
+
+
+def _nrc():
+    """NRC Emotion Lexicon (Mohammad & Turney, 2013): word -> list of emotions. None if the file is absent."""
+    global _NRC, _NRC_TRIED
+    if not _NRC_TRIED:
+        _NRC_TRIED = True
+        try:
+            with open(paths.NRC_LEXICON, "r", encoding="utf-8") as fh:
+                _NRC = json.load(fh)
+        except (OSError, ValueError):
+            _NRC = None
+    return _NRC
+
+
+def _nrc_forms(w):
+    """The word, then simple endings removed (loved -> love, tears -> tear)."""
+    yield w
+    for suf, add in (("ing", ""), ("ing", "e"), ("ed", ""), ("ed", "e"), ("ly", ""), ("es", ""), ("s", "")):
+        if w.endswith(suf) and len(w) - len(suf) >= 3:
+            yield w[:-len(suf)] + add
+
+
+def nrc_emotions(text):
+    """Count the words tied to eight emotions in the NRC lexicon. None if the lexicon or the text is missing.
+    One word can count for several emotions. Negation is not handled (the lexicon has no notion of it)."""
+    lex = _nrc()
+    if not lex or not text or len(text.split()) < 8:
+        return None
+    counts = {e: 0 for e in _NRC_EMOTIONS}
+    words = {e: {} for e in _NRC_EMOTIONS}
+    hit = 0
+    for m in _WORD_RE.finditer(text):
+        w = m.group().lower()
+        emos = next((lex[f] for f in _nrc_forms(w) if f in lex), None)
+        if not emos:
+            continue
+        hit += 1
+        for e in emos:
+            counts[e] += 1
+            words[e][w] = words[e].get(w, 0) + 1
+    rows = [{"emotion": e, "n": counts[e], "words": sorted(words[e], key=lambda k: -words[e][k])[:4]}
+            for e in _NRC_EMOTIONS if counts[e]]
+    rows.sort(key=lambda r: -r["n"])
+    top = rows[0]["n"] if rows else 1
+    for r in rows:
+        r["width"] = round(100 * r["n"] / top)
+    if hit < _MIN_EMO_WORDS:
+        text_out = "Only %d word%s from the NRC list found, too few to say which feelings stand out." % (hit, "" if hit == 1 else "s")
+    else:
+        lead = [r for r in rows if r["n"] >= max(2, 0.6 * rows[0]["n"])][:2]
+        text_out = "Feelings that stand out: %s." % " and ".join("%s (%d words)" % (r["emotion"], r["n"]) for r in lead)
+    return {"rows": rows, "hit": hit, "text": text_out, "lead": rows[0]["emotion"] if hit >= _MIN_EMO_WORDS and rows else None}
+
+
 # ----------------------------------------------------- external-data (EmoSurv) model
 def _emo_model():
     global _EMO_MODEL, _EMO_MODEL_TRIED
